@@ -34,6 +34,7 @@ LBOBJS =        \
  ReadGMSHFile.o \
  SWGGeometry.o  \
  SWGVolume.o    \
+ TetCR.o     	\
  TGMatrices.o	\
  Visualize.o
 

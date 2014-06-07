@@ -18,7 +18,8 @@
  */
 
 /*
- * TGMatrices.cc -- libSWG routines for forming the T and G matrices
+ * TGMatrices.cc -- libSWG routines for forming the T and G matrix
+ *                  blocks
  *
  * homer reid    -- 5/2014
  */
@@ -67,7 +68,7 @@ void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3])
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-typedef struct PTIData
+typedef struct VIIData
  { 
    double *QA;
    double PreFacA;
@@ -76,12 +77,13 @@ typedef struct PTIData
    cdouble Omega;
    IHAIMatProp *MP;
 
- } PTIData;
+ } VIIData;
 
-void PotentialTermIntegrand(double *x, double *b, double DivB, 
-                            void *UserData, double *I)
+void VInvIntegrand(double *x, double *b, double DivB, 
+                   void *UserData, double *I)
 {
-  PTIData *Data   = (PTIData *)UserData;
+#if 0
+  VIIData *Data   = (VIIData *)UserData;
   double *QA      = Data->QA;
   double PreFacA  = Data->PreFacA;
   double *QB      = Data->QB;
@@ -90,7 +92,7 @@ void PotentialTermIntegrand(double *x, double *b, double DivB,
   IHAIMatProp *MP = Data->MP;
 
   cdouble Eps[3][3], Y[3][3];
-  MP->GetEps( Omega, x );
+  MP->GetEps( Omega, x, Eps );
   Eps[0][0] -= 1.0;
   Eps[1][1] -= 1.0;
   Eps[2][2] -= 1.0;
@@ -110,17 +112,19 @@ void PotentialTermIntegrand(double *x, double *b, double DivB,
            +FA[2]*(Y[2][0]*FB[0] + Y[2][1]*FB[1] + Y[2][2]*FB[2])
           ) / (Omega*Omega);
   
+#endif
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void AddPotentialTermToTInverse(SWGVolume *V, cdouble Omega, HMatrix *TInv)
+void GetVInverseElement(SWGVolume *V, cdouble Omega, HMatrix *TInv)
 {
+#if 0
   for(int nfA=0; nfA<V->NumInteriorFaces; nfA++)
    { 
      SWGFace *FA = V->Faces[nfA];
-     struct PTIData MyPTIData, *Data=&MyPTIData;
+     struct VIIData MyVIIData, *Data=&MyVIIData;
      Data->Omega = Omega;
      Data->MP    = V->MP;
 
@@ -148,7 +152,7 @@ void AddPotentialTermToTInverse(SWGVolume *V, cdouble Omega, HMatrix *TInv)
          };
 
         cdouble Result, Error;
-        TetInt(this, ntA, 0, 1.0, PotentialTermIntegrand, (void *)Data,
+        TetInt(this, ntA, 0, 1.0, VInvIntegrand, (void *)Data,
                2, (double *)&Result, (double *)&Error, 0, 1.0e-4);
         M->AddEntry(nfA, nfB, Result);
       };
@@ -179,13 +183,14 @@ void AddPotentialTermToTInverse(SWGVolume *V, cdouble Omega, HMatrix *TInv)
          };
 
         cdouble Result, Error;
-        TetInt(this, ntA, 0, 1.0, PotentialTermIntegrand, (void *)Data,
+        TetInt(this, ntA, 0, 1.0, VInvIntegrandIntegrand, (void *)Data,
                2, (double *)&Result, (double *)&Error, 0, 1.0e-4);
         M->AddEntry(nfA, nfB, Result);
       };
 
    }; // for(int nfA=0; nfA<NumInteriorFaces; nfA++)
 
+#endif
 } // routine AddPotentialTermToTInverse
 
 /***************************************************************/
@@ -197,6 +202,7 @@ void GSurfaceIntegrand(double *xA, double *bA,
                        double DivbB, double *nHatB,
                        void *UserData, double *I)
 {
+#if 0
   double R[3];
   R[0] = (xA[0]-xB[0]);
   R[1] = (xA[1]-xB[1]);
@@ -208,24 +214,33 @@ void GSurfaceIntegrand(double *xA, double *bA,
   cdouble k = Data->k;
 
   cdouble Xi = II*k*r;
-  cdouble h = (exp(Xi) - 1.0 - Xi) / ( 4.0*M_PI*Xi ); 
+  cdouble h, p, w;
+  Gethpq(Xi, &h, &p, &q);
 
-  double DotProd=   nHatA[0]*nHatB[0] 
-                  + nHatA[1]*nHatB[1] 
-                  + nHatA[2]*nHatB[2];
+  double NdotN =   nHatA[0]*nHatB[0] 
+                 + nHatA[1]*nHatB[1] 
+                 + nHatA[2]*nHatB[2];
+
+  double PhiDotPhi = bA[0]*bB[0] + bA[1]*bB[1] * bA[2]*bB[2];
+
+  double VmVDotXi  = bA[0]*bB[0] + bA[1]*bB[1] * bA[2]*bB[2];
   
   cdouble *zI = (cdouble *)I;
-  zI[0] = -1.0 * DotProd * h / (II*k);
+  //zI[0] = -1.0 * DotProd * h / (II*k);
 
+#endif
 }
 
 /***************************************************************/
+/* Compute the G-matrix element between two tetrahedral basis  */
+/* functions using the surface-integral approach of Bleszynski */
+/* et. al.                                                     */
 /***************************************************************/
-/***************************************************************/
-cdouble ComputeGMatrixEntry(SWGVolume *VA, int nfA,
-                            SWGVolume *VB, int nfB,
-                            cdouble Omega)
+cdouble GetUMatrixElement_SI(SWGVolume *VA, int nfA,
+                             SWGVolume *VB, int nfB,
+                             cdouble Omega)
 {
+#if 0
   cdouble RetVal=0.0;
   int fDim=2;
 
@@ -233,8 +248,9 @@ cdouble ComputeGMatrixEntry(SWGVolume *VA, int nfA,
   for(int ASign=+1; ASign>=-1; ASign-=2)
    for(int BSign=+1; BSign>=-1; BSign-=2)
     {
-      int ntA = (ASign==1) ? FA->iPTet : FA->iMTet;
-      int iQA = (ASign==1) ? FA->iQP   : FA->iQM;
+      int ntA    = (ASign==1) ? FA->iPTet : FA->iMTet;
+      int iQA    = (ASign==1) ? FA->iQP   : FA->iQM;
+      Data->QA   = VA->Vertices + 3*iQA;
       SWGTet *TA = VA->Tets[ ntA ];
 
       int ntB = (BSign==1) ? FB->iPTet : FB->iMTet;
@@ -258,7 +274,18 @@ cdouble ComputeGMatrixEntry(SWGVolume *VA, int nfA,
 
   return RetVal;
 
+#endif
 }
+
+/***************************************************************/
+/* Compute the G-matrix element between two tetrahedral basis  */
+/* functions in the dipole approximation retaining NumTerms    */
+/* terms (here NumTerms may be 1 or 2).                        */
+/***************************************************************/
+cdouble GetUMatrixElement_DA(SWGVolume *VA, int nfA, 
+                             SWGVolume *VB, int nfB,
+                             cdouble Omega, int NumTerms)
+{}
 
 /***************************************************************/
 /***************************************************************/
@@ -266,18 +293,67 @@ cdouble ComputeGMatrixEntry(SWGVolume *VA, int nfA,
 void ComputeGMatrix(SWGVolume *VA, SWGVolume *VB,
                     cdouble Omega, HMatrix *G)
 {
+#if 0
   for(int nfA=0; nfA<VA->NumInteriorFaces; nfA++)
    for(int nfB=0; nfB<VB->NumInteriorFaces; nfB++)
     G->SetEntry(nfA, nfB, ComputeGMatrixEntry(VA, nfA, VB, nfB, Omega));
+#endif
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void ComputeTInvMatrix(SWGVolume *V, cdouble Omega, HMatrix *TInv)
+HMatrix *SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
+                                             HMatrix *M, int RowOffset, int ColOffset)
 {
-  ComputeGMatrix(V, V, Omega, TInv);
-  AddPotentialTermToTInverse(Omega, TInv);
+#if 0
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  SWGVolume *OA = Objects[noa];
+  SWGVolume *OB = Objects[nob];
+  int SameObject = (noa==nob) ? 1 : 0;
+
+  for(int nfa=0; nfa<OA->NumInteriorFaces; nfa++)
+   for(int nfb=SameObject*nfa; nfb<OB->NumInteriorFaces; nfb++)
+    M->SetEntry(RowOffset + nfa, ColOffset + nfb,
+                GetGMatrixElement(OA, nfa, OB, nfb, Omega) );
+
+#endif
+  /***************************************************************/
+  /**************************************************************/
+  /***************************************************************/
+#if 0
+  if (noa==nob)
+   { 
+     for(int nfa=0; nfa<OA->NumInteriorFaces; nfa++)
+      GetTInverseMatrixEntries(
+   };
+#endif
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *TInv)
+{
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+HMatrix *SWGGeometry::AllocateVIEMatrix()
+{
+  return new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+HVector *SWGGeometry::AllocateRHSVector()
+{
+  return new HVector(TotalBFs, LHM_COMPLEX);
 }
 
 } // namespace buff

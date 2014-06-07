@@ -193,6 +193,19 @@ class SWGGeometry
    // visualization
    void WritePPMesh(const char *FileName, const char *Tag);
 
+   // scattering API
+   HMatrix *AllocateVIEMatrix();
+   HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M);
+   HVector *AllocateRHSVector();
+   HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V);
+   void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
+   HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
+                      HMatrix *XMatrix, HMatrix *FMatrix=NULL);
+
+   // compute individual matrix blocks
+   HMatrix *AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
+                                   HMatrix *M, int RowOffset=0, int ColOffset=0);
+
    // miscellaneous routines
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);
 
@@ -239,35 +252,28 @@ typedef void (*UserFFIntegrand)(double *xA, double *bA, double DivbA, double *nH
                                 void *UserData, double *I);
 
 void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
-             UserTIntegrand Integrand, void *UserData,
+            UserTIntegrand Integrand, void *UserData,
             int fdim, double *Result, double *Error,
-            int MaxEvals, double RelTol);
+            int NumPts, int MaxEvals, double RelTol);
 
 void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
                SWGVolume *VB, int ntB, int iQB, double SignB,
                UserTTIntegrand Integrand, void *UserData,
                int fdim, double *Result, double *Error,
-               int MaxEvals, double RelTol);
+               int NumPts, int MaxEvals, double RelTol);
 
 void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
              UserFIntegrand Integrand, void *UserData,
              int fdim, double *Result, double *Error,
-             int MaxEvals, double RelTol);
+             int Order, int MaxEvals, double RelTol);
 
 void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
                  SWGVolume *VB, int ntB, int nfB, int iQB, double SignB,
                  UserFFIntegrand Integrand, void *UserData,
                  int fdim, double *Result, double *Error,
-                 int MaxEvals, double RelTol);
+                 int Order, int MaxEvals, double RelTol);
 
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void AssembleTInvMatrix(SWGVolume *V, cdouble Omega, HMatrix *TInv);
-
-void AssembleGMatrix(SWGVolume *VA, SWGVolume *VB,
-                     cdouble Omega, HMatrix *G);
-
+double *GetTetCR(int NumPts);
 
 } // namespace buff 
 

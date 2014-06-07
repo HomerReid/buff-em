@@ -1,13 +1,13 @@
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
- * This file is part of SCUFF-EM.
+ * This file is part of BUFF-EM.
  *
- * SCUFF-EM is free software; you can redistribute it and/or modify
+ * BUFF-EM is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * SCUFF-EM is distributed in the hope that it will be useful,
+ * BUFF-EM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -18,7 +18,7 @@
  */
 
 /*
- * Cubature.cc -- libSWG routines for integrals over tetrahedra
+ * Cubature.cc -- libbuff routines for integrals over tetrahedra
  *                and triangular faces
  *
  * homer reid  -- 5/2014
@@ -30,6 +30,7 @@
 #include <libhrutil.h>
 
 #include "libSGJC.h"
+#include "libTriInt.h"
 #include "libscuff.h"
 #include "libbuff.h"
 
@@ -55,7 +56,6 @@ typedef void (*UserFIntegrand)(double *x, double *b, double Divb, double *nHat,
 typedef void (*UserFFIntegrand)(double *xA, double *bA, double DivbA, double *nHatA,
                                 double *xB, double *bB, double DivbB, double *nHatB,
                                 void *UserData, double *I);
-
 /***************************************************************/
 /* utility routine to get the outward-pointing normal to a     */
 /* triangle with vertices (V1, V2, V3). 'Outward-pointing'     */
@@ -92,7 +92,7 @@ void GetOutwardPointingNormal(double *V1, double *V2, double *V3,
 /***************************************************************/  
 typedef struct TIData 
  { 
-   double *Q, L1[3], L2[3], L3[3]; 
+   double *Q, *L1, *L2, *L3;
    double Volume, PreFac;
    void *UserData;
    UserTIntegrand Integrand;
@@ -158,9 +158,9 @@ int TIIntegrand(unsigned ndim, const double *uvw, void *params,
 /* evaluate an integral over the volume of a single tetrahedron*/
 /***************************************************************/
 void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
-             UserTIntegrand Integrand, void *UserData,
+            UserTIntegrand Integrand, void *UserData,
             int fdim, double *Result, double *Error,
-            int MaxEvals, double RelTol)
+            int NumPts, int MaxEvals, double RelTol)
 {
   /***************************************************************/
   /***************************************************************/
@@ -172,23 +172,57 @@ void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
   double *V3    = V->Vertices + 3*(T->VI[ (iQ+3)%4 ]);
   double PreFac = Sign*V->Faces[T->FI[iQ]]->Area / (3.0 * T->Volume);
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  TIData MyTIData, *Data= &(MyTIData);
-  Data->Q = Q;
-  VecSub(V1, Q, Data->L1);
-  VecSub(V2, Q, Data->L2);
-  VecSub(V3, Q, Data->L3);
-  Data->Volume    = T->Volume;
-  Data->PreFac    = PreFac;
-  Data->UserData  = UserData;
-  Data->Integrand = Integrand;
+  double L1[3], L2[3], L3[3]; 
+  VecSub(V1, Q, L1);
+  VecSub(V2, Q, L2);
+  VecSub(V3, Q, L3);
 
-  double Lower[3]={0.0, 0.0, 0.0};
-  double Upper[3]={1.0, 1.0, 1.0};
-  hcubature(fdim, TIIntegrand, (void *)Data, 3, Lower, Upper,
-	    MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (NumPts==0)
+   { 
+     TIData MyTIData, *Data= &(MyTIData);
+     Data->Q         = Q;
+     Data->L1        = L1;
+     Data->L2        = L2;
+     Data->L3        = L3;
+     Data->Volume    = T->Volume;
+     Data->PreFac    = PreFac;
+     Data->UserData  = UserData;
+     Data->Integrand = Integrand;
+
+     double Lower[3]={0.0, 0.0, 0.0};
+     double Upper[3]={1.0, 1.0, 1.0};
+     hcubature(fdim, TIIntegrand, (void *)Data, 3, Lower, Upper,
+	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+   }
+  else
+   {
+     double *TetCR = GetTetCR(NumPts);
+     memset(Result,0,fdim*sizeof(double));
+     double *dI = new double[fdim];
+     for(int np=0; np<NumPts; np++)
+      { 
+        double u1=TetCR[4*np + 0];
+        double u2=TetCR[4*np + 1];
+        double u3=TetCR[4*np + 2];
+        double w=(6.0*T->Volume)*TetCR[4*np + 3];
+
+        double x[3], b[3];
+        for(int Mu=0; Mu<3; Mu++)
+         { b[Mu] = u1*L1[Mu] + u2*L2[Mu] + u3*L3[Mu];
+           x[Mu] = Q[Mu] + b[Mu];
+           b[Mu] *= PreFac;
+         };
+
+        Integrand(x, b, 3.0*PreFac, UserData, dI);
+
+        for(int nf=0; nf<fdim; nf++)
+         Result[nf]+=w*dI[nf];
+      };
+     delete[] dI;
+   };
 
 }
 
@@ -201,10 +235,10 @@ void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
 /***************************************************************/  
 typedef struct TTIData 
  { 
-   double *QA, L1A[3], L2A[3], L3A[3]; 
+   double *QA, *L1A, *L2A, *L3A;
    double VolumeA, PreFacA;
 
-   double *QB, L1B[3], L2B[3], L3B[3]; 
+   double *QB, *L1B, *L2B, *L3B;
    double VolumeB, PreFacB;
 
    void *UserData;
@@ -296,7 +330,7 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
                SWGVolume *VB, int ntB, int iQB, double SignB,
                UserTTIntegrand Integrand, void *UserData,
                int fdim, double *Result, double *Error,
-               int MaxEvals, double RelTol)
+               int NumPts, int MaxEvals, double RelTol)
 {
   /***************************************************************/
   /***************************************************************/
@@ -315,32 +349,91 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
   double *V3B    = VB->Vertices + 3*(TB->VI[ (iQB+3)%4 ]);
   double PreFacB = SignB*(VB->Faces[TB->FI[iQB]]->Area) / (3.0 * TB->Volume);
 
+  double L1A[3], L2A[3], L3A[3];
+  VecSub(V1A, QA, L1A);
+  VecSub(V2A, QA, L2A);
+  VecSub(V3A, QA, L3A);
+
+  double L1B[3], L2B[3], L3B[3];
+  VecSub(V1B, QB, L1B);
+  VecSub(V2B, QB, L2B);
+  VecSub(V3B, QB, L3B);
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  TTIData MyTTIData, *Data= &(MyTTIData);
+  if (NumPts==0)
+   { 
+     TTIData MyTTIData, *Data= &(MyTTIData);
+   
+     Data->QA        = QA;
+     Data->L1A       = L1A;
+     Data->L2A       = L2A;
+     Data->L3A       = L3A;
+     Data->VolumeA   = TA->Volume;
+     Data->PreFacA   = PreFacA;
+   
+     Data->QB        = QB;
+     Data->L1B       = L1B;
+     Data->L2B       = L2B;
+     Data->L3B       = L3B;
+     Data->VolumeB   = TB->Volume;
+     Data->PreFacB   = PreFacB;
+   
+     Data->UserData  = UserData;
+     Data->Integrand = Integrand;
+   
+     double Lower[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+     double Upper[6]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+     hcubature(fdim, TTIIntegrand, (void *)Data, 6, Lower, Upper,
+	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+   }
+  else
+   {
+     double *TetCR = GetTetCR(NumPts);
+     memset(Result,0,fdim*sizeof(double));
+     double *dI = new double[fdim];
+     for(int npA=0; npA<NumPts; npA++)
+      { 
+        double u1A=TetCR[4*npA + 0];
+        double u2A=TetCR[4*npA + 1];
+        double u3A=TetCR[4*npA + 2];
+        double wA=(6.0*TA->Volume)*TetCR[4*npA + 3];
 
-  Data->QA = QA;
-  VecSub(V1A, QA, Data->L1A);
-  VecSub(V2A, QA, Data->L2A);
-  VecSub(V3A, QA, Data->L3A);
-  Data->VolumeA  = TA->Volume;
-  Data->PreFacA  = PreFacA;
+        double xA[3], bA[3];
+        for(int Mu=0; Mu<3; Mu++)
+         { bA[Mu] = u1A*L1A[Mu] + u2A*L2A[Mu] + u3A*L3A[Mu];
+           xA[Mu] = QA[Mu] + bA[Mu];
+           bA[Mu] *= PreFacA;
+         };
+   
+        for(int npB=0; npB<NumPts; npB++)
+         { 
+           double u1B=TetCR[4*npB + 0];
+           double u2B=TetCR[4*npB + 1];
+           double u3B=TetCR[4*npB + 2];
+           double wB=(6.0*TB->Volume)*TetCR[4*npB + 3];
+   
+           double xB[3], bB[3];
+           for(int Mu=0; Mu<3; Mu++)
+            { bB[Mu] = u1B*L1B[Mu] + u2B*L2B[Mu] + u3B*L3B[Mu];
+              xB[Mu] = QB[Mu] + bB[Mu];
+              bB[Mu] *= PreFacB;
+            };
+   
+           Integrand(xA, bA, 3.0*PreFacA, 
+                     xB, bB, 3.0*PreFacB, 
+                     UserData, dI);
 
-  Data->QB = QB;
-  VecSub(V1B, QB, Data->L1B);
-  VecSub(V2B, QB, Data->L2B);
-  VecSub(V3B, QB, Data->L3B);
-  Data->VolumeB  = TB->Volume;
-  Data->PreFacB  = PreFacB;
+           for(int nf=0; nf<fdim; nf++)
+            Result[nf]+=wA*wB*dI[nf];
+         }; // for (int npB=...)
 
-  Data->UserData  = UserData;
-  Data->Integrand = Integrand;
+      }; // for(int npA=0; npA<NumPts; npA++)
 
-  double Lower[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-  double Upper[6]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-  hcubature(fdim, TTIIntegrand, (void *)Data, 6, Lower, Upper,
-	    MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+     delete[] dI;
+
+   }; // if (NumPts==0)  ... else ...
 
 }
 
@@ -353,7 +446,7 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
 /***************************************************************/  
 typedef struct FIData 
  { 
-   double *V1, L1[3], L2[3], *Q, nHat[3];
+   double *V1, *L1, *L2, *Q, *nHat;
    double Area, PreFac;
    void *UserData;
    UserFIntegrand Integrand;
@@ -419,7 +512,7 @@ int FIIntegrand(unsigned ndim, const double *uv, void *params,
 void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
              UserFIntegrand Integrand, void *UserData,
              int fdim, double *Result, double *Error,
-             int MaxEvals, double RelTol)
+             int Order, int MaxEvals, double RelTol)
 {
   /***************************************************************/
   /***************************************************************/
@@ -432,27 +525,58 @@ void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
   double *Q     = V->Vertices + 3*iQ;
   double PreFac = Sign*F->Area / (3.0*T->Volume);
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  FIData MyFIData, *Data= &(MyFIData);
-  VecSub(V2, V1, Data->L1);
-  VecSub(V3, V1, Data->L2);
-  Data->V1        = V1;
-  Data->Q         = Q;
-  Data->Area      = F->Area;
-  Data->PreFac    = PreFac;
-  Data->UserData  = UserData;
-  Data->Integrand = Integrand;
-  GetOutwardPointingNormal(V1, V2, V3, T->Centroid, Data->nHat);
+  double L1[3], L2[3], nHat[3];
+  VecSub(V2, V1, L1);
+  VecSub(V3, V1, L2);
+  GetOutwardPointingNormal(V1, V2, V3, T->Centroid, nHat);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  double Lower[2]={0.0, 0.0};
-  double Upper[2]={1.0, 1.0};
-  hcubature(fdim, FIIntegrand, (void *)Data, 2, Lower, Upper,
-	    MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+  if (Order==0)
+   { 
+     FIData MyFIData, *Data= &(MyFIData);
+     Data->V1        = V1;
+     Data->L1        = L1;
+     Data->L2        = L2;
+     Data->Q         = Q;
+     Data->Area      = F->Area;
+     Data->PreFac    = PreFac;
+     Data->UserData  = UserData;
+     Data->Integrand = Integrand;
+     Data->nHat      = nHat;
+     double Lower[2]={0.0, 0.0};
+     double Upper[2]={1.0, 1.0};
+     hcubature(fdim, FIIntegrand, (void *)Data, 2, Lower, Upper,
+	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+   }
+  else
+   { 
+     int NumPts;
+     double *TCR=GetTCR(Order, &NumPts);
+     if (TCR==0) ErrExit("unsupported cubature order in FaceInt");
+
+     memset(Result,0,fdim*sizeof(double));
+     double *dI = new double[fdim];
+     for(int np=0; np<NumPts; np++)
+      { 
+        double u=TCR[3*np + 0];
+        double v=TCR[3*np + 1];
+        double w=(2.0*F->Area)*TCR[3*np + 2];
+
+        double x[3], b[3];
+        for(int Mu=0; Mu<3; Mu++)
+         { x[Mu] = V1[Mu] + u*L1[Mu] + v*L2[Mu];
+           b[Mu] = PreFac * (x[Mu]-Q[Mu]);
+         };
+
+        Integrand(x, b, 3.0*PreFac, nHat, UserData, dI);
+
+        for(int nf=0; nf<fdim; nf++)
+         Result[nf]+=w*dI[nf];
+      };
+     delete[] dI;
+   };
 
 }
 
@@ -465,10 +589,10 @@ void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
 /***************************************************************/  
 typedef struct FFIData 
  { 
-   double *V1A, L1A[3], L2A[3], *QA, nHatA[3];
+   double *V1A, *L1A, *L2A, *QA, *nHatA;
    double AreaA, PreFacA;
 
-   double *V1B, L1B[3], L2B[3], *QB, nHatB[3];
+   double *V1B, *L1B, *L2B, *QB, *nHatB;
    double AreaB, PreFacB;
 
    void *UserData;
@@ -556,7 +680,7 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
                  SWGVolume *VB, int ntB, int nfB, int iQB, double SignB,
                  UserFFIntegrand Integrand, void *UserData,
                  int fdim, double *Result, double *Error,
-                 int MaxEvals, double RelTol)
+                 int Order, int MaxEvals, double RelTol)
 {
   /***************************************************************/
   /***************************************************************/
@@ -569,6 +693,11 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
   double  *QA    = VA->Vertices + 3*iQA;
   double PreFacA = SignA * FA->Area / (3.0*TA->Volume);
 
+  double L1A[3], L2A[3], nHatA[3];
+  VecSub(V2A, V1A, L1A);
+  VecSub(V3A, V1A, L2A);
+  GetOutwardPointingNormal(V1A, V2A, V3A, TA->Centroid, nHatA);
+
   SWGTet  *TB    = VB->Tets[ntB];
   SWGFace *FB    = VB->Faces[ TB->FI[nfB] ];
   double *V1B    = VB->Vertices + 3*(FB->iV1);
@@ -577,34 +706,85 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
   double  *QB    = VB->Vertices + 3*iQB;
   double PreFacB = SignB * FB->Area / (3.0*TB->Volume);
 
+  double L1B[3], L2B[3], nHatB[3];
+  VecSub(V2B, V1B, L1B);
+  VecSub(V3B, V1B, L2B);
+  GetOutwardPointingNormal(V1B, V2B, V3B, TB->Centroid, nHatB);
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  FFIData MyFIData, *Data= &(MyFIData);
+  if (Order==0)
+   { 
+     FFIData MyFFIData, *Data= &(MyFFIData);
+     Data->V1A      = V1A;
+     Data->L1A      = L1A;
+     Data->L2A      = L2A;
+     Data->QA       = QA;
+     Data->AreaA    = FA->Area;
+     Data->PreFacA  = PreFacA;
+     Data->nHatA    = nHatA;
+   
+     Data->V1B      = V1B;
+     Data->L1B      = L1B;
+     Data->L2B      = L2B;
+     Data->QB       = QB;
+     Data->AreaB    = FB->Area;
+     Data->PreFacB  = PreFacB;
+     Data->nHatB    = nHatB;
+   
+     Data->UserData  = UserData;
+     Data->Integrand = Integrand;
+     double Lower[4]={0.0, 0.0, 0.0, 0.0};
+     double Upper[4]={1.0, 1.0, 1.0, 1.0};
+     hcubature(fdim, FFIIntegrand, (void *)Data, 4, Lower, Upper,
+	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+   }
+  else
+   { 
+     int NumPts;
+     double *TCR=GetTCR(Order, &NumPts);
+     if (TCR==0) ErrExit("unsupported cubature order in FaceFaceInt");
 
-  Data->V1A = V1A;
-  VecSub(V2A, V1A, Data->L1A);
-  VecSub(V3A, V1A, Data->L2A);
-  Data->QA  = QA;
-  Data->AreaA     = FA->Area;
-  Data->PreFacA   = PreFacA;
-  GetOutwardPointingNormal(V1A, V2A, V3A, TA->Centroid, Data->nHatA);
+     memset(Result,0,fdim*sizeof(double));
+     double *dI = new double[fdim];
+     for(int npA=0; npA<NumPts; npA++)
+      { 
+        double uA=TCR[3*npA + 0];
+        double vA=TCR[3*npA + 1];
+        double wA=(2.0*FA->Area)*TCR[3*npA + 2];
 
-  Data->V1B = V1B;
-  VecSub(V2B, V1B, Data->L1B);
-  VecSub(V3B, V1B, Data->L2B);
-  Data->QB  = QB;
-  Data->AreaB     = FB->Area;
-  Data->PreFacB   = PreFacB;
-  GetOutwardPointingNormal(V1B, V2B, V3B, TB->Centroid, Data->nHatB);
+        double xA[3], bA[3];
+        for(int Mu=0; Mu<3; Mu++)
+         { xA[Mu] = V1A[Mu] + uA*L1A[Mu] + vA*L2A[Mu];
+           bA[Mu] = PreFacA * (xA[Mu]-QA[Mu]);
+         };
 
-  Data->UserData  = UserData;
-  Data->Integrand = Integrand;
+        for(int npB=0; npB<NumPts; npB++)
+         { 
+           double uB=TCR[3*npB + 0];
+           double vB=TCR[3*npB + 1];
+           double wB=(2.0*FB->Area)*TCR[3*npB + 2];
 
-  double Lower[4]={0.0, 0.0, 0.0, 0.0};
-  double Upper[4]={1.0, 1.0, 1.0, 1.0};
-  hcubature(fdim, FFIIntegrand, (void *)Data, 4, Lower, Upper,
-	    MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+           double xB[3], bB[3];
+           for(int Mu=0; Mu<3; Mu++)
+            { xB[Mu] = V1B[Mu] + uB*L1B[Mu] + vB*L2B[Mu];
+              bB[Mu] = PreFacB * (xB[Mu]-QB[Mu]);
+            };
+
+           Integrand(xA, bA, 3.0*PreFacA, nHatA, 
+                     xB, bB, 3.0*PreFacB, nHatB, 
+                     UserData, dI);
+
+           for(int nf=0; nf<fdim; nf++)
+            Result[nf]+=wA*wB*dI[nf];
+
+         }; // for(int npB...)
+
+      }; // for(int npA...)
+     delete[] dI;
+
+   }; // if (Order==0) ... else ...  
 
 }
 
