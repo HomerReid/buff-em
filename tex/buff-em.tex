@@ -1,0 +1,529 @@
+\documentclass[letterpaper]{article}
+
+\input{physcmds}
+
+\graphicspath{{figures/}}
+\newcommand{\TInv}{\rotatebox[origin=c]{180}{$T$}}
+\newcommand{\vbTInv}{\rotatebox[origin=c]{180}{$\vb T$}}
+\newcommand{\vbTInvSmall}{\rotatebox[origin=c]{180}{\scriptsize{$\vb T$}}}
+\newcommand{\bbTInv}{\rotatebox[origin=c]{180}{$\mathbb{T}$}}
+\newcommand{\bbVInv}{\rotatebox[origin=c]{180}{$\mathbb{V}$}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Special commands for this document -----------------------
+%------------------------------------------------------------
+%------------------------------------------------------------
+\newcommand{\vbxi}{\boldsymbol{\xi}}
+\newcommand{\TT}{\mathbb{T}}
+\newcommand{\GG}{\mathbb{G}}
+\newcommand{\im}{\text{Im }}
+\newcommand{\vbeps}{\boldsymbol{\epsilon}}
+\newcommand{\vbLambda}{\boldsymbol{\Lambda}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Document header  -----------------------------------------
+%------------------------------------------------------------
+%------------------------------------------------------------
+\title { {\sc buff-em}: A Volume-Integral-Equation
+         Solver Suite for Computational Fluctuation Physics}
+\author {Homer Reid}
+\date {June 3, 2014}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Start of actual document
+%------------------------------------------------------------
+%------------------------------------------------------------
+
+\begin{document}
+\pagestyle{myheadings}
+\markright{Homer Reid: \texttt{buff-em} }
+\maketitle
+
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{SWG Basis Functions}
+
+SWG basis functions are the three-dimensional analog of
+RWG basis functions. They are defined on pairs of adjacent tetrahedra:
+%====================================================================%
+$$ \vb b_\alpha(\vb x) = 
+  \begin{cases}
+   \displaystyle{
+    +\frac{A_\alpha}{3V_\alpha^+}(\vb x - \vb Q_\alpha^+), 
+                }
+    \qquad &\vb x\in \mc P_\alpha^+
+\\[5pt]
+   \displaystyle{
+  -\frac{A\alpha}{3V_\alpha^-}(\vb x - \vb Q_\alpha^-), 
+                } 
+    \qquad &\vb x\in \mc P_\alpha^-
+  \end{cases}
+$$
+%====================================================================%
+where $\mc P_\alpha^\pm$ are the two tetrahedra associated with basis
+function $\alpha$, $V_\alpha^\pm$ are their volumes, $\vb Q_\alpha\pm$
+are the source/sink vertices, and $A_\alpha$ is the area of the 
+triangular face shared by $\mc P_\alpha^\pm$. (I denote tetrahedra 
+by $\mc P$, which stands for ``pyramid,'' to avoid confusion with
+the symbol $\mc T$, which stands for ``triangle'' in my memos on
+RWG basis functions.)
+
+The divergence of the SWG basis function is 
+%====================================================================%
+$$ \nabla \cdot \vb b_\alpha(\vb x) = 
+    \pm \frac{A_\alpha}{V_\alpha^\pm}, \qquad \vb x\in \mc P_\alpha^\pm.
+$$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Volume-Integral Scattering Formulation}
+
+\subsection*{Continuous VIE formulation}
+
+Consider a material body with relative permittivity tensor
+$\vbeps(\vb x)$ lying in vacuum and irradiated by monochromatic
+sources which may lie inside or outside the body. 
+Let the electric field due to the sources be $\vb E\sups{inc}$ 
+and let $\vb J(\vb x)$ be the induced volume current
+density throughout the bulk of the body. 
+(We work at frequency $\omega$ and assume time dependence
+of all field and currents $\propto e^{-i\omega t}$.)
+The total electric field at any point is a sum of
+``incident'' and ``scattered'' contributions:\footnote{We
+put the terms ``incident'' and ``scattered'' in quotes
+to remind readers that the ``incident''-field sources may
+in fact lie \textit{inside} the body; in this case it is 
+not quite right to refer to the field they produce as 
+being ``incident'' on the body, but the terminology is 
+convenient nonetheless.}
+%====================================================================%
+\begin{align}
+ \vb E\sups{tot} &= \vb E\sups{inc} + \vb E\sups{scat}
+\\
+                 &= \vb E\sups{inc} + ikZ_0 \mathbb{G}\star\vb J
+\label{ETot}
+\end{align}
+%====================================================================%
+where $k=\omega/c$ is the (free-space) wavenumber,
+$Z_0=\sqrt{\mu_0/\epsilon_0}$ is the impedance of free space,
+$\star$ denotes convolution, and $\mathbb{G}$ is the free-space
+dyadic Green's function:
+$$ \mathbb{G}(\vb x, \vb x^\prime) = 
+   \Big(\vb 1 - \frac{1}{k^2} \nabla \times \nabla \Big)
+   \frac{e^{ikr}}{4\pi r}
+   \qquad (r\equiv |\vb x-\vb x^\prime|).
+$$
+On the other hand, the induced current is related to the total field
+according to
+%====================================================================%
+\begin{align*}
+ \vb J(\vb x) 
+&= i\frac{k}{Z_0} \big[\vbeps(\vb x) - \vb 1\big]\cdot \vb E\sups{tot}(\vb x)
+\\
+&\equiv^* -\frac{1}{ikZ_0} \mathbb{V}(\vb x) \cdot \vb E\sups{tot}(\vb x)
+\end{align*}
+%====================================================================%
+where $\mathbb{V}\equiv k^2\big[\vb 1 - \vbeps(\vb x)\big]$ is
+sometimes known\footnote{Jamal's paper.} as the ``potential.''
+At points not in free space, i.e. points at which 
+$\vbeps(\vb x)\ne \vb 1$, we can invert this equation to read
+%====================================================================%
+\begin{align}
+-ikZ_0 \bbVInv(\vb x) \cdot \vb J(\vb x) &= \vb E\sups{tot}(\vb x)
+\nonumber
+\intertext{where $\bbVInv\equiv \mathbb{V}^{-1}.$ Now insert (\ref{ETot}):}
+-ikZ_0 \bbVInv(\vb x) \cdot \vb J(\vb x) &= \vb E\sups{inc} + ik Z_0 \mathbb{G} \star \vb J \\
+\intertext{Rearranging and writing out the convolution, 
+           we obtain a volume-integral equation for $\vb J$:} 
+  -ikZ_0\left[   \bbVInv(\vb x) \cdot \vb J(\vb x)
+              + \int \mathbb{G}(\vb x, \vb x^\prime) 
+                \cdot \vb J(\vb x^\prime) \,d\vb x^\prime
+        \right]
+&= \vb E\sups{inc}(\vb x).
+\\
+\intertext{In what follows it will be convenient to think of the RHS 
+           here as the convolution of just a single operator with $\vb J$:}
+ -ikZ_0
+  \int \bbTInv(\vb x, \vb x^\prime) \cdot \vb J(\vb x^\prime) \,d\vb x^\prime
+&= \vb E\sups{inc}(\vb x).
+\label{ContinuousVIE}
+\end{align}
+where
+$$
+  \bbTInv(\vb x, \vb x^\prime) 
+  =
+  \bbVInv(\vb x) \delta(\vb x-\vb x^\prime)+ \mathbb{G}(\vb x,\vb x^\prime).
+$$
+(The symbol $\bbTInv$ is pronounced ``tee-inverse'' or ``eet''.)
+
+\subsection*{Discretized VIE formulation}
+
+Now let $\vb b_\alpha$ be some convenient set of $N$ vector-valued 
+basis functions and approximate $j$ in the form
+%====================================================================%
+\numeq{JExpansion}
+ { \vb J(\vb x) \approx \sum_{\alpha} j_\alpha \vb b_\alpha(\vb x). }
+%====================================================================%
+Insert into (\ref{ContinuousVIE}) and ``test'' both sides
+with the elements of the set $\{\vb b_\alpha\}$ to obtain a
+discretized version of (\ref{ContinuousVIE}) in the form of an
+$N\times N$ linear system:
+\begin{align*}
+ \vbTInv \cdot \vb j &= \vb v
+\end{align*}
+where the elements of the vector $\vb j$ are the expansion 
+coefficients in (\ref{JExpansion}) and the elements of 
+$\vbTInv$ and $\vb v$ are 
+%====================================================================%
+\numeq{Elements}
+{
+ \TInv_{\alpha\beta}=\exptwoB{\vb b_\alpha}{\bbTInv}{\vb b_\beta},
+ \qquad
+ v_{\alpha}=-\frac{1}{ikZ_0} \inpB{\vb E\sups{inc}}{\vb b_\beta}.
+}
+%====================================================================%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Numerical Evaluation of $\mathbb{T}\mathbb{G}$ Formulas
+         for Casimir and Heat-Transfer Quantities}
+
+The Kardar/Jaffe group has derived a number of formulas expressing
+Casimir forces (both equilibrium and non-equilibrium) and
+rates of heat transfer among a collection of material bodies 
+in terms of the $\TT$ and $\GG$ operators of the
+bodies. For example:
+%====================================================================%
+\begin{description}
+ \item[1.] \textit{Equilibrium Casimir energy between two bodies:}
+ $$\mathcal{E}=\frac{\hbar c}{2\pi}\int
+   \log\det\Big(\vb{1} - \GG_{12}\mathbb{T}_2\GG_{21}\mathbb{T}_1\Big)
+   d\xi
+ $$
+(where $\xi$ indicates imaginary frequency)
+%====================================================================%
+ \item[2.] \textit{Rate of heat radiation from a single body:}
+ $$H=\frac{2}{\pi}
+   \int \,\Theta(\omega) 
+   \text{Tr }
+   \Big[   \text{Im }\GG \, \text{Im }\TT 
+         - \text{Im }\GG \, \TT \,
+           \text{Im }\GG\, \TT^\dagger 
+   \Big] \, d\omega
+ $$
+(where $\Theta(\omega)\equiv \frac{\hbar\omega}{e^{\hbar\omega/kT} - 1}$
+ is the Bose-Einstein factor)
+%====================================================================%
+ \item[3.] \textit{Heat transfer from body 1 to body 2:}
+ $$H_1^{(2)}=\frac{2}{\pi}
+   \int \,\Theta(\omega) \mathcal{H}_1^{(2)}(\omega)\,d\omega
+ $$
+ $$\mathcal{H}_1^{(2)}=\text{Im Tr }
+   \bigg\{ (1 + \GG \TT_2) \frac{1}{1-\GG \TT_1 \GG \TT_2}
+           \GG 
+           \Big[ \im \TT_1 - \TT_1 \big(\im \GG\big) \TT_1^\dagger \Big] 
+           \GG^\dagger
+           \frac{1}{1-\TT_2^\dagger \GG^\dagger \TT_1^\dagger \GG}\TT_2^\dagger
+   \bigg\}
+ $$
+%====================================================================%
+ \item[4.] \textit{Momentum transfer (Nonequilibrium Casimir force) from body 1 to body 2:}
+ $$F_1^{(2)}=\frac{2}{\pi}
+   \int \,\Theta(\omega) \mathcal{F}_1^{(2)}(\omega)\,d\omega
+ $$
+ $$\mathcal{F}_1^{(2)}=\text{Re Tr }
+   \bigg\{ \nabla (1 + \GG \TT_2) 
+           \frac{1}{1-\GG \TT_1 \GG \TT_2}
+           \GG 
+           \Big[ \im \TT_1 - \TT_1 \big(\im \GG\big) \TT_1^\dagger \Big] 
+           \GG^\dagger
+           \frac{1}{1-\TT_2^\dagger \GG^\dagger \TT_1^\dagger \GG}
+           \TT_2^\dagger
+   \bigg\}
+ $$
+\end{description}
+%====================================================================%
+
+Although the formulas are expressed as traces of 
+certain linear-algebraic combinations of the operators 
+and are are thus---in principle---basis-independent, in practice the 
+$\mathbb{T}$ operator is so unwieldy that the formulas have only
+ever been applied to certain high-symmetry geometries, in which
+the known special forms of the Maxwell solutions allow 
+analytical evaluation of $\mathbb{T}$-matrix elements.
+In effect, this amounts to working in a basis of globally-defined
+wave functions, which are typically highly specific to the 
+particular shapes of the objects in question and thus not 
+amenable to the treatment of more general geometries.
+In particular, to date there has been no obvious way to use
+$\mathbb{T}/\mathbb{G}$ formulas to handle \textit{inhomogeneous}
+bodies with continuously varying material properties, since 
+the $\mathbb{T}$-matrices cannot be computed analytically
+for such bodies even if their shapes are highly symmetric.
+
+Here I show that in fact the restriction to special-function
+bases is in fact unnecessary. Instead, it is possible to compute 
+$\mathbb{T}$-matrices \textit{numerically} for arbitrary 
+inhomogeneous objects using a basis of \textit{localized} 
+functions. This insight leads to a general-purpose approach
+that is capable, in principle, of predicting Casimir and 
+heat-transfer phenomena for bodies of arbitrary shapes and
+arbitrary anisotropic continuously-varying material properties. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Computation of the $\mathbb{G}$ Matrix }
+
+The $\mathbb{G}_0$ operator is just the usual free-space dyadic 
+Maxwell Green's function. The matrix elements of this operator 
+sandwiched between two localized volume-current basis functions 
+has an immediate physical interpretation: it is the electric field 
+due to the first localized current, averaged over the second 
+localized current.
+
+%====================================================================%
+\begin{align}
+&\hspace{-0.1in}
+  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+\\
+&= \int_{\sup\vb b_\alpha} \!\!\!\!\!\!\! \, d\vb x_\alpha
+   \int_{\sup\vb b_\beta} \!\!\!\!\!\!\! \, d\vb x_\beta
+   \left\{ \vb b_{\alpha}(\vb x_\alpha) \cdot \vb b_\beta(\vb x_\beta)
+           -\frac{ (\nabla \cdot \vb b_\alpha) (\nabla \cdot \vb b_\beta)}
+                 { k^2 }
+   \right\}
+   G_0(\vb x_\alpha -\vb x_\beta)
+\\
+&= 
+   \int_{\sup\vb b_\alpha} \!\!\!\!\!\!\! d\vb x_\alpha
+   \int_{\sup\vb b_\beta}  \!\!\!\!\!\!\! d\vb x_\beta
+   \left\{ \vb b_{\alpha}(\vb x_\alpha) \cdot \vb b_\beta(\vb x_\beta)
+           -\frac{ (\nabla \cdot \vb b_\alpha) (\nabla \cdot \vb b_\beta)}
+                 { k^2 }
+   \right\}
+   G_0(\vb x_\alpha -\vb x_\beta)
+\label{G0Volume}
+\end{align}
+%====================================================================%
+where 
+$$ G_0(\vb r)=\frac{e^{ik|\vb r|}}{4\pi |\vb r|}.$$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Computation of the $\mathbb{T}$ Matrix}
+
+The basic observation underlying our approach is that,
+while the $\mathbb{T}$ operator is highly unwieldy in position space,
+the \textit{inverse} $\mathbb{T}$ operator is quite easy to 
+describe in position space---in fact, it is just equal to the 
+$\mathbb{G}$ operator plus a correction which is \textit{diagonal}
+in the position-space basis. 
+
+What this means is that, numerically, it's easy to compute
+matrix elements of the \textit{inverse} $\mathbb{T}$ operator.
+Our approach is to compute the matrix of this operator in 
+a basis of SWG functions,
+then simply \textit{invert} this matrix numerically to obtain
+the actual $\mathbb{T}$ matrix.
+
+\subsection{Matrix Elements of the Inverse $\mathbb{T}$ Operator}
+
+For nonmagnetic materials $(\mu=1)$, the inverse $\mathbb{T}$ operator 
+may be expressed in position space in the form
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{TInverseRealSpace}
+{\mathbb{T}^{-1}(\omega; \vb x, \vb x^\prime)
+   =\frac{c^2 }{\omega^2} 
+    \underbrace{
+    \Big[1-\vbeps(\omega, \vb x)\Big]^{-1}
+               }_{\vb Y(\omega,\vb x)}
+    \delta(\vb x-\vb x^\prime)
+    + \mathbb{G}_0(\omega; \vb x, \vb x^\prime)
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+where $\vbeps$ is the frequency- and position-dependent relative
+dielectric permittivity tensor.
+
+Using (\ref{TInverseRealSpace}), the matrix elements of $\mathbb{T}^{-1}$
+take the form
+%====================================================================%
+\begin{align}
+  \exptwoB{\vb b_\alpha}{\mathbb{T}^{-1}}{\vb b_\beta}
+&=
+  \frac{c^2}{\omega^2}
+  \int \vb b_\alpha(\vb x) \cdot \vb Y(\omega,\vb x) \cdot \vb b_\beta(\vb x)
+  \, d\vb x
+  +
+  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+\label{TInvME}
+\end{align}
+%====================================================================%
+where $\vb Y$ at each point is computed as a $3\times 3$ matrix 
+inverse:
+%====================================================================%
+$$\vb Y(\omega,\vb x) \equiv \Big[1 - \epsilon(\omega,\vb x)\Big]^{-1}.$$
+%====================================================================%
+The first integral in (\ref{TInvME}) extends over the common support of 
+basis functions $\vb b_\alpha,\vb b_\beta$. For the SWG basis, each 
+function shares support with only a small number (typically 7) of other 
+functions, so this term amounts to a sparse update to the second term in 
+(\ref{TInverseRealSpace}), which is dense.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Volume integrals involving SWG basis functions}
+
+\begin{align*}
+ \int_{\sup \vb b_\alpha} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
+&= 
+  \int_{\mc P_\alpha^+} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
+ +\int_{\mc P_\alpha^-} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
+\\
+\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Consider a tetrahedron with vertices 
+$\{\vb Q, \vb V_1, \vb V_2, \vb V_3.\}$ 
+A general
+integral over this region takes the form
+%====================================================================%
+\begin{align*}
+ \int_{\mc P} \mathcal{I}(\vb x, \vb b ) \, d\vb x
+&=\mc{J} \int_0^1 \, du \int_0^{1-u} \, dv \int_0^{1-u-v} dw
+  \mathcal{I}\Big( \vb x(u,v,w), \vb b(u,v,w) \Big)
+\end{align*}
+%====================================================================%
+where
+%====================================================================%
+\begin{align*}
+ \vb x(u,v,w) 
+&= 
+ \vb Q + u\vb L_1 + v\vb L_2 + w\vb L_3 
+\\
+ \vb b(u,v,w) 
+&= 
+ \pm \frac{A}{3V}\bigg\{ u \vb L_1 
+                        +v \vb L_2 
+                        +w \vb L_3 
+                 \bigg\}
+\end{align*}
+%====================================================================%
+and the Jacobian of the transformation is 
+%====================================================================%
+$$\mc J=\frac{d(x,y,z)}{d(u,v,w)}
+   =\det\left|\begin{array}{ccc} 
+     \\
+     \vb L_1 & \vb L_2 & \vb L_3 \\
+     \\
+     \end{array}\right|
+  =6V
+$$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Surface integrals involving SWG basis functions}
+
+When computing matrix elements of $\mathbb{G}$ in the SWG basis
+it is very convenient to follow the work of Bleszynski et al.~\cite{} 
+by reducing the volume integral (\ref{G0Volume}) to a nonsingular
+\textit{surface} integral. Begin by introducing the function
+%====================================================================%
+\begin{align}
+ h(\vbxi) &\equiv \frac{e^{|\vbxi|} - 1 - |\vbxi|}{4\pi |\vbxi|}
+\intertext{with gradient}
+ \nabla_{\vbxi } h &= \frac{1+\big(|\xi|-1\big) e^{\vbxi}}{4\pi \xi^3}
+\intertext{and Laplacian}
+ \nabla_{\vbxi} \cdot \nabla_{\vbxi}h &= 
+ \frac{e^{|\vbxi|}}{{4\pi|\vbxi|}}.
+\label{DelDelh}
+\end{align}
+%====================================================================%
+Before proceeding it is useful to note the following
+alternative form of (\ref{DelDelh}): 
+If 
+$$\vbxi=\alpha(\vb x-\vb x^\prime)=\alpha \vb r$$
+%====================================================================%
+$$ \nabla_{\vbxi} 
+   =  \frac{1}{\alpha}\nabla_{\vb x} 
+   = -\frac{1}{\alpha}\nabla_{\vb x^\prime}
+$$
+%====================================================================%
+and hence
+$$ \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
+   =\frac{1}{k^2} \nabla_{\vb x} \nabla_{\vb x^\prime}  h(\vb r).
+$$
+%====================================================================%
+\newpage
+We will also need Green's theorem in the form
+%====================================================================%
+\begin{align*}
+\int_{\mc V} \psi\, (\nabla \cdot \vb a) \, dV 
+&=
+\int_{\mc V}\Big[   \Big(\nabla \cdot \psi \vb a \Big)
+                    -\vb a \cdot \nabla \psi
+            \Big] dV 
+\\
+&= \int_{\partial \mc V} \psi \vb a \cdot d\vb A
+   - 
+   \int_{\mc V} \vb a \cdot \nabla \psi \, dV
+\intertext{
+If we further have $\vb a=\nabla \phi$ and 
+$\nabla\vb \psi= \vb C$ (constant), then the second integral
+may be converted into a surface integral to yield}
+&= \int_{\partial \mc V}
+   \Big[ \psi \, \vb a \cdot \vbhat{n} + \phi \, \vb C\cdot \vbhat{n}
+   \Big]dA
+\end{align*}
+
+%====================================================================%
+The matrix element of the $\mathbb{G}$ operator between
+SWG basis functions becomes 
+%====================================================================%
+\begin{align*}
+  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+&=
+ \int_{\mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+ \underbrace{
+ \Big[\vb b_\alpha \cdot \vb b_\beta 
+          -\frac{ (\nabla \cdot \vb b_\alpha)
+                  (\nabla \cdot \vb b_\beta)
+                }{k^2}
+            }_{P(\vb x_\alpha, \vb x_\beta)}
+ \Big] \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
+\\
+&=\frac{1}{k^2}
+ \int_{\mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+ P(\vb x_\alpha, \vb x_\beta)
+ \nabla_{\vb x_\alpha} \nabla_{\vb x_\beta} 
+ h(\vb r)
+\\
+\intertext{Apply () with $\psi=P, \vb a = \nabla h$}
+&=\frac{1}{k^2}
+ \int_{\partial \mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+  \Big[  P (\nabla h)\cdot \vbhat{n}_\alpha
+       + h \vb C \cdot \vhat{n}_\alpha
+  \Big]
+\end{align*}
+%====================================================================%
+
+\end{document}
