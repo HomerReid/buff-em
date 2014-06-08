@@ -225,6 +225,36 @@ void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
    };
 
 }
+ 
+/***************************************************************/
+/* evaluate a volume integral over the support of an SWG basis */
+/* function, which involves making two calls to TetInt         */
+/***************************************************************/
+void BFInt(SWGVolume *V, int nf,
+           UserTIntegrand Integrand, void *UserData,
+           int fdim, double *Result, double *Error,
+           int NumPts, int MaxEvals, double RelTol)
+{
+  
+  SWGFace *F = V->Faces[nf];
+
+  TetInt(V, F->iPTet, F->PIndex, +1.0, Integrand, UserData, 
+         fdim, Result, Error, NumPts, MaxEvals, RelTol);
+
+  double *MResult = new double[fdim];
+  double *MError  = new double[fdim];
+  TetInt(V, F->iMTet, F->MIndex, -1.0, Integrand, UserData, 
+         fdim, MResult, MError, NumPts, MaxEvals, RelTol);
+
+  for(int nf=0; nf<fdim; nf++) 
+   { Result[nf] += MResult[nf];
+     Error[nf] +=  MError[nf];
+   };
+
+  delete[] MResult;
+  delete[] MError;
+
+}
 
 /*=============================================================*/
 /*= PART 2: integrals over pairs of tetrahedra ================*/
@@ -321,7 +351,6 @@ int TTIIntegrand(unsigned ndim, const double *uvw, void *params,
   return 0;
   
 }
-
 
 /***************************************************************/
 /* evaluate an integral over a pair of tetrahedra              */
@@ -434,6 +463,64 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
      delete[] dI;
 
    }; // if (NumPts==0)  ... else ...
+
+}
+ 
+/***************************************************************/
+/* evaluate a 6-dimensional integral over the product of the   */
+/* supports of two SWG functions, which involves making four   */
+/* calls to TetTetInt                                          */
+/***************************************************************/
+void BFBFInt(SWGVolume *VA, int nfA,
+             SWGVolume *VB, int nfB,
+             UserTTIntegrand Integrand, void *UserData,
+             int fdim, double *Result, double *Error,
+             int NumPts, int MaxEvals, double RelTol)
+{
+  
+  SWGFace *FA = VA->Faces[nfA];
+  SWGFace *FB = VB->Faces[nfB];
+
+  double *PResult = new double[fdim];
+  double *PError  = new double[fdim];
+
+  TetTetInt(VA, FA->iPTet, FA->PIndex, +1.0, 
+            VB, FB->iPTet, FB->PIndex, +1.0, 
+            Integrand, UserData, 
+            fdim, Result, Error, NumPts, MaxEvals, RelTol);
+
+  TetTetInt(VA, FA->iPTet, FA->PIndex, +1.0, 
+            VB, FB->iMTet, FB->MIndex, -1.0, 
+            Integrand, UserData, 
+            fdim, PResult, PError, NumPts, MaxEvals, RelTol);
+
+  for(int nf=0; nf<fdim; nf++)
+   { Result[nf] += PResult[nf];
+     Error[nf]  += PError[nf];
+   };
+
+  TetTetInt(VA, FA->iMTet, FA->MIndex, -1.0, 
+            VB, FB->iPTet, FB->PIndex, +1.0, 
+            Integrand, UserData, 
+            fdim, PResult, PError, NumPts, MaxEvals, RelTol);
+
+  for(int nf=0; nf<fdim; nf++)
+   { Result[nf] += PResult[nf];
+     Error[nf]  += PError[nf];
+   };
+
+  TetTetInt(VA, FA->iMTet, FA->MIndex, -1.0,
+            VB, FB->iMTet, FB->MIndex, -1.0,
+            Integrand, UserData,
+            fdim, PResult, PError, NumPts, MaxEvals, RelTol);
+
+  for(int nf=0; nf<fdim; nf++)
+   { Result[nf] += PResult[nf];
+     Error[nf]  += PError[nf];
+   };
+
+  delete[] PResult;
+  delete[] PError;
 
 }
 

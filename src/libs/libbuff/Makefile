@@ -32,10 +32,11 @@ LBOBJS =        \
  IHAIMatProp.o  \
  InitFaceList.o \
  ReadGMSHFile.o \
+ RHSVector.o    \
  SWGGeometry.o  \
  SWGVolume.o    \
  TetCR.o     	\
- TGMatrices.o	\
+ VIEMatrix.o	\
  Visualize.o
 
 libbuff.a:     	$(LBOBJS)

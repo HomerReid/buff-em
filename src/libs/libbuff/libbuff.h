@@ -256,11 +256,22 @@ void TetInt(SWGVolume *V, int nt, int iQ, double Sign,
             int fdim, double *Result, double *Error,
             int NumPts, int MaxEvals, double RelTol);
 
+void BFInt(SWGVolume *V, int nf,
+           UserTIntegrand Integrand, void *UserData,
+           int fdim, double *Result, double *Error,
+           int NumPts, int MaxEvals, double RelTol);
+
 void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
                SWGVolume *VB, int ntB, int iQB, double SignB,
                UserTTIntegrand Integrand, void *UserData,
                int fdim, double *Result, double *Error,
                int NumPts, int MaxEvals, double RelTol);
+
+void BFBFInt(SWGVolume *VA, int nfA,
+             SWGVolume *VB, int nfB,
+             UserTTIntegrand Integrand, void *UserData,
+             int fdim, double *Result, double *Error,
+             int NumPts, int MaxEvals, double RelTol);
 
 void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
              UserFIntegrand Integrand, void *UserData,

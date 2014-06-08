@@ -109,13 +109,13 @@ convenient nonetheless.}
 \begin{align}
  \vb E\sups{tot} &= \vb E\sups{inc} + \vb E\sups{scat}
 \\
-                 &= \vb E\sups{inc} + ikZ_0 \mathbb{G}\star\vb J
+                 &= \vb E\sups{inc} + ikZ_0 \mathbb{G}*\vb J
 \label{ETot}
 \end{align}
 %====================================================================%
 where $k=\omega/c$ is the (free-space) wavenumber,
 $Z_0=\sqrt{\mu_0/\epsilon_0}$ is the impedance of free space,
-$\star$ denotes convolution, and $\mathbb{G}$ is the free-space
+$*$ denotes convolution, and $\mathbb{G}$ is the free-space
 dyadic Green's function:
 $$ \mathbb{G}(\vb x, \vb x^\prime) = 
    \Big(\vb 1 - \frac{1}{k^2} \nabla \times \nabla \Big)
@@ -196,8 +196,195 @@ $\vbTInv$ and $\vb v$ are
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Numerical Evaluation of $\mathbb{T}\mathbb{G}$ Formulas
-         for Casimir and Heat-Transfer Quantities}
+\section{SWG Matrix Elements of the $\mathbb{G}$ operator}
+
+%=================================================
+%=================================================
+%=================================================
+\subsection{Distant case: Dipole and Quadrupole Approximations}
+
+The $\mathbb{G}$-matrix element between two SWG basis functions
+is
+%====================================================================%
+\numeq{bGb}
+{
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+ =\int_{\sup \vb b_\alpha} \, d\vb x_\alpha \,
+  \int_{\sup \vb b_\beta} \, d\vb x_\beta\,
+   b_{\alpha i}(\vb x_\alpha)
+   \mathbb G_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+   b_{\beta j}(\vb x_\beta)
+}
+%====================================================================%
+where 
+%====================================================================%
+$$ \overline{\vb x}_\alpha \equiv \vb x_\alpha - \vb x_{\alpha 0}, 
+   \qquad 
+   \overline{\vb x}_\beta \equiv \vb x_\beta - \vb x_{\beta 0}, 
+   \qquad 
+   \vb R_0 = \vb x_{\alpha 0}-\vb x_{\beta 0}
+$$
+%====================================================================%
+and $\vb x_{\alpha 0}, \vb x_{\beta 0}$ are the centroids of
+the basis functions.
+
+When the two basis functions are well separated 
+(i.e. $|\vb R_0| \gg |\overline{\vb x}_\alpha|, |\overline{\vb x}_\beta|$),
+we may retain just the first two terms in the Taylor expansion of 
+$\mathbb G_{ij}$ about $\vb R_0$:
+%====================================================================%
+$$ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+  \,\approx\, \mathbb{G}_{ij}^0
+         +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
+         -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
+         +\cdots
+$$
+%====================================================================%
+where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
+and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
+Equation (\ref{bGb}) then reads (with a summation convention in force)
+%====================================================================%
+\numeq{DQApprox}
+{
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+\approx 
+  \mc J_{\alpha i} \mathbb{G}^0_{ij} \mc J_{\beta j}
+ +\mc Q_{\alpha ik} \mathbb{G}^0_{ijk} \mc J_{\beta j}
+ -\mc J_{\alpha i} \mathbb{G}^0_{ijk} \mc Q_{\beta jk}
+}
+%====================================================================%
+Here we have introduced the first and second moments
+of the current distributions of the SWG functions:
+\begin{align*}
+ \mc J_{\alpha i}
+\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x)\,d\vb x
+\\
+ \mc Q_{\alpha ij}
+\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x) x_j\,d\vb x
+\end{align*}
+
+%=================================================
+%=================================================
+%=================================================
+\subsection{Nearby case: Surface-integral method}
+When the basis functions are not well separated, the
+dipole/quadrupole expansion method of the previous 
+subsection is inaccurate. In this case it is convenient 
+to follow the work of Bleszynski et al.~\cite{} by reducing 
+the volume integral (\ref{bGb}) to a nonsingular 
+\textit{surface} integral:
+
+\begin{align*}
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+&=-\frac{1}{4\pi ik} 
+  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\alpha \,
+  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\beta
+  \Big(\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big)
+  \Big[   T_1(\vb x_\alpha, \vb x_\beta)
+        + T_2(\vb x_\alpha, \vb x_\beta)
+  \Big]
+\end{align*}
+with
+\begin{align*} 
+     T_1(\vb x_\alpha, \vb x_\beta) 
+  &= \vb b_\alpha(\vb x_\alpha ) \cdot \vb b_\beta(\vb x_\beta)
+     h(ik R)
+\\
+     T_2(\vb x_\alpha, \vb x_\beta) 
+  &= -\frac{9A_\alpha A_\beta}{V_\alpha V_\beta k^2}
+      \Big\{ 9h(ikR) + w(ikR) 
+             +k^2\big[(\vb Q_\alpha - \vb Q_\beta)\cdot \vb R\big]\,p(ikR)
+      \Big\}
+\end{align*} 
+where the scalar functions $h,w,p$ are 
+%====================================================================%
+\begin{align*}
+  h(x) &= \frac{1}{x}\texttt{ExpRelBar}(x,2) \\
+  w(x) &= \texttt{ExpRelBar}(x,3) \\
+  p(x) &= \frac{1}{x^3}\Big[ x\texttt{ExpRelBar}(x,2) 
+                            - \texttt{ExpRelBar}(x,3)\Big] - \frac{1}{3}
+\\
+       &= \frac{h(x)}{x} - \frac{w(x)}{x^3} - \frac{1}{3}.
+\end{align*}
+Here the function \texttt{ExpRelBar} is defined by 
+\begin{align*}
+ \texttt{ExpRelBar}(x,N) 
+&= e^{x} - \sum_{n=0}^{N-1} \frac{x^{n}}{N!}
+\\
+&= \sum_{n=N}^\infty \frac{x^n}{N!}
+\end{align*}
+I call this \texttt{ExpRelBar} because it is similar to
+a similar function known as \texttt{ExpRel} (the two
+functions differ only in their normalization).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{SWG Matrix Elements of the $\mathbb{T}^{-1}$ Operator}
+
+The basic observation underlying our approach is that,
+while the $\mathbb{T}$ operator is highly unwieldy in position space,
+the \textit{inverse} $\mathbb{T}$ operator is quite easy to 
+describe in position space---in fact, it is just equal to the 
+$\mathbb{G}$ operator plus a correction which is \textit{diagonal}
+in the position-space basis. 
+
+What this means is that, numerically, it's easy to compute
+matrix elements of the \textit{inverse} $\mathbb{T}$ operator.
+Our approach is to compute the matrix of this operator in 
+a basis of SWG functions,
+then simply \textit{invert} this matrix numerically to obtain
+the actual $\mathbb{T}$ matrix.
+
+\subsection{Matrix Elements of the Inverse $\mathbb{T}$ Operator}
+
+For nonmagnetic materials $(\mu=1)$, the inverse $\mathbb{T}$ operator 
+may be expressed in position space in the form
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{TInverseRealSpace}
+{\mathbb{T}^{-1}(\omega; \vb x, \vb x^\prime)
+   =\frac{c^2 }{\omega^2} 
+    \underbrace{
+    \Big[1-\vbeps(\omega, \vb x)\Big]^{-1}
+               }_{\vb Y(\omega,\vb x)}
+    \delta(\vb x-\vb x^\prime)
+    + \mathbb{G}_0(\omega; \vb x, \vb x^\prime)
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+where $\vbeps$ is the frequency- and position-dependent relative
+dielectric permittivity tensor.
+
+Using (\ref{TInverseRealSpace}), the matrix elements of $\mathbb{T}^{-1}$
+take the form
+%====================================================================%
+\begin{align}
+  \exptwoB{\vb b_\alpha}{\mathbb{T}^{-1}}{\vb b_\beta}
+&=
+  \frac{c^2}{\omega^2}
+  \int \vb b_\alpha(\vb x) \cdot \vb Y(\omega,\vb x) \cdot \vb b_\beta(\vb x)
+  \, d\vb x
+  +
+  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+\label{TInvME}
+\end{align}
+%====================================================================%
+where $\vb Y$ at each point is computed as a $3\times 3$ matrix 
+inverse:
+%====================================================================%
+$$\vb Y(\omega,\vb x) \equiv \Big[1 - \epsilon(\omega,\vb x)\Big]^{-1}.$$
+%====================================================================%
+The first integral in (\ref{TInvME}) extends over the common support of 
+basis functions $\vb b_\alpha,\vb b_\beta$. For the SWG basis, each 
+function shares support with only a small number (typically 7) of other 
+functions, so this term amounts to a sparse update to the second term in 
+(\ref{TInverseRealSpace}), which is dense.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{$\mathbb{T}\mathbb{G}$ Formulas
+         for Casimir Forces and Heat-Transfer Rates}
 
 The Kardar/Jaffe group has derived a number of formulas expressing
 Casimir forces (both equilibrium and non-equilibrium) and
@@ -280,104 +467,7 @@ functions. This insight leads to a general-purpose approach
 that is capable, in principle, of predicting Casimir and 
 heat-transfer phenomena for bodies of arbitrary shapes and
 arbitrary anisotropic continuously-varying material properties. 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Computation of the $\mathbb{G}$ Matrix }
 
-The $\mathbb{G}_0$ operator is just the usual free-space dyadic 
-Maxwell Green's function. The matrix elements of this operator 
-sandwiched between two localized volume-current basis functions 
-has an immediate physical interpretation: it is the electric field 
-due to the first localized current, averaged over the second 
-localized current.
-
-%====================================================================%
-\begin{align}
-&\hspace{-0.1in}
-  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
-\\
-&= \int_{\sup\vb b_\alpha} \!\!\!\!\!\!\! \, d\vb x_\alpha
-   \int_{\sup\vb b_\beta} \!\!\!\!\!\!\! \, d\vb x_\beta
-   \left\{ \vb b_{\alpha}(\vb x_\alpha) \cdot \vb b_\beta(\vb x_\beta)
-           -\frac{ (\nabla \cdot \vb b_\alpha) (\nabla \cdot \vb b_\beta)}
-                 { k^2 }
-   \right\}
-   G_0(\vb x_\alpha -\vb x_\beta)
-\\
-&= 
-   \int_{\sup\vb b_\alpha} \!\!\!\!\!\!\! d\vb x_\alpha
-   \int_{\sup\vb b_\beta}  \!\!\!\!\!\!\! d\vb x_\beta
-   \left\{ \vb b_{\alpha}(\vb x_\alpha) \cdot \vb b_\beta(\vb x_\beta)
-           -\frac{ (\nabla \cdot \vb b_\alpha) (\nabla \cdot \vb b_\beta)}
-                 { k^2 }
-   \right\}
-   G_0(\vb x_\alpha -\vb x_\beta)
-\label{G0Volume}
-\end{align}
-%====================================================================%
-where 
-$$ G_0(\vb r)=\frac{e^{ik|\vb r|}}{4\pi |\vb r|}.$$
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Computation of the $\mathbb{T}$ Matrix}
-
-The basic observation underlying our approach is that,
-while the $\mathbb{T}$ operator is highly unwieldy in position space,
-the \textit{inverse} $\mathbb{T}$ operator is quite easy to 
-describe in position space---in fact, it is just equal to the 
-$\mathbb{G}$ operator plus a correction which is \textit{diagonal}
-in the position-space basis. 
-
-What this means is that, numerically, it's easy to compute
-matrix elements of the \textit{inverse} $\mathbb{T}$ operator.
-Our approach is to compute the matrix of this operator in 
-a basis of SWG functions,
-then simply \textit{invert} this matrix numerically to obtain
-the actual $\mathbb{T}$ matrix.
-
-\subsection{Matrix Elements of the Inverse $\mathbb{T}$ Operator}
-
-For nonmagnetic materials $(\mu=1)$, the inverse $\mathbb{T}$ operator 
-may be expressed in position space in the form
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\numeq{TInverseRealSpace}
-{\mathbb{T}^{-1}(\omega; \vb x, \vb x^\prime)
-   =\frac{c^2 }{\omega^2} 
-    \underbrace{
-    \Big[1-\vbeps(\omega, \vb x)\Big]^{-1}
-               }_{\vb Y(\omega,\vb x)}
-    \delta(\vb x-\vb x^\prime)
-    + \mathbb{G}_0(\omega; \vb x, \vb x^\prime)
-}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where $\vbeps$ is the frequency- and position-dependent relative
-dielectric permittivity tensor.
-
-Using (\ref{TInverseRealSpace}), the matrix elements of $\mathbb{T}^{-1}$
-take the form
-%====================================================================%
-\begin{align}
-  \exptwoB{\vb b_\alpha}{\mathbb{T}^{-1}}{\vb b_\beta}
-&=
-  \frac{c^2}{\omega^2}
-  \int \vb b_\alpha(\vb x) \cdot \vb Y(\omega,\vb x) \cdot \vb b_\beta(\vb x)
-  \, d\vb x
-  +
-  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
-\label{TInvME}
-\end{align}
-%====================================================================%
-where $\vb Y$ at each point is computed as a $3\times 3$ matrix 
-inverse:
-%====================================================================%
-$$\vb Y(\omega,\vb x) \equiv \Big[1 - \epsilon(\omega,\vb x)\Big]^{-1}.$$
-%====================================================================%
-The first integral in (\ref{TInvME}) extends over the common support of 
-basis functions $\vb b_\alpha,\vb b_\beta$. For the SWG basis, each 
-function shares support with only a small number (typically 7) of other 
-functions, so this term amounts to a sparse update to the second term in 
-(\ref{TInverseRealSpace}), which is dense.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -389,15 +479,15 @@ functions, so this term amounts to a sparse update to the second term in
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Volume integrals involving SWG basis functions}
 
-\begin{align*}
+Integrals over the support of SWG basis functions take the form
+\numeq{SWGVolumeIntegral}
+{
  \int_{\sup \vb b_\alpha} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
-&= 
+= 
   \int_{\mc P_\alpha^+} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
  +\int_{\mc P_\alpha^-} \mathcal{I}(\vb x, \vb b_\alpha) \, d\vb x
-\\
-\end{align*}
+}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 Consider a tetrahedron with vertices 
 $\{\vb Q, \vb V_1, \vb V_2, \vb V_3.\}$ 
 A general
@@ -405,7 +495,7 @@ integral over this region takes the form
 %====================================================================%
 \begin{align*}
  \int_{\mc P} \mathcal{I}(\vb x, \vb b ) \, d\vb x
-&=\mc{J} \int_0^1 \, du \int_0^{1-u} \, dv \int_0^{1-u-v} dw
+&=\mc{J} \int_0^1 \, du \int_0^{1-u} \, dv \int_0^{1-u-v} dw \,
   \mathcal{I}\Big( \vb x(u,v,w), \vb b(u,v,w) \Big)
 \end{align*}
 %====================================================================%
@@ -435,95 +525,63 @@ $$\mc J=\frac{d(x,y,z)}{d(u,v,w)}
   =6V
 $$
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Surface integrals involving SWG basis functions}
+\subsection*{Dipole and Quadrupole Moments}
 
-When computing matrix elements of $\mathbb{G}$ in the SWG basis
-it is very convenient to follow the work of Bleszynski et al.~\cite{} 
-by reducing the volume integral (\ref{G0Volume}) to a nonsingular
-\textit{surface} integral. Begin by introducing the function
-%====================================================================%
-\begin{align}
- h(\vbxi) &\equiv \frac{e^{|\vbxi|} - 1 - |\vbxi|}{4\pi |\vbxi|}
-\intertext{with gradient}
- \nabla_{\vbxi } h &= \frac{1+\big(|\xi|-1\big) e^{\vbxi}}{4\pi \xi^3}
-\intertext{and Laplacian}
- \nabla_{\vbxi} \cdot \nabla_{\vbxi}h &= 
- \frac{e^{|\vbxi|}}{{4\pi|\vbxi|}}.
-\label{DelDelh}
-\end{align}
-%====================================================================%
-Before proceeding it is useful to note the following
-alternative form of (\ref{DelDelh}): 
-If 
-$$\vbxi=\alpha(\vb x-\vb x^\prime)=\alpha \vb r$$
-%====================================================================%
-$$ \nabla_{\vbxi} 
-   =  \frac{1}{\alpha}\nabla_{\vb x} 
-   = -\frac{1}{\alpha}\nabla_{\vb x^\prime}
+The dipole moment of the current distribution described by
+a single unit-strength SWG basis function is 
+
+$$ \vb p_\alpha 
+   \equiv 
+   \frac{i}{\omega} 
+   \underbrace{\int_{\sup \vb b_\alpha} \vb b_\alpha(\vb x) \, d\vb x}
+             _{\bmc J_\alpha(\vb x)}
 $$
 %====================================================================%
-and hence
-$$ \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
-   =\frac{1}{k^2} \nabla_{\vb x} \nabla_{\vb x^\prime}  h(\vb r).
-$$
-%====================================================================%
-\newpage
-We will also need Green's theorem in the form
+The Cartesian components of $\bmc J_\alpha(\vb x)$ may be worked out 
+in closed form:
 %====================================================================%
 \begin{align*}
-\int_{\mc V} \psi\, (\nabla \cdot \vb a) \, dV 
-&=
-\int_{\mc V}\Big[   \Big(\nabla \cdot \psi \vb a \Big)
-                    -\vb a \cdot \nabla \psi
-            \Big] dV 
+ \mc J_{\alpha i}(\vb x)
+&=2A\int_0^1 \, du \, \int_0^{1-u} \, dv \, \int_0^{1-u-v}  \, dw \,
+    (u+v+w) (\vb Q^- - \vb Q^+)_i
 \\
-&= \int_{\partial \mc V} \psi \vb a \cdot d\vb A
-   - 
-   \int_{\mc V} \vb a \cdot \nabla \psi \, dV
-\intertext{
-If we further have $\vb a=\nabla \phi$ and 
-$\nabla\vb \psi= \vb C$ (constant), then the second integral
-may be converted into a surface integral to yield}
-&= \int_{\partial \mc V}
-   \Big[ \psi \, \vb a \cdot \vbhat{n} + \phi \, \vb C\cdot \vbhat{n}
-   \Big]dA
+&=\frac{A}{4} (\vb Q^- - \vb Q^+)_i.
 \end{align*}
-
 %====================================================================%
-The matrix element of the $\mathbb{G}$ operator between
-SWG basis functions becomes 
-%====================================================================%
+Similarly, the quadrupole moments are related to the quantity
 \begin{align*}
-  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+ \mc Q_{\alpha ij}(\vb x)
+&= \int_{\sup \vb b_\alpha} b_{\alpha i} (\vb x-\vb x_0)_j\, d\vb x
+\intertext{where $\vb x_0=\frac{1}{3}(\vb V_1 + \vb V_2 + \vb V_3)$
+           is the centroid of the basis function (which we take to 
+           be the centroid of the triangle that constitutes the 
+           common face).}
 &=
- \int_{\mc V_\alpha}\,d\vb x_\alpha\,
- \int_{\mc V_\beta}\,d\vb x_\beta\,
- \underbrace{
- \Big[\vb b_\alpha \cdot \vb b_\beta 
-          -\frac{ (\nabla \cdot \vb b_\alpha)
-                  (\nabla \cdot \vb b_\beta)
-                }{k^2}
-            }_{P(\vb x_\alpha, \vb x_\beta)}
- \Big] \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
+2A\int_0^1 \, du \, \int_0^{1-u} \, dv \, \int_0^{1-u-v}  \, dw \,
+ \bigg\{
 \\
-&=\frac{1}{k^2}
- \int_{\mc V_\alpha}\,d\vb x_\alpha\,
- \int_{\mc V_\beta}\,d\vb x_\beta\,
- P(\vb x_\alpha, \vb x_\beta)
- \nabla_{\vb x_\alpha} \nabla_{\vb x_\beta} 
- h(\vb r)
+&\qquad\qquad 
+ \hphantom{-}\,
+  \bigg[ u\vb L_1^+ + v\vb L_2^+ + w\vb L_3+ \bigg]_i
+  \left[ \left(u-\frac{1}{3}\right)\vb L_1^+
+        +\left(v-\frac{1}{3}\right)\vb L_1^+
+        +\left(w-\frac{1}{3}\right)\vb L_1^+
+  \right]_j
 \\
-\intertext{Apply () with $\psi=P, \vb a = \nabla h$}
-&=\frac{1}{k^2}
- \int_{\partial \mc V_\alpha}\,d\vb x_\alpha\,
- \int_{\mc V_\beta}\,d\vb x_\beta\,
-  \Big[  P (\nabla h)\cdot \vbhat{n}_\alpha
-       + h \vb C \cdot \vhat{n}_\alpha
-  \Big]
+&\qquad\qquad 
+ -\bigg[ u\vb L_1^- + v\vb L_2^- + w\vb L_3- \bigg]_i
+  \left[ \left(u-\frac{1}{3}\right)\vb L_1^-
+        +\left(v-\frac{1}{3}\right)\vb L_2^-
+        +\left(w-\frac{1}{3}\right)\vb L_3^-
+  \right]_j
+ \bigg\}
+\\
+&=\frac{A}{20}
+  \bigg\{ 
+          Q^-_i \Big[ \vb Q^- - \vb x_0 \Big]_j
+         -Q^+_i \Big[ \vb Q^+ - \vb x_0 \Big]_j
+         +x_{0i}\Big[ \vb Q^+ - \vb x_0 \Big]_j
+  \bigg\}
 \end{align*}
-%====================================================================%
 
 \end{document}

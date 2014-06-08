@@ -39,31 +39,41 @@ using namespace buff;
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void AnalyzeVolume(SWGVolume *V)
-{
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  printf("Volume %s (file %s): \n",V->Label,V->MeshFileName);
-  printf(" %3i vertices \n",V->NumVertices);
-  printf(" %3i tetrahedra \n",V->NumTets);
-  printf(" %3i interior faces \n",V->NumInteriorFaces);
-  printf(" %3i exterior faces \n",V->NumTotalFaces - V->NumInteriorFaces);
-  printf("\n");
-  
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  double Volume=0.0, SurfaceArea=0.0;
-  for(int nt=0; nt<V->NumTets; nt++)
-   Volume+=V->Tets[nt]->Volume;
-  for(int nf=V->NumInteriorFaces; nf<V->NumTotalFaces; nf++)
-   SurfaceArea+=V->Faces[nf]->Area;
+namespace buff{
+cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
+                             SWGVolume *VB, int nfB,
+                             cdouble Omega);
 
-  printf(" Volume:       %e \n",Volume);
-  printf(" Surface area: %e \n",SurfaceArea);
-  printf("\n");
+cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA, 
+                             SWGVolume *OB, int nfB,
+                             cdouble Omega, int NumTerms);
+              }
+
+#define II cdouble(0.0,1.0)
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GVIntegrand(double *xA, double *bA, double DivbA,
+                 double *xB, double *bB, double DivbB,
+                 void *UserData, double *I)
+{
+  double R[3]; 
+  R[0] = (xA[0] - xB[0]);
+  R[1] = (xA[1] - xB[1]);
+  R[2] = (xA[2] - xB[2]);
+
+  double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2]);
+
+  cdouble k = *((cdouble *)UserData);
+  cdouble ExpFac = exp(II*k*r)/(4.0*M_PI*r);
+
+  double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+
+  cdouble *zI = (cdouble *)I;
+  zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
 }
+
 
 /***************************************************************/
 /* main function   *********************************************/
@@ -86,7 +96,7 @@ int main(int argc, char *argv[])
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
-  if (GeoFileName==0)
+  if (GeoFile==0)
    OSUsage(argv[0],OSArray,"--geometry option is mandatory");
 
   /***************************************************************/
@@ -106,20 +116,25 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  FILE *f=fopen("tUMatrix.dat","w");
+  FILE *f=fopen("tUElement.dat","w");
+  SetDefaultCD2SFormat("%.8e %.8e");
   for(double z=0.01; z<=10.0; z*=exp(0.05*log(10.0)) )
    { 
      O2->Transform("DISPLACED 0 0 %e",z);
 
-     cdouble USI = GetUMatrixElement_SI(O1, nfa, O2, nfb, Omega);
-     cdouble UD1 = GetUMatrixElement_DA(O1, nfa, O2, nfb, Omega, 1);
-     cdouble UD2 = GetUMatrixElement_DA(O1, nfa, O2, nfb, Omega, 2);
+     cdouble UVI;
+     BFBFInt(O1, nfa, O2, nfb, GVIntegrand, (void *)&Omega, 
+             2, (double *)&UVI, 0, 0, 0, 1.0e-4);
 
-     fprintf(f,"%e %s %s %s %e %e \n",z, 
-                CD2S(USI), CD2S(UD1), CD2S(UD2),
-                RD(USI, UD1), RD(USI, UD2));
+     cdouble USI = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega);
+     cdouble UD1 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 1);
+     cdouble UD2 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 2);
 
-     O2->UnTransform("");
+     fprintf(f,"%e %s %s %s %s %e %e %e \n",z, 
+                CD2S(USI), CD2S(UVI), CD2S(UD1), CD2S(UD2),
+                RD(USI, UVI), RD(USI, UD1), RD(USI, UD2));
+
+     O2->UnTransform();
    };
   fclose(f);
 
