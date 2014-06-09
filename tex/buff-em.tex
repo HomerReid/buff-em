@@ -273,17 +273,19 @@ subsection is inaccurate. In this case it is convenient
 to follow the work of Bleszynski et al.~\cite{} by reducing 
 the volume integral (\ref{bGb}) to a nonsingular 
 \textit{surface} integral:
-
-\begin{align*}
+%====================================================================%
+\numeq{GSurfaceIntegral}
+{
  \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
-&=-\frac{1}{4\pi ik} 
+=-\frac{1}{4\pi ik} 
   \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\alpha \,
   \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\beta
   \Big(\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big)
   \Big[   T_1(\vb x_\alpha, \vb x_\beta)
         + T_2(\vb x_\alpha, \vb x_\beta)
   \Big]
-\end{align*}
+}
+%====================================================================%
 with
 \begin{align*} 
      T_1(\vb x_\alpha, \vb x_\beta) 
@@ -584,4 +586,191 @@ Similarly, the quadrupole moments are related to the quantity
   \bigg\}
 \end{align*}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Derivation of Equation (\ref{GSurfaceIntegral})}
+
+Begin by introducing the function
+%====================================================================%
+\begin{align}
+ h(\vbxi) &\equiv \frac{e^{|\vbxi|} - 1 - |\vbxi|}{4\pi |\vbxi|}
+\intertext{with gradient}
+ \nabla_{\vbxi } h &= \frac{1+\big(|\xi|-1\big) e^{\vbxi}}{4\pi \xi^3}
+\intertext{and Laplacian}
+ \nabla_{\vbxi} \cdot \nabla_{\vbxi}h &= 
+ \frac{e^{|\vbxi|}}{{4\pi|\vbxi|}}.
+\label{DelDelh}
+\end{align}
+%====================================================================%
+Before proceeding it is useful to note the following
+alternative form of (\ref{DelDelh}): 
+If 
+$$\vbxi=\alpha(\vb x-\vb x^\prime)=\alpha \vb r$$
+%====================================================================%
+$$ \nabla_{\vbxi} 
+   =  \frac{1}{\alpha}\nabla_{\vb x} 
+   = -\frac{1}{\alpha}\nabla_{\vb x^\prime}
+$$
+%====================================================================%
+and hence
+\begin{subequations}
+\begin{align}
+ \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
+ &=-\frac{1}{k^2} \nabla^2_{\vb x} h(\vb r) 
+\\
+ &=\frac{1}{k^2} \nabla_{\vb x} \nabla_{\vb x^\prime}  h(\vb r).
+\end{align}
+\label{gNNh}
+\end{subequations}
+%====================================================================%
+We will also need Green's theorem in the forms 
+%====================================================================%
+\begin{subequations}
+\begin{align}
+\int_{\mc V} \Big[ \phi\nabla^2 \psi - \psi\nabla^2 \phi\Big] dV
+&=
+\int_{\partial \mc V} \left(\phi \nabla \psi - \psi\nabla\phi\right)
+     \cdot \, d\vb A
+\intertext{and}
+\int_{\mc V} (\nabla \cdot \vb a) \, dV 
+&=
+\int_{\partial \mc V} \vb a \cdot \, d\vb A 
+\end{align}
+\label{GreensTheorem}
+\end{subequations}
+%====================================================================%
+The matrix element of the $\mathbb{G}$ operator between
+SWG basis functions is 
+%====================================================================%
+\begin{align*}
+  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+&=
+ \int_{\mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+ \Big[\vb b_\alpha \cdot \vb b_\beta 
+          -\frac{ (\nabla \cdot \vb b_\alpha)
+                  (\nabla \cdot \vb b_\beta)
+                }{k^2}
+ \Big] \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
+\\
+%--------------------------------------------------------------------%
+&=-\pf{A_\alpha A_\beta}{9V_\alpha V_\beta k^2} \mathcal{I}_1
+  -\pf{A_\alpha A_\beta}{V_\alpha V_\beta k^4} \mathcal{I}_2
+\intertext{where}
+%--------------------------------------------------------------------%
+\mathcal{I}_1
+&=
+ \int_{\mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+     P(\vb x_\alpha, \vb x_\beta) 
+     \nabla^2_\alpha h(\vb r)
+\\
+%--------------------------------------------------------------------%
+\mathcal{I}_2
+&=
+ \int_{\mc V_\alpha}\,d\vb x_\alpha\,
+ \int_{\mc V_\beta}\,d\vb x_\beta\,
+ \nabla_\alpha \nabla_\beta h(\vb r)
+\end{align*}
+with
+
+$$P(\vb x_\alpha, \vb x_\beta) = 
+   (\vb x_\alpha-\vb Q_\alpha)\cdot (\vb x_\beta-\vb Q_\beta),
+   \qquad
+   \nabla_\alpha \equiv \nabla_{\vb x_\alpha},  
+   \qquad
+   \nabla_\beta \equiv \nabla_{\vb x_\beta}.
+$$
+%====================================================================%
+First transform the integral in $\mathcal{I}_1$
+by using (\ref{GreensTheorem}a) with $\phi=P$, $\psi=h$
+and noting that $\nabla_\alpha^2 P=0:$ 
+%====================================================================%
+\begin{align}
+\mathcal{I}_1 
+&=
+ \int_{\mc V_\beta} \, d\vb x_\beta\,
+ \left\{ 
+   \int_{\mc V_\alpha}
+         P(\vb x_\alpha, \vb x_\beta)
+         \nabla_\alpha^2 h(\vb r)
+        \, d\vb x_\alpha
+ \right\}
+\nn
+&=
+ \int_{\mc V_\beta} \, d\vb x_\beta\,
+ \left\{ 
+   \int_{\partial \mc V_\alpha}
+         \Big[
+         P(\vb x_\alpha, \vb x_\beta) \nabla_\alpha h
+         - (\vb x_\beta-\vb Q_\beta)h
+         \Big] \cdot \vbhat{n_\alpha} \,d\vb x_\alpha
+ \right\}
+\nn
+&=-
+ \int_{\mc V_\beta} \, d\vb x_\beta\,
+ \left\{ 
+   \int_{\partial \mc V_\alpha}
+         \Big[
+         P(\vb x_\alpha, \vb x_\beta) \nabla_\beta h
+         + (\vb x_\beta-\vb Q_\beta)h
+         \Big] \cdot \vbhat{n_\alpha} \,d\vb x_\alpha
+ \right\}
+\intertext{Use $\nabla_\beta\Big[Ph\Big] = P\nabla_\beta h
+               +h(\vb x_\alpha-\vb Q_\alpha):$}
+&=-
+ \int_{\mc V_\beta} \, d\vb x_\beta\,
+ \left\{ 
+   \int_{\partial \mc V_\alpha}
+         \Big[
+         \nabla_\beta \Big[Ph\Big] 
+         - (\vb x_\alpha-\vb Q_\alpha) h
+         + (\vb x_\beta-\vb Q_\beta)h
+         \Big] \cdot \vbhat{n_\alpha} \,d\vb x_\alpha
+ \right\}
+\\
+&=-
+ \int_{\mc V_\beta} \, d\vb x_\beta\,
+ \left\{ 
+   \int_{\partial \mc V_\alpha}
+         \Big[
+         \nabla_\beta \Big[Ph\Big] 
+         + (  \vb x_\beta - \vb x_\alpha 
+            - \vb Q_\beta - \vb Q_\alpha) h
+         \Big] \cdot \vbhat{n_\alpha} \,d\vb x_\alpha
+ \right\}
+\end{align}
+Now use (\ref{GreensTheorem}b) twice to 
+transform the second integral in $\mathcal{I}_2$:
+\begin{align*}
+\mc I_2=
+ \int_{\mc V_\alpha} \, d\vb x_\alpha\,
+ \nabla_\alpha \cdot 
+ \left\{ \int_{\mc V_\beta}  \, d\vb x_\beta\,
+         \nabla_\beta h(\vb r)
+ \right\}
+&=
+ \int_{\mc V_\alpha} \, d\vb x_\alpha\,
+ \nabla_\alpha \cdot 
+ \left\{ \int_{\partial \mc V_\beta} 
+         h(\vb r)\vbhat{n}_\beta\, d\vb x_\beta
+ \right\}
+\\
+&=
+ \int_{\partial \mc V_\beta} d\vb x_\beta
+ \vbhat{n}_\beta \cdot 
+ \left\{
+ \int_{\mc V_\alpha} 
+ \nabla_\alpha h(\vb r)
+ \, d\vb x_\alpha\,
+ \right\}     
+\\
+&=
+ \int_{\partial \mc V_\alpha} d\vb x_\alpha
+ \int_{\partial \mc V_\beta} d\vb x_\beta
+ \Big[\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big] h(\vb r).
+\end{align*}
 \end{document}
+
+(x h) = \nabla ( x^2 h ) - x^2 \nabla h

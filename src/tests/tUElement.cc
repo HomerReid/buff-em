@@ -71,7 +71,11 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
 
   cdouble *zI = (cdouble *)I;
-  zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
+  //zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
+  zI[0] = (- DivbA*DivbB/(k*k)) * ExpFac;
+//printf("VI (%e,%e,%e) \n",DivbA, DivbB, abs(k*k));
+                                                   
+  //zI[0] = ExpFac;
 }
 
 
@@ -91,8 +95,8 @@ int main(int argc, char *argv[])
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING,  1, 1, (void *)&GeoFile,        0, "mesh file"},
      {"Omega",              PA_CDOUBLE, 1, 1, (void *)&Omega,          0, "omega"},
-     {"nfa",                PA_DOUBLE,  1, 1, (void *)&nfa,            0, "nfa"},
-     {"nfb",                PA_DOUBLE,  1, 1, (void *)&nfb,            0, "nfb"},
+     {"nfa",                PA_INT,     1, 1, (void *)&nfa,            0, "nfa"},
+     {"nfb",                PA_INT,     1, 1, (void *)&nfb,            0, "nfb"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -108,10 +112,13 @@ int main(int argc, char *argv[])
   SWGVolume *O1 = G1->Objects[0];
   SWGVolume *O2 = G2->Objects[0];
   
+  srand48(time(0));
   if (nfa==-1)
    nfa = lrand48() % O1->NumInteriorFaces;
   if (nfb==-1)
    nfb = lrand48() % O1->NumInteriorFaces;
+
+  printf("--nfa %i --nfb %i\n",nfa,nfb);
 
   /***************************************************************/
   /***************************************************************/
@@ -122,13 +129,15 @@ int main(int argc, char *argv[])
    { 
      O2->Transform("DISPLACED 0 0 %e",z);
 
-     cdouble UVI;
+     cdouble UVI, Error;
      BFBFInt(O1, nfa, O2, nfb, GVIntegrand, (void *)&Omega, 
-             2, (double *)&UVI, 0, 0, 0, 1.0e-4);
+             2, (double *)&UVI, (double *)&Error, 0, 0, 1.0e-4);
 
      cdouble USI = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega);
      cdouble UD1 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 1);
      cdouble UD2 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 2);
+
+     printf("%.3e %.1e %.1e %.1e\n",z,abs(USI),abs(UVI),abs(USI)/abs(UVI));
 
      fprintf(f,"%e %s %s %s %s %e %e %e \n",z, 
                 CD2S(USI), CD2S(UVI), CD2S(UD1), CD2S(UD2),

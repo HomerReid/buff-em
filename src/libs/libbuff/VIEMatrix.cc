@@ -215,14 +215,13 @@ void GetVInverseElement(SWGVolume *V, cdouble Omega, HMatrix *TInv)
 typedef struct GSIData
  { 
    cdouble k;
-   double *QA; 
-   double *QB; 
+   double *QA;
+   double *QB;
+
  } GSIData;
 
-void GSurfaceIntegrand(double *xA, double *bA,
-                       double DivbA, double *nHatA,
-                       double *xB, double *bB,
-                       double DivbB, double *nHatB,
+void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
+                       double *xB, double *bB, double DivbB, double *nHatB,
                        void *UserData, double *I)
 {
   /*--------------------------------------------------------------*/
@@ -264,12 +263,24 @@ void GSurfaceIntegrand(double *xA, double *bA,
   cdouble h   = ExpRel(Xi, 2) / Xi;
   cdouble p   = h/Xi - w/Xi3 - 1.0/3.0;
 
-  cdouble T1 = (bA[0]*bB[0] + bA[1]*bB[1] * bA[2]*bB[2]) * h;
+  cdouble T1 = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]) * h;
 
-  cdouble T2 = -9.0*DivbA*DivbB*(9.0*h + w + k2*DQdotR*p) / k2;
+  cdouble T2 = -DivbA*DivbB*(9.0*h + w + k2*DQdotR*p) / (9.0*k2);
 
   cdouble *zI = (cdouble *)I;
+
+T1=0.0;
+T2=-DivbA*DivbB*h/k2;
+
   zI[0] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
+
+  //zI[0] = NdotN * h / (-4.0*M_PI*II*k);
+//printf("T1, T2 = (%e,%e)\n", 
+//        abs(NdotN * T1 / (-4.0*M_PI*II*k)),
+//        abs(NdotN * T2 / (-4.0*M_PI*II*k)));
+//printf("(DivbA*DivbB)/(9*k2): %s \n",CD2S(DivbA*DivbB / (9.0*k2)));
+//printf("(h,w,p,k2*DQdotR*p)=(%e,%e,%e,%e)\n",
+//        abs(h),abs(w),abs(p),abs(k2*DQdotR*p));
 
 }
 
@@ -363,8 +374,21 @@ cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA,
                              SWGVolume *OB, int nfB,
                              cdouble Omega, int NumTerms)
 {
+
   SWGFace *FA = OA->Faces[nfA];
   SWGFace *FB = OB->Faces[nfB];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+#if 0
+double R[3];
+R[0] = FA->Centroid[0] - FB->Centroid[0];
+R[1] = FA->Centroid[1] - FB->Centroid[1];
+R[2] = FA->Centroid[2] - FB->Centroid[2];
+double r=sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] );
+return (OA->Tets[FA->iPTet]->Volume + OA->Tets[FA->iMTet]->Volume)
+      *(OB->Tets[FB->iPTet]->Volume + OB->Tets[FB->iMTet]->Volume)
+      *exp(II*Omega*r) / (4.0*M_PI*r);
+#endif
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   /***************************************************************/
   /* get dipole moments ******************************************/

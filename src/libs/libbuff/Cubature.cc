@@ -761,14 +761,21 @@ int FFIIntegrand(unsigned ndim, const double *uv, void *params,
 }
 
 /***************************************************************/
-/* evaluate an integral over two faces                         */
+/* evaluate an integral over two faces.                        */
+/* nfA ([0..3]) indicates which of the four faces of tet #ntA  */
+/* we are taking as our domain of integration.                 */
+/* nfBFA ([0..3]) indicates which of the four faces of tet #ntA*/
+/* we are using to construct the SWG basis function if it is   */
+/* needed by the user's integrand function.                    */
 /***************************************************************/
-void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
-                 SWGVolume *VB, int ntB, int nfB, int iQB, double SignB,
+void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFa, double SignA,
+                 SWGVolume *VB, int ntB, int nfB, int nfBFb, double SignB,
                  UserFFIntegrand Integrand, void *UserData,
                  int fdim, double *Result, double *Error,
                  int Order, int MaxEvals, double RelTol)
 {
+  SWGFace *FSharedA = VA->Faces[ TA->FI[iQA] ];
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
