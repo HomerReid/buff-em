@@ -73,6 +73,7 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
   cdouble *zI = (cdouble *)I;
   //zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
   zI[0] = (- DivbA*DivbB/(k*k)) * ExpFac;
+zI[0] = DivbA*ExpFac,p;
 //printf("VI (%e,%e,%e) \n",DivbA, DivbB, abs(k*k));
                                                    
   //zI[0] = ExpFac;

@@ -594,9 +594,16 @@ int FIIntegrand(unsigned ndim, const double *uv, void *params,
 
 
 /***************************************************************/
-/* evaluate an integral over the area of a single face         */
+/* evaluate an integral over the area of a single face.        */
+/*                                                             */
+/* note: nf and nfBF are both indices in the list of faces     */
+/* associated with tetrahedron #nt. that is, nf and nfBF are   */
+/* both integers between 0 and 3 inclusive.                    */
+/* nf is the index of the face over which we integrate, while  */
+/* nfBF is the index of the face used to compute values of the */
+/* SWG basis function.                                         */
 /***************************************************************/
-void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
+void FaceInt(SWGVolume *V, int nt, int nf, int nfBF, double Sign,
              UserFIntegrand Integrand, void *UserData,
              int fdim, double *Result, double *Error,
              int Order, int MaxEvals, double RelTol)
@@ -606,11 +613,12 @@ void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
   /***************************************************************/
   SWGTet  *T    = V->Tets[nt];
   SWGFace *F    = V->Faces[ T->FI[nf] ];
+  SWGFace *FBF  = V->Faces[ T->FI[nfBF] ];
   double *V1    = V->Vertices + 3*(F->iV1);
   double *V2    = V->Vertices + 3*(F->iV2);
   double *V3    = V->Vertices + 3*(F->iV3);
-  double *Q     = V->Vertices + 3*iQ;
-  double PreFac = Sign*F->Area / (3.0*T->Volume);
+  double *Q     = V->Vertices + 3*(T->VI[nfBF]);
+  double PreFac = Sign*FBF->Area / (3.0*T->Volume);
 
   double L1[3], L2[3], nHat[3];
   VecSub(V2, V1, L1);
@@ -768,24 +776,23 @@ int FFIIntegrand(unsigned ndim, const double *uv, void *params,
 /* we are using to construct the SWG basis function if it is   */
 /* needed by the user's integrand function.                    */
 /***************************************************************/
-void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFa, double SignA,
-                 SWGVolume *VB, int ntB, int nfB, int nfBFb, double SignB,
+void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
+                 SWGVolume *VB, int ntB, int nfB, int nfBFB, double SignB,
                  UserFFIntegrand Integrand, void *UserData,
                  int fdim, double *Result, double *Error,
                  int Order, int MaxEvals, double RelTol)
 {
-  SWGFace *FSharedA = VA->Faces[ TA->FI[iQA] ];
-
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   SWGTet  *TA    = VA->Tets[ntA];
   SWGFace *FA    = VA->Faces[ TA->FI[nfA] ];
+  SWGFace *FBFA  = VA->Faces[ TA->FI[nfBFA] ];
   double *V1A    = VA->Vertices + 3*(FA->iV1);
   double *V2A    = VA->Vertices + 3*(FA->iV2);
   double *V3A    = VA->Vertices + 3*(FA->iV3);
-  double  *QA    = VA->Vertices + 3*iQA;
-  double PreFacA = SignA * FA->Area / (3.0*TA->Volume);
+  double  *QA    = VA->Vertices + 3*(TA->VI[nfBFA]);
+  double PreFacA = SignA * FBFA->Area / (3.0*TA->Volume);
 
   double L1A[3], L2A[3], nHatA[3];
   VecSub(V2A, V1A, L1A);
@@ -794,11 +801,12 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFa, double SignA,
 
   SWGTet  *TB    = VB->Tets[ntB];
   SWGFace *FB    = VB->Faces[ TB->FI[nfB] ];
+  SWGFace *FBFB  = VB->Faces[ TB->FI[nfBFB] ];
   double *V1B    = VB->Vertices + 3*(FB->iV1);
   double *V2B    = VB->Vertices + 3*(FB->iV2);
   double *V3B    = VB->Vertices + 3*(FB->iV3);
-  double  *QB    = VB->Vertices + 3*iQB;
-  double PreFacB = SignB * FB->Area / (3.0*TB->Volume);
+  double  *QB    = VB->Vertices + 3*(TB->VI[nfBFB]);
+  double PreFacB = SignB * FBFB->Area / (3.0*TB->Volume);
 
   double L1B[3], L2B[3], nHatB[3];
   VecSub(V2B, V1B, L1B);

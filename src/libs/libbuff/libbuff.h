@@ -1,13 +1,13 @@
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
- * This file is part of SCUFF-EM.
+ * This file is part of BUFF-EM.
  *
- * SCUFF-EM is free software; you can redistribute it and/or modify
+ * BUFF-EM is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * SCUFF-EM is distributed in the hope that it will be useful,
+ * BUFF-EM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -273,13 +273,13 @@ void BFBFInt(SWGVolume *VA, int nfA,
              int fdim, double *Result, double *Error,
              int NumPts, int MaxEvals, double RelTol);
 
-void FaceInt(SWGVolume *V, int nt, int nf, int iQ, double Sign,
+void FaceInt(SWGVolume *V, int nt, int nf, int nfBF, double Sign,
              UserFIntegrand Integrand, void *UserData,
              int fdim, double *Result, double *Error,
              int Order, int MaxEvals, double RelTol);
 
-void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int iQA, double SignA,
-                 SWGVolume *VB, int ntB, int nfB, int iQB, double SignB,
+void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
+                 SWGVolume *VB, int ntB, int nfB, int nfBFB, double SignB,
                  UserFFIntegrand Integrand, void *UserData,
                  int fdim, double *Result, double *Error,
                  int Order, int MaxEvals, double RelTol);

@@ -269,8 +269,9 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 
   cdouble *zI = (cdouble *)I;
 
-T1=0.0;
-T2=-DivbA*DivbB*h/k2;
+T1 = 0.0;
+T2 = -DivbA*DivbB*h/k2;
+T2 = DivbA*h;
 
   zI[0] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
 
@@ -307,25 +308,25 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
   for(int ASign=+1; ASign>=-1; ASign-=2)
    for(int BSign=+1; BSign>=-1; BSign-=2)
     {
-      int ntA    = (ASign==1) ? FA->iPTet : FA->iMTet;
-      int iQA    = (ASign==1) ? FA->iQP   : FA->iQM;
-      Data->QA   = VA->Vertices + 3*iQA;
+      int ntA    = (ASign==1) ? FA->iPTet  : FA->iMTet;
+      int nfBFA  = (ASign==1) ? FA->PIndex : FA->MIndex;
       SWGTet *TA = VA->Tets[ ntA ];
+      Data->QA   = VA->Vertices + 3*TA->VI[nfBFA];
 
-      int ntB    = (BSign==1) ? FB->iPTet : FB->iMTet;
-      int iQB    = (BSign==1) ? FB->iQP   : FB->iQM;
-      Data->QB   = VB->Vertices + 3*iQB;
+      int ntB    = (BSign==1) ? FB->iPTet  : FB->iMTet;
+      int nfBFB  = (BSign==1) ? FB->PIndex : FB->MIndex;
       SWGTet *TB = VB->Tets[ ntB ];
+      Data->QB   = VB->Vertices + 3*TB->VI[nfBFB];
 
       for(int nfP=0; nfP<4; nfP++)
        for(int nfQ=0; nfQ<4; nfQ++)
         { 
-          if ( (TA->FI[nfP] == nfA) || (TB->FI[nfQ] == nfB) )
+          if ( nfP==nfBFA || nfQ==nfBFB )
            continue;
 
           double PResult[2], PError[2];
-          FaceFaceInt(VA, ntA, nfP, iQA, ASign,
-                      VB, ntB, nfQ, iQB, BSign,
+          FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
+                      VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
                       PResult, PError, 0, 1000, 1.0e-8);
           RetVal += cdouble( PResult[0], PResult[1] );
