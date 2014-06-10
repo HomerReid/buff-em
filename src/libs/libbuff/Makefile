@@ -9,10 +9,10 @@ LIBDIR   = $(SCUFFEM)/lib
 ##################################################
 ##################################################
 CPPFLAGS += -I$(SCUFFEM)/include/scuff-em -I$(HOME)/include -I. -fopenmp
-CPPFLAGS += -I/home/homer/work/scuff-em/src/libs/libscuff
+CPPFLAGS += -I/home/homer/work/scuff-em/src/libs/libscuff 
 LDFLAGS += -L$(LIBDIR) -Wl,-rpath,$(LIBDIR)
 LDFLAGS += -L$(HOME)/codes/lib -L$(HOME)/lib -L.
-CXXFLAGS += -O3 
+CXXFLAGS += -O3 -DUSE_OPENMP
 #CXXFLAGS = -ggdb -O0
 
 HR_LIBS=-lscuff
@@ -28,6 +28,7 @@ LIBS = $(HR_LIBS) $(OTHER_LIBS)
 ##################################################
 ##################################################
 LBOBJS =        \
+ GetFields.o    \
  Cubature.o     \
  IHAIMatProp.o  \
  InitFaceList.o \

@@ -35,8 +35,7 @@
 #include <libMDInterp.h>
 
 #include "libscuff.h"
-#include "libscuffInternals.h"
-#include "FieldGrid.h"
+#include "libbuff.h"
 
 #ifdef USE_PTHREAD
 #  include <pthread.h>
@@ -45,9 +44,77 @@
 #define MAXFUNC 50
 
 using namespace scuff;
+
+namespace scuff{
+
+void CalcGC(double R1[3], double R2[3],
+            cdouble Omega, cdouble EpsR, cdouble MuR, 
+            cdouble GMuNu[3][3], cdouble CMuNu[3][3],
+            cdouble GMuNuRho[3][3][3], cdouble CMuNuRho[3][3][3]);
+
+               }
+
+cdouble ExpRel(cdouble x, int n);
 namespace buff {
 
 #define II cdouble(0,1)
+
+/***************************************************************/
+/* get 1BF fields using surface-integral method ****************/
+/***************************************************************/
+void Get1BFFields_SI(SWGVolume *O, int nf, cdouble k, double X[3],
+                     cdouble EH[6], int Order=0)
+{
+}
+
+/***************************************************************/
+/* get 1BF fields using dipole / quadrupole approximation      */
+/***************************************************************/
+void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],
+                     cdouble EH[6], int NumTerms=1)
+{
+  SWGFace *F = O->Faces[nf];
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  double J[3], Q[3][3];
+  cdouble GMuNu[3][3], GMuNuRho[3][3][3];
+  cdouble CMuNu[3][3], CMuNuRho[3][3][3];
+
+  GetDQMoments(O, nf, J, Q, (NumTerms==1) ? false : true );
+  CalcGC(X, F->Centroid, Omega, 1.0, 1.0, GMuNu, CMuNu,
+         (NumTerms==1) ? 0 : GMuNuRho, (NumTerms==1) ? 0 : CMuNuRho);
+  
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  EH[0]=EH[1]=EH[2]=EH[3]=EH[4]=EH[5]=0.0;
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    { EH[ Mu + 0 ] += GMuNu[Mu][Nu]*J[Nu];
+      EH[ Mu + 3 ] += CMuNu[Mu][Nu]*J[Nu];
+    };
+
+  if (NumTerms>1)
+   { 
+     for(int Mu=0; Mu<3; Mu++)
+      for(int Nu=0; Nu<3; Nu++)
+       for(int Rho=0; Rho<3; Rho++)
+        { EH[ Mu + 0 ] -= GMuNuRho[Mu][Nu][Rho]*Q[Nu][Rho];
+          EH[ Mu + 3 ] -= CMuNuRho[Mu][Nu][Rho]*Q[Nu][Rho];
+        };
+   };
+
+  cdouble EPreFac = II*Omega*ZVAC, HPreFac = -II*Omega;
+  EH[0] *= EPreFac;
+  EH[1] *= EPreFac;
+  EH[2] *= EPreFac;
+  EH[3] *= HPreFac;
+  EH[4] *= HPreFac;
+  EH[5] *= HPreFac;
+
+}
 
 /***************************************************************/
 /* get the E and H fields due to a single SWG basis function   */
@@ -59,13 +126,12 @@ void Get1BFFields(SWGVolume *O, int nf, cdouble k, double X[3],
   SWGFace *F = O->Faces[nf];
   double rRel = VecDistance(X, F->Centroid) / F->Radius;
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  
-  GetDQMoments(B, nfB, JB, QB, true);
-  
-  
+  if (rRel > 20.0)
+   Get1BFFields_DA(O, nf, k, X, EH, 1);
+  else if (rRel > 10.0)
+   Get1BFFields_DA(O, nf, k, X, EH, 2);
+  else
+   Get1BFFields_SI(O, nf, k, X, EH, 20);
 }
 
 /***************************************************************/
@@ -82,9 +148,9 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
 
   if (FMatrix==0) 
    FMatrix=new HMatrix(XMatrix->NR, 6, LHM_COMPLEX);
-  else if ( (FMatrix->NR != XMatrix->NR) || (FMatrix->NC!=NumFuncs) ) 
+  else if ( (FMatrix->NR != XMatrix->NR) || (FMatrix->NC!=6) ) 
    { Warn(" ** warning: wrong-size FMatrix passed to GetFields(); allocating new matrix");
-     FMatrix=new HMatrix(XMatrix->NR, NumFuncs, LHM_COMPLEX);
+     FMatrix=new HMatrix(XMatrix->NR, 6, LHM_COMPLEX);
    };
   FMatrix->Zero();
 
@@ -106,8 +172,8 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
 #ifdef USE_OPENMP
 #pragma omp parallel for schedule(dynamic,1),      \
                          num_threads(NumThreads),  \
-                         reduction(+:ExReal, ExImag, EyReal, EyImag, ExReal, EzImag, \
-                                     HxReal, HxImag, HyReal, HyImag, HxReal, HzImag)
+                         reduction(+:ExReal, ExImag, EyReal, EyImag, EzReal, EzImag, \
+                                     HxReal, HxImag, HyReal, HyImag, HzReal, HzImag)
 #endif
   for(int nr=0; nr<XMatrix->NR; nr++)
    { 
@@ -121,16 +187,16 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
       for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
        { 
          cdouble EHScat[6], EHInc[6], EHTot[6];
-         Get1BFFields(G->Objects[no], nf, k, X, EHScat);
+         Get1BFFields(Objects[no], nf, Omega, X, EHScat);
          IF->GetFields(X, EHInc);
 
          cdouble JAlpha = J->GetEntry(nbf);
-         EHTot[0] = JAlpha*EHScat[0] + EHInt[0];
-         EHTot[1] = JAlpha*EHScat[1] + EHInt[1];
-         EHTot[2] = JAlpha*EHScat[2] + EHInt[2];
-         EHTot[3] = JAlpha*EHScat[3] + EHInt[3];
-         EHTot[4] = JAlpha*EHScat[4] + EHInt[4];
-         EHTot[5] = JAlpha*EHScat[5] + EHInt[5];
+         EHTot[0] = JAlpha*EHScat[0] + EHInc[0];
+         EHTot[1] = JAlpha*EHScat[1] + EHInc[1];
+         EHTot[2] = JAlpha*EHScat[2] + EHInc[2];
+         EHTot[3] = JAlpha*EHScat[3] + EHInc[3];
+         EHTot[4] = JAlpha*EHScat[4] + EHInc[4];
+         EHTot[5] = JAlpha*EHScat[5] + EHInc[5];
 
          ExReal += real(EHTot[0]); ExImag += imag(EHTot[0]); 
          EyReal += real(EHTot[1]); EyImag += imag(EHTot[1]); 
@@ -161,7 +227,7 @@ void SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
 {
   HMatrix XMatrix(1, 3, LHM_REAL, LHM_NORMAL, (void *)X);
   HMatrix FMatrix(1, 6, LHM_COMPLEX, LHM_NORMAL, (void *)EH);
-  GetFields(IF, J, Omega, &XMatrix, &FMatrix, 0);
+  GetFields(IF, J, Omega, &XMatrix, &FMatrix);
 } 
 
 } // namespace scuff

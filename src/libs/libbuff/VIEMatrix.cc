@@ -132,41 +132,41 @@ void VInvIntegrand(double *x, double *b, double DivB,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-int GetVInverseElements(SWGVolume *O, int nfA, cdouble Omega,
+int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
                         int Indices[7], cdouble Entries[7])
 {
   int nnz=0;
 
-  SWGFace *FA = O->Faces[nfA];
+  SWGFace *FA = V->Faces[nfA];
   struct VIIData MyVIIData, *Data=&MyVIIData;
   Data->Omega = Omega;
-  Data->MP    = O->MP;
+  Data->MP    = V->MP;
 
   /*--------------------------------------------------------------*/
   /* handle interactions between face #nfA and face #nfB, where   */
   /* nfB runs over the 4 faces of the positive tetrahedron of nfA */
   /*--------------------------------------------------------------*/
-  int ntA       = FA->iPTet;
-  SWGTet *TA    = V->Tets[ntA];
+  int nt        = FA->iPTet;
+  SWGTet *T     = V->Tets[nt];
   Data->QA      = V->Vertices + 3*(FA->iQP);
-  Data->PreFacA = FA->Area / (3.0*TA->Volume);
+  Data->PreFacA = FA->Area / (3.0*T->Volume);
   for(int ifB=0; ifB<4; ifB++)
    { 
-     int nfB = TA->FI[ifB];
+     int nfB = T->FI[ifB];
      if (nfB >= V->NumInteriorFaces) continue;
 
      SWGFace *FB = V->Faces[nfB];
-     if ( FB->iPTet == ntA )
+     if ( FB->iPTet == nt )
       { Data->QB      = V->Vertices + 3*(FB->iQP);
-        Data->PreFacB = FB->Area / (3.0*TA->Volume);
+        Data->PreFacB = FB->Area / (3.0*T->Volume);
       }
      else
       { Data->QB      = V->Vertices + 3*(FB->iQM);
-        Data->PreFacB = -1.0*FB->Area / (3.0*TA->Volume);
+        Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
      cdouble Result, Error;
-     TetInt(this, ntA, 0, 1.0, VInvIntegrand, (void *)Data,
+     TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
             2, (double *)&Result, (double *)&Error, 33, 0, 1.0e-4);
 
      Entries[nnz] = Result;
@@ -181,28 +181,28 @@ int GetVInverseElements(SWGVolume *O, int nfA, cdouble Omega,
   /* nfB runs over the 3 faces of the negative tetrahedron of nfA */
   /* that differ from nfA                                         */
   /*--------------------------------------------------------------*/
-  ntA           = FA->iMTet;
-  TA            = V->Tets[ntA];
+  nt            = FA->iMTet;
+  T             = V->Tets[nt];
   Data->QA      = V->Vertices + 3*(FA->iQM);
-  Data->PreFacA = -1.0*FA->Area / (3.0*TA->Volume);
+  Data->PreFacA = -1.0*FA->Area / (3.0*T->Volume);
   for(int ifB=0; ifB<4; ifB++)
    { 
-     int nfB = TA->FI[ifB];
+     int nfB = T->FI[ifB];
      if (nfB==nfA) continue;
-     if (nfB >= V-NumInteriorFaces) continue;
+     if (nfB >= V->NumInteriorFaces) continue;
 
      SWGFace *FB = V->Faces[nfB];
-     if ( FB->iPTet == ntA )
+     if ( FB->iPTet == nt )
       { Data->QB      = V->Vertices + 3*(FB->iQP);
-        Data->PreFacB = FB->Area / (3.0*TA->Volume);
+        Data->PreFacB = FB->Area / (3.0*T->Volume);
       }
      else
       { Data->QB      = V->Vertices + 3*(FB->iQM);
-        Data->PreFacB = -1.0*FB->Area / (3.0*TA->Volume);
+        Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
      cdouble Result, Error;
-     TetInt(this, ntA, 0, 1.0, VInvIntegrandIntegrand, (void *)Data,
+     TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
             2, (double *)&Result, (double *)&Error, 33, 0, 0);
 
      Entries[nnz] = Result;
@@ -333,7 +333,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
 /* distribution described by a single SWG basis function.      */
 /***************************************************************/
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
-                  int NeedQ=true)
+                  int NeedQ)
 {
   SWGFace *F = O->Faces[nf];
   double A= F->Area;
@@ -419,12 +419,12 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   double rRel = VecDistance(FA->Centroid, FB->Centroid)
                  / fmax(FA->Radius, FB->Radius);
 
-  if ( rRel > 20.0 )
+  if ( rRel > 10.0 )
    return GetGMatrixElement_DA(VA, nfA, VB, nfB, Omega, 1);
-  else if ( rRel > 10.0 )
+  else if ( rRel > 2.0 )
    return GetGMatrixElement_DA(VA, nfA, VB, nfB, Omega, 2);
   else 
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9);
   
 }
 
@@ -466,7 +466,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
      Log("Adding TInv(%i)",noa);
 #ifdef USE_OPENMP
        int NumThreads=GetNumThreads();
-#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads
+#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
 #endif
        for(int nfa=0; nfa<OA->NumInteriorFaces; nfa++)
         { int Indices[7];

@@ -435,42 +435,54 @@ $$
  \mathbb{E}_{\alpha i}(\vb x)
  \approx
  ikZ_0 \Big[   \mathbb{G}^0_{ij} \mc{J}_{\alpha j} 
-             + \mathbb{G}^0_{ijk} \mc{Q}_{\alpha jk}
+             - \mathbb{G}^0_{ijk} \mc{Q}_{\alpha jk}
        \Big]
 $$
+Note the minus sign in the second term.
 
 \subsection*{Nearby case: Surface-integral formulation}
 
 %====================================================================%
 \begin{align*}
  \mathbb{E}_{\alpha}(\vb x)
-&=   ikZ_0 \mathbb{A}_{\alpha}(\vb x) 
-  - \frac{Z_0}{ik} \nabla \mathbb{P}_\alpha(\vb x)
+&=   ikZ_0 \mathbb{A}_{\alpha}(\vb x)
+  - \nabla \mathbb{P}_\alpha(\vb x)
 \end{align*}
 %====================================================================%
 \begin{align*}
 \mathbb{A}_{\alpha}(\vb x)
-&= \int_{\mc V} \vb b_\alpha(\vb x) \frac{e^{ikr}}{4\pi r}\, dV
+&= \int_{\mc V} \vb b_\alpha(\vb x^\prime) \frac{e^{ikr}}{4\pi r}\, d\vb x^\prime
 \\
-&= -\frac{A}{3ikV} \int_{\mc V} (\vb x - \vb Q) \Big[\nabla^2 h(\vb r)\Big] dV
-\\
-&= -\frac{A}{3ikV} \int_{\mc S} \Big[ (\vb x - \vb Q) (\nabla h \cdot \vbhat{n})
-                                  - h \vbhat{n}
-                             \Big] dA
+&= -\frac{A}{3k^2V} \int_{\mc V} (\vb x^\prime - \vb Q) \Big[\nabla_{\vb x^\prime}^2 h(\vb r)\Big] 
+  d\vb x^\prime
+\intertext{Use (\ref{GreensTheorem}a):}
+&= -\frac{A}{3k^2 V} 
+    \int_{\partial \mc V} \Big[ (\vb x^\prime - \vb Q)
+                       \big[\vbhat{n} \cdot \nabla_{\vb x^\prime} h(\vb r)\big]
+                       - \vbhat{n} h(\vb r) 
+                 \Big] \, d\vb x^\prime
 \\[5pt]
-\nabla \mathbb{P}_\alpha(\vb x)
-&= \nabla
-   \int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha(\vb x) \Big]
-                \frac{e^{ikr}}{4\pi r}\, dV
+\nabla_{\vb x}
+\mathbb{P}_\alpha(\vb x)
+&= \frac{Z_0}{ik} \nabla_{\vb x}
+   \int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
+                g(\vb r) \, d\vb x^\prime
+ \qquad \left[ g(\vb r) \equiv \frac{e^{ik|\vb r|}}{4\pi |\vb r|}\right]
 \\
-&= -\frac{A}{4\pi ik V}\nabla 
-    \int_{\mc V} \nabla \cdot \vb F(\vb r)\, dV
+&= -\frac{A Z_0}{k^2 V}
+    \int_{\mc V} \nabla_{\vb x} \, g(\vb r) \, d\vb x^\prime
 \\
-&= -\frac{A}{4\pi ik V}\nabla 
-    \int_{\mc S} \vb F(\vb r) \cdot \vbhat{n}\, dV
+&= +\frac{A Z_0}{k^2 V}
+    \int_{\mc V} \nabla_{\vb x^\prime} \, g(\vb r) \, d\vb x^\prime
 \\
+&= +\frac{A Z_0}{k^2 V}
+    \int_{\partial \mc V} g(\vb r) \, \vbhat{n} \, d\vb x^\prime
 \end{align*}
-%====================================================================%
+Putting it all together, 
+$$ 
+\mathbb{E}_{\alpha}
+= \int_{\partial \mc V}
+$$ 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
