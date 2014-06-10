@@ -42,7 +42,7 @@ using namespace buff;
 namespace buff{
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega);
+                             cdouble Omega, int NumPts=0);
 
 cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA, 
                              SWGVolume *OB, int nfB,
@@ -71,12 +71,7 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
 
   cdouble *zI = (cdouble *)I;
-  //zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
-  zI[0] = (- DivbA*DivbB/(k*k)) * ExpFac;
-zI[0] = DivbA*ExpFac,p;
-//printf("VI (%e,%e,%e) \n",DivbA, DivbB, abs(k*k));
-                                                   
-  //zI[0] = ExpFac;
+  zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
 }
 
 
@@ -121,28 +116,44 @@ int main(int argc, char *argv[])
 
   printf("--nfa %i --nfb %i\n",nfa,nfb);
 
+  SWGFace *FA = O1->Faces[nfa];
+  SWGFace *FB = O2->Faces[nfb];
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   FILE *f=fopen("tUElement.dat","w");
   SetDefaultCD2SFormat("%.8e %.8e");
-  for(double z=0.01; z<=10.0; z*=exp(0.05*log(10.0)) )
+  for(double z=0.1; z<=10.0; z*=exp(0.05*log(10.0)) )
    { 
      O2->Transform("DISPLACED 0 0 %e",z);
 
      cdouble UVI, Error;
      BFBFInt(O1, nfa, O2, nfb, GVIntegrand, (void *)&Omega, 
-             2, (double *)&UVI, (double *)&Error, 0, 0, 1.0e-4);
+             2, (double *)&UVI, (double *)&Error, 0, 10000, 1.0e-6);
 
-     cdouble USI = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega);
-     cdouble UD1 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 1);
-     cdouble UD2 = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 2);
+     cdouble USI   = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega);
+     cdouble USI5  = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega, 5);
+     cdouble USI14 = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega, 14);
+     cdouble USI20 = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega, 20);
+     cdouble USI25 = GetGMatrixElement_SI(O1, nfa, O2, nfb, Omega, 25);
+     cdouble UD1   = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 1);
+     cdouble UD2   = GetGMatrixElement_DA(O1, nfa, O2, nfb, Omega, 2);
 
      printf("%.3e %.1e %.1e %.1e\n",z,abs(USI),abs(UVI),abs(USI)/abs(UVI));
 
-     fprintf(f,"%e %s %s %s %s %e %e %e \n",z, 
-                CD2S(USI), CD2S(UVI), CD2S(UD1), CD2S(UD2),
-                RD(USI, UVI), RD(USI, UD1), RD(USI, UD2));
+     fprintf(f,"%e %e %e %e %e %e %e %e %e %e\n",
+                VecDistance(FA->Centroid,FB->Centroid)
+                 / fmax(FA->Radius, FB->Radius),
+                real(USI), imag(USI),
+                RD(USI, UVI),
+                RD(USI, USI5),
+                RD(USI, USI14),
+                RD(USI, USI20),
+                RD(USI, USI25),
+                RD(USI, UD1), 
+                RD(USI, UD2));
+     fflush(f);
 
      O2->UnTransform();
    };

@@ -177,9 +177,12 @@ Insert into (\ref{ContinuousVIE}) and ``test'' both sides
 with the elements of the set $\{\vb b_\alpha\}$ to obtain a
 discretized version of (\ref{ContinuousVIE}) in the form of an
 $N\times N$ linear system:
-\begin{align*}
- \vbTInv \cdot \vb j &= \vb v
-\end{align*}
+%====================================================================%
+\numeq{VIESystem}
+{
+ \vbTInv \cdot \vb j = \vb v
+}
+%====================================================================%
 where the elements of the vector $\vb j$ are the expansion 
 coefficients in (\ref{JExpansion}) and the elements of 
 $\vbTInv$ and $\vb v$ are 
@@ -233,12 +236,13 @@ When the two basis functions are well separated
 we may retain just the first two terms in the Taylor expansion of 
 $\mathbb G_{ij}$ about $\vb R_0$:
 %====================================================================%
-$$ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+\numeq{TaylorExpansion}
+{ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
   \,\approx\, \mathbb{G}_{ij}^0
          +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
          -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
          +\cdots
-$$
+}
 %====================================================================%
 where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
 and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
@@ -380,6 +384,93 @@ basis functions $\vb b_\alpha,\vb b_\beta$. For the SWG basis, each
 function shares support with only a small number (typically 7) of other 
 functions, so this term amounts to a sparse update to the second term in 
 (\ref{TInverseRealSpace}), which is dense.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Fields of Individual SWG Basis Functions}
+
+Once we have obtained the solution vector $\vb j$ to the 
+linear system (\ref{VIESystem}), we can compute the fields
+at arbitrary points in space according to 
+%====================================================================%
+$$ \left\{ \begin{array}{c} \vb E(\vb x) \\ 
+                            \vb H(\vb x) 
+           \end{array} 
+   \right\}
+   = 
+   \left\{ \begin{array}{c} \vb E\sups{inc}(\vb x) \\ 
+                            \vb H\sups{inc}(\vb x) 
+           \end{array} 
+   \right\}
+  + 
+  \sum_\alpha j_\alpha
+   \left\{ \begin{array}{c} \mathbb{E}_\alpha(\vb x) \\ 
+                            \mathbb{H}_\alpha(\vb x)
+           \end{array} 
+   \right\}
+$$
+%====================================================================%
+where $\{\mathbb{E}_\alpha, \mathbb{H}_\alpha\}$ are the
+electric and magnetic fields produced by the current distribution
+of basis function $\vb b_\alpha$ populated with unit strength:
+%====================================================================%
+\begin{align*}
+ \mathbb{E}_\alpha(\vb x)
+&= ikZ_0 
+   \int_{\sup \vb b_\alpha} \mathbb{G}(\vb x, \vb x_\alpha) \cdot \vb b_\alpha
+   d\vb x_\alpha
+\\
+ \mathbb{H}_\alpha(\vb x)
+&= 
+\end{align*}
+%====================================================================%
+
+\subsection*{Distant case: Dipole / Quadrupole approximation}
+
+When the evaluation point is far from the centroid of the basis
+function we can use the Taylor expansion (\ref{TaylorExpansion}):
+$$
+ \mathbb{E}_{\alpha i}(\vb x)
+ \approx
+ ikZ_0 \Big[   \mathbb{G}^0_{ij} \mc{J}_{\alpha j} 
+             + \mathbb{G}^0_{ijk} \mc{Q}_{\alpha jk}
+       \Big]
+$$
+
+\subsection*{Nearby case: Surface-integral formulation}
+
+%====================================================================%
+\begin{align*}
+ \mathbb{E}_{\alpha}(\vb x)
+&=   ikZ_0 \mathbb{A}_{\alpha}(\vb x) 
+  - \frac{Z_0}{ik} \nabla \mathbb{P}_\alpha(\vb x)
+\end{align*}
+%====================================================================%
+\begin{align*}
+\mathbb{A}_{\alpha}(\vb x)
+&= \int_{\mc V} \vb b_\alpha(\vb x) \frac{e^{ikr}}{4\pi r}\, dV
+\\
+&= -\frac{A}{3ikV} \int_{\mc V} (\vb x - \vb Q) \Big[\nabla^2 h(\vb r)\Big] dV
+\\
+&= -\frac{A}{3ikV} \int_{\mc S} \Big[ (\vb x - \vb Q) (\nabla h \cdot \vbhat{n})
+                                  - h \vbhat{n}
+                             \Big] dA
+\\[5pt]
+\nabla \mathbb{P}_\alpha(\vb x)
+&= \nabla
+   \int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha(\vb x) \Big]
+                \frac{e^{ikr}}{4\pi r}\, dV
+\\
+&= -\frac{A}{4\pi ik V}\nabla 
+    \int_{\mc V} \nabla \cdot \vb F(\vb r)\, dV
+\\
+&= -\frac{A}{4\pi ik V}\nabla 
+    \int_{\mc S} \vb F(\vb r) \cdot \vbhat{n}\, dV
+\\
+\end{align*}
+%====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -623,6 +714,13 @@ and hence
 \end{align}
 \label{gNNh}
 \end{subequations}
+Also useful is
+$$ \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
+   =\frac{1}{4\pi i k} \nabla_{\vb r} \cdot \vb F(\vb r),
+   \qquad
+   \vb F(\vb r)= \frac{e^{ikr}(ikr-1) + 1}{r^2} \vb r.
+$$
+
 %====================================================================%
 We will also need Green's theorem in the forms 
 %====================================================================%
