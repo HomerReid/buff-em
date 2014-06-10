@@ -269,19 +269,7 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 
   cdouble *zI = (cdouble *)I;
 
-T1 = 0.0;
-T2 = -DivbA*DivbB*h/k2;
-T2 = DivbA*h;
-
   zI[0] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
-
-  //zI[0] = NdotN * h / (-4.0*M_PI*II*k);
-//printf("T1, T2 = (%e,%e)\n", 
-//        abs(NdotN * T1 / (-4.0*M_PI*II*k)),
-//        abs(NdotN * T2 / (-4.0*M_PI*II*k)));
-//printf("(DivbA*DivbB)/(9*k2): %s \n",CD2S(DivbA*DivbB / (9.0*k2)));
-//printf("(h,w,p,k2*DQdotR*p)=(%e,%e,%e,%e)\n",
-//        abs(h),abs(w),abs(p),abs(k2*DQdotR*p));
 
 }
 
@@ -292,7 +280,8 @@ T2 = DivbA*h;
 /***************************************************************/
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega)
+                             cdouble Omega,
+                             int NumPts=0)
 {
   int fDim=2;
 
@@ -303,7 +292,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
 
-  // 36 surface integrals
+  // 64 surface-surface integrals
   cdouble RetVal=0.0;
   for(int ASign=+1; ASign>=-1; ASign-=2)
    for(int BSign=+1; BSign>=-1; BSign-=2)
@@ -321,14 +310,11 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
       for(int nfP=0; nfP<4; nfP++)
        for(int nfQ=0; nfQ<4; nfQ++)
         { 
-          if ( nfP==nfBFA || nfQ==nfBFB )
-           continue;
-
           double PResult[2], PError[2];
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
-                      PResult, PError, 0, 1000, 1.0e-8);
+                      PResult, PError, NumPts, 10000, 1.0e-8);
           RetVal += cdouble( PResult[0], PResult[1] );
         };
     };
@@ -378,18 +364,6 @@ cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA,
 
   SWGFace *FA = OA->Faces[nfA];
   SWGFace *FB = OB->Faces[nfB];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-#if 0
-double R[3];
-R[0] = FA->Centroid[0] - FB->Centroid[0];
-R[1] = FA->Centroid[1] - FB->Centroid[1];
-R[2] = FA->Centroid[2] - FB->Centroid[2];
-double r=sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] );
-return (OA->Tets[FA->iPTet]->Volume + OA->Tets[FA->iMTet]->Volume)
-      *(OB->Tets[FB->iPTet]->Volume + OB->Tets[FB->iMTet]->Volume)
-      *exp(II*Omega*r) / (4.0*M_PI*r);
-#endif
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   /***************************************************************/
   /* get dipole moments ******************************************/
@@ -450,7 +424,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   else if ( r > 10.0*fmax( FA->Radius, FB->Radius) )
    return GetGMatrixElement_DA(VA, nfA, VB, nfB, Omega, 2);
   else 
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20);
   
 }
 
