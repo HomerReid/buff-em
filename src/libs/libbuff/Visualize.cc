@@ -220,8 +220,11 @@ void SWGGeometry::PlotCurrentDistribution(const char *FileName,
   va_start(ap,Tag);
   vsnprintfEC(buffer,MAXSTR,Tag,ap);
   va_end(ap);
-  fprintf(f,"View \"%s\" {\n",buffer);
 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  fprintf(f,"View \"Real(%s)\" {\n",buffer);
   for(int no=0; no<NumObjects; no++)
    for(int nt=0; nt<Objects[no]->NumTets; nt++)
     { 
@@ -239,7 +242,7 @@ void SWGGeometry::PlotCurrentDistribution(const char *FileName,
          if (nf >= O->NumInteriorFaces) continue;
 
          SWGFace *F = O->Faces[nf];
-         double JAlpha = J->GetEntryD(Offset + nf);
+         double JAlpha = real(J->GetEntry(Offset + nf));
          double PreFac = F->Area / (3.0*T->Volume);
          double Sign; 
          double *Q;
@@ -258,12 +261,54 @@ void SWGGeometry::PlotCurrentDistribution(const char *FileName,
          JCentroid[1] += Sign*PreFac*JAlpha*(T->Centroid[1] - Q[1]);
          JCentroid[2] += Sign*PreFac*JAlpha*(T->Centroid[2] - Q[2]);
        };
-
       WriteVP(T->Centroid, JCentroid, f);
-
     };
-
   fprintf(f,"};\n");
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  fprintf(f,"View \"Imag(%s)\" {\n",buffer);
+  for(int no=0; no<NumObjects; no++)
+   for(int nt=0; nt<Objects[no]->NumTets; nt++)
+    { 
+      SWGVolume *O = Objects[no];
+      int Offset   = BFIndexOffset[no];
+      SWGTet *T    = O->Tets[nt];
+
+      /*--------------------------------------------------------------*/
+      /*--------------------------------------------------------------*/
+      /*--------------------------------------------------------------*/
+      double JCentroid[3]={0.0, 0.0, 0.0};
+      for(int iF=0; iF<4; iF++)
+       { 
+         int nf = T->FI[iF];
+         if (nf >= O->NumInteriorFaces) continue;
+
+         SWGFace *F = O->Faces[nf];
+         double JAlpha = imag(J->GetEntry(Offset + nf));
+         double PreFac = F->Area / (3.0*T->Volume);
+         double Sign; 
+         double *Q;
+         if ( F->iPTet == nt)
+          { Sign = +1.0;
+            Q    = O->Vertices + 3*F->iQP;
+          }
+         else if ( F->iMTet == nt)
+          { Sign = -1.0;
+            Q    = O->Vertices + 3*F->iQM;
+          }
+         else 
+          ErrExit("%s:%i: internal error",__FILE__,__LINE__);
+   
+         JCentroid[0] += Sign*PreFac*JAlpha*(T->Centroid[0] - Q[0]);
+         JCentroid[1] += Sign*PreFac*JAlpha*(T->Centroid[1] - Q[1]);
+         JCentroid[2] += Sign*PreFac*JAlpha*(T->Centroid[2] - Q[2]);
+       };
+      WriteVP(T->Centroid, JCentroid, f);
+    };
+  fprintf(f,"};\n");
+
   fclose(f);
 }
 

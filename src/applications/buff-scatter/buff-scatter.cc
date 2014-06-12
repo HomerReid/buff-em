@@ -232,6 +232,8 @@ int main(int argc, char *argv[])
      /***************************************************************/
      Log("  Assembling the RHS vector..."); 
      G->AssembleRHSVector(Omega, IFList, J);
+     if (JPlotFile)
+      G->PlotCurrentDistribution(JPlotFile, J, "RHS_%s",CD2S(Omega));
      BSD->RHS->Copy(J); // save a copy of the RHS vector for later
 
      /***************************************************************/
@@ -249,7 +251,7 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (JPlotFile)
-      G->PlotCurrentDistribution(JPlotFile, J, "J%s",CD2S(Omega));
+      G->PlotCurrentDistribution(JPlotFile, J, "J_%s",CD2S(Omega));
 
      /*--------------------------------------------------------------*/
      /*- scattered fields at user-specified points ------------------*/
