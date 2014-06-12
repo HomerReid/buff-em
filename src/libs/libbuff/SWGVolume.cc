@@ -292,4 +292,61 @@ void SWGVolume::UnTransform()
 
 }
 
+/***************************************************************/
+/* compare two SWG basis functions by computing the following  */
+/* characteristics:                                            */
+/*  (a) number of common vertices                              */
+/*  (b) relative distance                                      */
+/***************************************************************/
+int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+               double *rRel)
+{ 
+
+  SWGFace *FA = OA->Faces[nfA];
+  SWGFace *FB = OB->Faces[nfB];
+
+  if (rRel)
+   { *rRel = VecDistance(FA->Centroid, FB->Centroid) 
+              / fmax(FA->Radius, FB->Radius); 
+   };
+
+  if (OA!=OB)
+   return 0;
+ 
+  int ncv=0;
+
+  if (FA->iQP == FB->iQP ) ncv++;
+  if (FA->iQP == FB->iV1 ) ncv++;
+  if (FA->iQP == FB->iV2 ) ncv++;
+  if (FA->iQP == FB->iV3 ) ncv++;
+  if (FA->iQP == FB->iQM ) ncv++;
+
+  if (FA->iV1 == FB->iQP ) ncv++;
+  if (FA->iV1 == FB->iV1 ) ncv++;
+  if (FA->iV1 == FB->iV2 ) ncv++;
+  if (FA->iV1 == FB->iV3 ) ncv++;
+  if (FA->iV1 == FB->iQM ) ncv++;
+
+  if (FA->iV2 == FB->iQP ) ncv++;
+  if (FA->iV2 == FB->iV1 ) ncv++;
+  if (FA->iV2 == FB->iV2 ) ncv++;
+  if (FA->iV2 == FB->iV3 ) ncv++;
+  if (FA->iV2 == FB->iQM ) ncv++;
+
+  if (FA->iV3 == FB->iQP ) ncv++;
+  if (FA->iV3 == FB->iV1 ) ncv++;
+  if (FA->iV3 == FB->iV2 ) ncv++;
+  if (FA->iV3 == FB->iV3 ) ncv++;
+  if (FA->iV3 == FB->iQM ) ncv++;
+
+  if (FA->iQM == FB->iQP ) ncv++;
+  if (FA->iQM == FB->iV1 ) ncv++;
+  if (FA->iQM == FB->iV2 ) ncv++;
+  if (FA->iQM == FB->iV3 ) ncv++;
+  if (FA->iQM == FB->iQM ) ncv++;
+
+  return ncv;
+
+}
+
 } // namespace buff

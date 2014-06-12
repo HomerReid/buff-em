@@ -123,15 +123,17 @@ void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],
 void Get1BFFields(SWGVolume *O, int nf, cdouble k, double X[3],
                   cdouble EH[6])
 {
+  Get1BFFields_DA(O, nf, k, X, EH, 2);
+#if 0
   SWGFace *F = O->Faces[nf];
   double rRel = VecDistance(X, F->Centroid) / F->Radius;
-
   if (rRel > 20.0)
    Get1BFFields_DA(O, nf, k, X, EH, 1);
   else if (rRel > 10.0)
    Get1BFFields_DA(O, nf, k, X, EH, 2);
   else
    Get1BFFields_SI(O, nf, k, X, EH, 20);
+#endif
 }
 
 /***************************************************************/
@@ -154,7 +156,8 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
    };
   FMatrix->Zero();
 
-  IF->SetFrequency(Omega, true);
+  if (IF)
+   IF->SetFrequency(Omega, true);
 
   /***************************************************************/
   /***************************************************************/
@@ -181,38 +184,44 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
      X[0] = XMatrix->GetEntryD(nr, 0);
      X[1] = XMatrix->GetEntryD(nr, 1);
      X[2] = XMatrix->GetEntryD(nr, 2);
+
+     cdouble EHInc[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+     if (IF) IF->GetFields(X, EHInc);
+
      ExReal=ExImag=EyReal=EyImag=EzReal=EzImag=0.0;
      HxReal=HxImag=HyReal=HyImag=HzReal=HzImag=0.0;
-     for(int no=0, nbf=0; no<NumObjects; no++)
-      for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
-       { 
-         cdouble EHScat[6], EHInc[6], EHTot[6];
-         Get1BFFields(Objects[no], nf, Omega, X, EHScat);
-         IF->GetFields(X, EHInc);
+     if (J)
+      { 
+        for(int nbf=0, no=0; no<NumObjects; no++)
+         for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
+          { 
+            cdouble EHScat[6];
+            Get1BFFields(Objects[no], nf, Omega, X, EHScat);
+            cdouble JAlpha = J->GetEntry(nbf);
+            EHScat[0] *= JAlpha;
+            EHScat[1] *= JAlpha;
+            EHScat[2] *= JAlpha;
+            EHScat[3] *= JAlpha;
+            EHScat[4] *= JAlpha;
+            EHScat[5] *= JAlpha;
 
-         cdouble JAlpha = J->GetEntry(nbf);
-         EHTot[0] = JAlpha*EHScat[0] + EHInc[0];
-         EHTot[1] = JAlpha*EHScat[1] + EHInc[1];
-         EHTot[2] = JAlpha*EHScat[2] + EHInc[2];
-         EHTot[3] = JAlpha*EHScat[3] + EHInc[3];
-         EHTot[4] = JAlpha*EHScat[4] + EHInc[4];
-         EHTot[5] = JAlpha*EHScat[5] + EHInc[5];
+            ExReal += real(EHScat[0]); ExImag += imag(EHScat[0]); 
+            EyReal += real(EHScat[1]); EyImag += imag(EHScat[1]); 
+            EzReal += real(EHScat[2]); EzImag += imag(EHScat[2]); 
+            HxReal += real(EHScat[3]); HxImag += imag(EHScat[3]); 
+            HyReal += real(EHScat[4]); HyImag += imag(EHScat[4]); 
+            HzReal += real(EHScat[5]); HzImag += imag(EHScat[5]);
 
-         ExReal += real(EHTot[0]); ExImag += imag(EHTot[0]); 
-         EyReal += real(EHTot[1]); EyImag += imag(EHTot[1]); 
-         EzReal += real(EHTot[2]); EzImag += imag(EHTot[2]); 
-         HxReal += real(EHTot[3]); HxImag += imag(EHTot[3]); 
-         HyReal += real(EHTot[4]); HyImag += imag(EHTot[4]); 
-         HzReal += real(EHTot[5]); HzImag += imag(EHTot[5]);
+          }; // if (no...) if (nf...) 
+      }; // if(J) ... 
 
-       }; // for (int no=) ... for (int nf=...)
+     FMatrix->SetEntry(nr, 0, EHInc[0] + cdouble(ExReal, ExImag) );
+     FMatrix->SetEntry(nr, 1, EHInc[1] + cdouble(EyReal, EyImag) );
+     FMatrix->SetEntry(nr, 2, EHInc[2] + cdouble(EzReal, EzImag) );
+     FMatrix->SetEntry(nr, 3, EHInc[3] + cdouble(HxReal, HxImag) );
+     FMatrix->SetEntry(nr, 4, EHInc[4] + cdouble(HyReal, HyImag) );
+     FMatrix->SetEntry(nr, 5, EHInc[5] + cdouble(HzReal, HzImag) );
 
-     FMatrix->SetEntry(nr, 0, cdouble(ExReal, ExImag) );
-     FMatrix->SetEntry(nr, 1, cdouble(EyReal, EyImag) );
-     FMatrix->SetEntry(nr, 2, cdouble(EzReal, EzImag) );
-     FMatrix->SetEntry(nr, 3, cdouble(HxReal, HxImag) );
-     FMatrix->SetEntry(nr, 4, cdouble(HyReal, HyImag) );
-     FMatrix->SetEntry(nr, 5, cdouble(HzReal, HzImag) );
    }; // for(int nr=0; nr<XMatrix->NR; nr++)
 
   return FMatrix;

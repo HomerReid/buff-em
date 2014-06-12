@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
   char *MeshFile=0;
   char *TransFile=0;
   bool WriteGMSHFiles=false;
+  int DrawBFs[10], nDrawBFs;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,        0, "mesh file"},
@@ -84,6 +85,7 @@ int main(int argc, char *argv[])
      {"meshfile",           PA_STRING, 1, 1, (void *)&MeshFile,       0, "mesh file"},
      {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles, 0, "output GMSH visualization code"},
      {"transfile",          PA_STRING, 1, 1, (void *)&TransFile,      0, "output GMSH visualization code"},
+     {"DrawBFs",            PA_INT,    1, 10, (void *)DrawBFs,        &nDrawBFs, "output GMSH visualization code"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -113,6 +115,15 @@ int main(int argc, char *argv[])
    AnalyzeVolume( new SWGVolume(MeshFile) );
   else
    ErrExit("either --geometry or --mesh / --meshfile option is mandatory");
+
+  if (nDrawBFs)
+   { FILE *f=vfopen("%s.BFs.pp","w",GetFileBase(GeoFile));
+     for(int n=0; n<nDrawBFs; n++)
+      G->Objects[0]->DrawBF(DrawBFs[n], f);
+     fclose(f);
+     printf("Individual BF visualizations written to file %s.BFs.pp",
+             GetFileBase(GeoFile));
+   };
 
   if (WriteGMSHFiles && GeoFile!=0)
    { char FileName[1000];

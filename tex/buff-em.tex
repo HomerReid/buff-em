@@ -630,6 +630,35 @@ $$\mc J=\frac{d(x,y,z)}{d(u,v,w)}
   =6V
 $$
 
+%=================================================
+%=================================================
+%=================================================
+\subsection*{Overlap Matrix Elements} 
+
+\begin{align*}
+  \inpB{\vb b_\alpha}{\vb b_\beta}
+&=\sum \pm \frac{A_\alpha A_\beta}{9V^2}
+  \int_{\mc V} 
+  \Big(\vb x-\vb Q_\alpha\Big)
+  \cdot
+  \Big(\vb x-\vb Q_\beta\Big)
+  d\vb x
+\intertext{(where the sum is over the 0, 1, or 2 tetrahedra in the 
+            common support of $\{\vb b_\alpha,\vb b_\beta\}$)}
+&=\sum \pm \frac{2A_\alpha A_\beta}{3V}
+  \int_0^1 \, du \int_0^{1-u} \, dv \, \int_0^{1-u-v}\, dw\,
+  \bigg\{ 
+  \Big[u\vb L_{1\alpha} + v\vb L_{2\alpha} + w\vb L_{3\alpha}\Big]
+\\
+&\hspace{2in}
+  \cdot \Big[u\vb L_{1\alpha} + v\vb L_{2\alpha} + w\vb L_{3\alpha} 
+            + \vb Q_\alpha - \vb Q_\beta\Big]
+  \bigg\}
+\end{align*}
+
+%=================================================
+%=================================================
+%=================================================
 \subsection*{Dipole and Quadrupole Moments}
 
 The dipole moment of the current distribution described by

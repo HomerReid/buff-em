@@ -57,6 +57,16 @@ void WriteST(double **VV, double Val, FILE *f)
              Val,Val,Val);
 }
 
+/* scalar triangle */
+void WriteST(double **VV, cdouble Val, FILE *f)
+{
+  fprintf(f,"ST(%e,%e,%e,%e,%e,%e,%e,%e,%e) {%e,%e,%e};\n",
+             VV[0][0], VV[0][1], VV[0][2],
+             VV[1][0], VV[1][1], VV[1][2],
+             VV[2][0], VV[2][1], VV[2][2], 
+             real(Val),real(Val),real(Val));
+}
+
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
@@ -192,5 +202,69 @@ void SWGGeometry::WritePPMesh(const char *FileName, const char *Tag)
   fclose(f);
 }
 
-} // namespace buff
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void SWGGeometry::PlotCurrentDistribution(const char *FileName,
+                                          HVector *J, 
+                                          const char *Tag, ...)
+{
+  /***************************************************************/
+  /***************************************************************/ 
+  /***************************************************************/ 
+  FILE *f=fopen(FileName,"a");
+  if (!f) return;
 
+  va_list ap;
+  char buffer[MAXSTR];
+  va_start(ap,Tag);
+  vsnprintfEC(buffer,MAXSTR,Tag,ap);
+  va_end(ap);
+  fprintf(f,"View \"%s\" {\n",buffer);
+
+  for(int no=0; no<NumObjects; no++)
+   for(int nt=0; nt<Objects[no]->NumTets; nt++)
+    { 
+      SWGVolume *O = Objects[no];
+      int Offset   = BFIndexOffset[no];
+      SWGTet *T    = O->Tets[nt];
+
+      /*--------------------------------------------------------------*/
+      /*--------------------------------------------------------------*/
+      /*--------------------------------------------------------------*/
+      double JCentroid[3]={0.0, 0.0, 0.0};
+      for(int iF=0; iF<4; iF++)
+       { 
+         int nf = T->FI[iF];
+         if (nf >= O->NumInteriorFaces) continue;
+
+         SWGFace *F = O->Faces[nf];
+         double JAlpha = J->GetEntryD(Offset + nf);
+         double PreFac = F->Area / (3.0*T->Volume);
+         double Sign; 
+         double *Q;
+         if ( F->iPTet == nt)
+          { Sign = +1.0;
+            Q    = O->Vertices + 3*F->iQP;
+          }
+         else if ( F->iMTet == nt)
+          { Sign = -1.0;
+            Q    = O->Vertices + 3*F->iQM;
+          }
+         else 
+          ErrExit("%s:%i: internal error",__FILE__,__LINE__);
+   
+         JCentroid[0] += Sign*PreFac*JAlpha*(T->Centroid[0] - Q[0]);
+         JCentroid[1] += Sign*PreFac*JAlpha*(T->Centroid[1] - Q[1]);
+         JCentroid[2] += Sign*PreFac*JAlpha*(T->Centroid[2] - Q[2]);
+       };
+
+      WriteVP(T->Centroid, JCentroid, f);
+
+    };
+
+  fprintf(f,"};\n");
+  fclose(f);
+}
+
+} // namespace buff

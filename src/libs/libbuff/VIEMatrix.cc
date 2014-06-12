@@ -44,8 +44,6 @@ void CalcGC(double R1[3], double R2[3],
             cdouble GMuNu[3][3], cdouble CMuNu[3][3],
             cdouble GMuNuRho[3][3][3], cdouble CMuNuRho[3][3][3]);
 
-cdouble ExpRel(cdouble x, int n);
-
 }
 
 using namespace scuff;
@@ -54,6 +52,26 @@ namespace buff {
 
 #define MAXSTR 1000
 #define II cdouble(0.0,1.0)
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+#define EXPRELTOL  1.0e-8
+#define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
+void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3)
+{
+  cdouble Term2=x*x/2.0, Term=Term2;
+
+  cdouble Sum=0.0;
+  for(int m=3; m<100; m++)
+   { Term*=x/((double)m);
+     Sum+=Term;
+     if ( norm(Term) < EXPRELTOL2*norm(Sum) )
+      break;
+   };
+  *ExpRel3=Sum;
+  *ExpRel2=Sum + Term2;
+} 
 
 /***************************************************************/
 /***************************************************************/
@@ -218,6 +236,48 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void GVIntegrand(double *xA, double *bA, double DivbA,
+                 double *xB, double *bB, double DivbB,
+                 void *UserData, double *I)
+{
+  double R[3]; 
+  R[0] = (xA[0] - xB[0]);
+  R[1] = (xA[1] - xB[1]);
+  R[2] = (xA[2] - xB[2]);
+
+  double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2]);
+  if ( fabs(r) < 1.0e-12 ) 
+   { I[0]=I[1]=0.0;
+     return;
+   };
+
+  cdouble k = *((cdouble *)UserData);
+  cdouble ExpFac = exp(II*k*r)/(4.0*M_PI*r);
+
+  double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+
+  cdouble *zI = (cdouble *)I;
+  zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
+}
+
+/***************************************************************/
+/* Compute the G-matrix element between two tetrahedral basis  */
+/* functions using a volume cubature method.                   */
+/***************************************************************/
+cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
+                             SWGVolume *VB, int nfB,
+                             cdouble Omega, int Order=0)
+{
+  cdouble UVI, Error;
+  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)&Omega,
+          2, (double *)&UVI, (double *)&Error, Order, 10000, 1.0e-8);
+
+  return UVI;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 typedef struct GSIData
  { 
    cdouble k;
@@ -246,6 +306,10 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   R[1] = (xA[1]-xB[1]);
   R[2] = (xA[2]-xB[2]);
   double r2 = R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
+  if ( fabs(r2) < 1.0e-15 )
+   { I[0]=I[1]=0.0; 
+     return;
+   };
   double r = sqrt(r2);
 
   /*--------------------------------------------------------------*/
@@ -265,8 +329,11 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   cdouble k2  = k*k;
   cdouble Xi  = II*k*r;
   cdouble Xi3 = Xi*Xi*Xi;
-  cdouble w   = ExpRel(Xi, 3);
-  cdouble h   = ExpRel(Xi, 2) / Xi;
+  //cdouble h   = ExpRel(Xi, 2) / Xi;
+  //cdouble w   = ExpRel(Xi, 3);
+  cdouble w, h;
+  ExpRel23(Xi, &h, &w);
+  h/=Xi;
   cdouble p   = h/Xi - w/Xi3 - 1.0/3.0;
 
   cdouble T1 = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]) * h;
@@ -286,8 +353,7 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 /***************************************************************/
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega,
-                             int NumPts=0)
+                             cdouble Omega, int Order=0)
 {
   int fDim=2;
 
@@ -320,7 +386,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
-                      PResult, PError, NumPts, 10000, 1.0e-8);
+                      PResult, PError, Order, 10000, 1.0e-8);
           RetVal += cdouble( PResult[0], PResult[1] );
         };
     };
@@ -416,15 +482,15 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
 
-  double rRel = VecDistance(FA->Centroid, FB->Centroid)
-                 / fmax(FA->Radius, FB->Radius);
+  double rRel;
+  int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
-  if ( rRel > 10.0 )
-   return GetGMatrixElement_DA(VA, nfA, VB, nfB, Omega, 1);
-  else if ( rRel > 2.0 )
-   return GetGMatrixElement_DA(VA, nfA, VB, nfB, Omega, 2);
-  else 
+  if ( ncv>=2 )
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20);
+  else if (ncv==1)
    return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9);
+  else
+   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16);
   
 }
 

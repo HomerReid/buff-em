@@ -248,7 +248,7 @@ void BFInt(SWGVolume *V, int nf,
 
   for(int nf=0; nf<fdim; nf++) 
    { Result[nf] += MResult[nf];
-     Error[nf] +=  MError[nf];
+     if (Error) Error[nf] +=  MError[nf];
    };
 
   delete[] MResult;
@@ -496,7 +496,7 @@ void BFBFInt(SWGVolume *VA, int nfA,
 
   for(int nf=0; nf<fdim; nf++)
    { Result[nf] += PResult[nf];
-     Error[nf]  += PError[nf];
+     if (Error) Error[nf]  += PError[nf];
    };
 
   TetTetInt(VA, FA->iMTet, FA->MIndex, -1.0, 
@@ -506,7 +506,7 @@ void BFBFInt(SWGVolume *VA, int nfA,
 
   for(int nf=0; nf<fdim; nf++)
    { Result[nf] += PResult[nf];
-     Error[nf]  += PError[nf];
+     if (Error) Error[nf]  += PError[nf];
    };
 
   TetTetInt(VA, FA->iMTet, FA->MIndex, -1.0,
@@ -516,7 +516,7 @@ void BFBFInt(SWGVolume *VA, int nfA,
 
   for(int nf=0; nf<fdim; nf++)
    { Result[nf] += PResult[nf];
-     Error[nf]  += PError[nf];
+     if (Error) Error[nf]  += PError[nf];
    };
 
   delete[] PResult;
