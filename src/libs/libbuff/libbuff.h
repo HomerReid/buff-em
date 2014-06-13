@@ -237,7 +237,7 @@ class SWGGeometry
 SWGTet *NewSWGTet(double *Vertices, int iV1, int iV2, int iV3, int iV4);
 
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
-                  int NeedQ=true);
+                  bool NeedQ=true);
 
 int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
                double *rRel);

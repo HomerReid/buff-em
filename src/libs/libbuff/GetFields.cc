@@ -68,6 +68,15 @@ void Get1BFFields_SI(SWGVolume *O, int nf, cdouble k, double X[3],
 }
 
 /***************************************************************/
+/* get 1BF fields using volume-integral method *****************/
+/***************************************************************/
+UserTIntegrand Integrand
+void Get1BFFields_VI(SWGVolume *O, int nf, cdouble k, double X[3],
+                     cdouble EH[6], int NumPts=0)
+{
+}
+
+/***************************************************************/
 /* get 1BF fields using dipole / quadrupole approximation      */
 /***************************************************************/
 void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],

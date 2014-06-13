@@ -399,7 +399,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
 /* distribution described by a single SWG basis function.      */
 /***************************************************************/
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
-                  int NeedQ)
+                  bool NeedQ)
 {
   SWGFace *F = O->Faces[nf];
   double A= F->Area;
