@@ -127,9 +127,9 @@ according to
 %====================================================================%
 \begin{align*}
  \vb J(\vb x) 
-&= i\frac{k}{Z_0} \big[\vbeps(\vb x) - \vb 1\big]\cdot \vb E\sups{tot}(\vb x)
+&= -i\frac{k}{Z_0} \big[\vbeps(\vb x) - \vb 1\big]\cdot \vb E\sups{tot}(\vb x)
 \\
-&\equiv^* -\frac{1}{ikZ_0} \mathbb{V}(\vb x) \cdot \vb E\sups{tot}(\vb x)
+&\equiv -\frac{1}{ikZ_0} \mathbb{V}(\vb x) \cdot \vb E\sups{tot}(\vb x)
 \end{align*}
 %====================================================================%
 where $\mathbb{V}\equiv k^2\big[\vb 1 - \vbeps(\vb x)\big]$ is
@@ -635,7 +635,7 @@ $$
 %=================================================
 \subsection*{Overlap Matrix Elements} 
 
-\begin{align*}
+\begin{align*} 
   \inpB{\vb b_\alpha}{\vb b_\beta}
 &=\sum \pm \frac{A_\alpha A_\beta}{9V^2}
   \int_{\mc V} 
@@ -654,6 +654,23 @@ $$
   \cdot \Big[u\vb L_{1\alpha} + v\vb L_{2\alpha} + w\vb L_{3\alpha} 
             + \vb Q_\alpha - \vb Q_\beta\Big]
   \bigg\}
+\\
+&=\sum \pm \frac{2A_\alpha A_\beta}{3V}
+  \bigg\{ \frac{1}{120}
+         \Big|\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}\Big|^2
+         +\frac{1}{24}
+         \Big(\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}\Big)
+          \cdot (\vb Q_\alpha - \vb Q_\beta)
+  \bigg\}
+\intertext{This can be simplified by noting that 
+           $\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}
+           =3(\vb X_{0\alpha} - \vb Q_\alpha)$
+           where $\vb X_{0\alpha}$ is the centroid of 
+           basis function $\vb b_\alpha$:}
+&=\sum \pm \frac{2A_\alpha A_\beta}{3V}
+  \Big[ \frac{3}{40}(\vb X_{0\alpha}-\vb Q_\alpha)^2 
+         +\frac{1}{8}(\vb X_{0\alpha} - \vb Q_\alpha) \cdot (\vb Q_\alpha-\vb Q_\beta)
+  \Big].
 \end{align*}
 
 %=================================================
@@ -664,23 +681,26 @@ $$
 The dipole moment of the current distribution described by
 a single unit-strength SWG basis function is 
 
-$$ \vb p_\alpha 
+\numeq{pAlpha}
+{
+   \vb p_\alpha 
    \equiv 
    \frac{i}{\omega} 
    \underbrace{\int_{\sup \vb b_\alpha} \vb b_\alpha(\vb x) \, d\vb x}
              _{\bmc J_\alpha(\vb x)}
-$$
+}
 %====================================================================%
 The Cartesian components of $\bmc J_\alpha(\vb x)$ may be worked out 
 in closed form:
 %====================================================================%
-\begin{align*}
+\begin{align}
  \mc J_{\alpha i}(\vb x)
 &=2A\int_0^1 \, du \, \int_0^{1-u} \, dv \, \int_0^{1-u-v}  \, dw \,
     (u+v+w) (\vb Q^- - \vb Q^+)_i
-\\
+\nn
 &=\frac{A}{4} (\vb Q^- - \vb Q^+)_i.
-\end{align*}
+\label{mcJAlpha}
+\end{align}
 %====================================================================%
 Similarly, the quadrupole moments are related to the quantity
 \begin{align*}
@@ -910,6 +930,56 @@ transform the second integral in $\mathcal{I}_2$:
  \int_{\partial \mc V_\beta} d\vb x_\beta
  \Big[\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big] h(\vb r).
 \end{align*}
-\end{document}
 
-(x h) = \nabla ( x^2 h ) - x^2 \nabla h
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Diagonal Elements of the $\mathbb{G}$ Matrix}
+
+The diagonal element of the $\mathbb{G}$ matrix is 
+%====================================================================%
+\numeq{DiagonalElement}
+{
+   \exptwob{\vb b_\alpha}{\mathbb{G}}{\vb b_\alpha}
+= \frac{1}{ikZ_0}\int \vb J^*(\vb x) \cdot \vb E(\vb x) \, d\vb x
+}
+%====================================================================%
+where $\vb J(\vb x)=\vb b_\alpha(\vb x)$ is the current distribution
+of a single unit-strength SWG function (note we have $\vb J^*=\vb J$ 
+as the SWG basis is real-valued) and
+%====================================================================%
+$$ \vb E(\vb x) =
+   ikZ_0 \int \mathbb{G}(\vb x, \vb x^\prime) 
+   \vb b_\alpha(\vb x^\prime) d\vb x^\prime
+$$ 
+%====================================================================%
+is the electric field produced by this same current distribution.
+
+Using Poynting's theorem [see, for example, Jackson equation (6.134)],
+we may equate the real part of the RHS of equation 
+(\ref{DiagonalElement}) to the negative of the power radiated 
+to infinity by the localized current distribution $\vb J(\vb x)$:
+%====================================================================%
+\begin{align}
+ -\frac{1}{2}\text{Re }\int \vb J^* \cdot \vb E \, dV 
+&= \text{Re }\oint \vb S \cdot d\vb A 
+\nn
+&\approx \frac{ c^2 Z_0 k^4}{12\pi} |\vb p|^2
+\label{PoyntingTheorem}
+\end{align}
+%====================================================================%
+where on the RHS we have inserted the expression for the total power 
+radiated by a point dipole; we expect the approximation to improve as 
+the size of the basis function shrinks (so that its current distribution
+more closely resembles that of a point dipole). Using equations 
+(\ref{pAlpha}), (\ref{DiagonalElement}), and (\ref{PoyntingTheorem})
+then allows us to derive the following expected relationship
+between the diagonal $\mathbb{G}$-element and the first 
+spatial moment of the SWG basis function:
+%====================================================================%
+\begin{align*}
+ \text{Im } \exptwob{\vb b_\alpha}{\mathbb{G}}{\vb b_\alpha}
+= \frac{k}{6\pi} \Big|\bmc J_\alpha\Big|^2.
+\end{align*}
+
+\end{document}

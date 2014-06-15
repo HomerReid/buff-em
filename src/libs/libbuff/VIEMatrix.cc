@@ -140,10 +140,10 @@ void VInvIntegrand(double *x, double *b, double DivB,
   FB[2] = PreFacB * (x[2] - QB[2]);
 
   cdouble *zI = (cdouble *)I;
-  zI[0] = ( FA[0]*(Y[0][0]*FB[0] + Y[0][1]*FB[1] + Y[0][2]*FB[2])
-           +FA[1]*(Y[1][0]*FB[0] + Y[1][1]*FB[1] + Y[1][2]*FB[2])
-           +FA[2]*(Y[2][0]*FB[0] + Y[2][1]*FB[1] + Y[2][2]*FB[2])
-          ) / (Omega*Omega);
+  zI[0] = -( FA[0]*(Y[0][0]*FB[0] + Y[0][1]*FB[1] + Y[0][2]*FB[2])
+            +FA[1]*(Y[1][0]*FB[0] + Y[1][1]*FB[1] + Y[1][2]*FB[2])
+            +FA[2]*(Y[2][0]*FB[0] + Y[2][1]*FB[1] + Y[2][2]*FB[2])
+           ) / (Omega*Omega);
   
 }
 
@@ -153,7 +153,9 @@ void VInvIntegrand(double *x, double *b, double DivB,
 int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
                         int Indices[7], cdouble Entries[7])
 {
-  int nnz=0;
+  Indices[0]=0.0;
+  Entries[0]=0.0;
+  int NNZ=1;
 
   SWGFace *FA = V->Faces[nfA];
   struct VIIData MyVIIData, *Data=&MyVIIData;
@@ -187,17 +189,20 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
      TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
             2, (double *)&Result, (double *)&Error, 33, 0, 1.0e-4);
 
-     Entries[nnz] = Result;
-     Indices[nnz] = nfB;
-     nnz++;
+     if (nfB==nfA)
+      { 
+        Entries[0] += Result;
+      }
+     else
+      { Entries[NNZ] = Result;
+        Indices[NNZ] = nfB;
+        NNZ++;
+      };
+
    };
 
-  if (FA->iMTet==-1) return nnz; 
-
   /*--------------------------------------------------------------*/
-  /* handle interactions between face #nfA and face #nfB, where   */
-  /* nfB runs over the 3 faces of the negative tetrahedron of nfA */
-  /* that differ from nfA                                         */
+  /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   nt            = FA->iMTet;
   T             = V->Tets[nt];
@@ -206,7 +211,6 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
   for(int ifB=0; ifB<4; ifB++)
    { 
      int nfB = T->FI[ifB];
-     if (nfB==nfA) continue;
      if (nfB >= V->NumInteriorFaces) continue;
 
      SWGFace *FB = V->Faces[nfB];
@@ -223,13 +227,19 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
      TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
             2, (double *)&Result, (double *)&Error, 33, 0, 0);
 
-     Entries[nnz] = Result;
-     Indices[nnz] = nfB;
-     nnz++;
+     if (nfB==nfA)
+      { 
+        Entries[0] += Result;
+      }
+     else
+      { Entries[NNZ] = Result;
+        Indices[NNZ] = nfB;
+        NNZ++;
+      };
 
    }; // for(int ifB=0; ifB<4; ifB++)
 
-  return nnz;
+  return NNZ;
 
 } // routine GetVInverse
 
