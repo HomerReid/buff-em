@@ -70,13 +70,47 @@ void Get1BFFields_SI(SWGVolume *O, int nf, cdouble k, double X[3],
 /***************************************************************/
 /* get 1BF fields using volume-integral method *****************/
 /***************************************************************/
-#if 0
-UserTIntegrand Integrand
-void Get1BFFields_VI(SWGVolume *O, int nf, cdouble k, double X[3],
+typedef struct GFVIData
+ {
+   cdouble Omega;
+   double *XDest;
+
+ } GFVIData;
+
+void GetFields_VIntegrand(double *XSource, double *b, double Divb,
+                          void *UserData, double *I)
+{
+  GFVIData *Data = (GFVIData *)UserData;
+  cdouble Omega = Data->Omega;
+  double *XDest = Data->XDest;
+   
+  cdouble GMuNu[3][3], CMuNu[3][3];
+  CalcGC(XDest, XSource, Omega, 1.0, 1.0, GMuNu, CMuNu, 0, 0);
+
+  cdouble EPreFac = II*Omega*ZVAC;
+  cdouble HPreFac = -II*Omega;
+  cdouble *zI =  (cdouble *)I;
+  zI[0] = EPreFac*(GMuNu[0][0]*b[0] + GMuNu[0][1]*b[1] + GMuNu[0][2]*b[2]);
+  zI[1] = EPreFac*(GMuNu[1][0]*b[0] + GMuNu[1][1]*b[1] + GMuNu[1][2]*b[2]);
+  zI[2] = EPreFac*(GMuNu[2][0]*b[0] + GMuNu[2][1]*b[1] + GMuNu[2][2]*b[2]);
+  zI[3] = HPreFac*(CMuNu[0][0]*b[0] + CMuNu[0][1]*b[1] + CMuNu[0][2]*b[2]);
+  zI[4] = HPreFac*(CMuNu[1][0]*b[0] + CMuNu[1][1]*b[1] + CMuNu[1][2]*b[2]);
+  zI[5] = HPreFac*(CMuNu[2][0]*b[0] + CMuNu[2][1]*b[1] + CMuNu[2][2]*b[2]);
+  
+}
+
+void Get1BFFields_VI(SWGVolume *O, int nf, cdouble Omega, double X[3],
                      cdouble EH[6], int NumPts=0)
 {
+  GFVIData MyData, *Data=&MyData;
+  Data->Omega = Omega;
+  Data->XDest = X;
+
+  double Error[12];
+  BFInt(O, nf, GetFields_VIntegrand, (void *)Data,
+        12, (double *)EH, Error, NumPts, 0, 1.0e-6);
+
 }
-#endif
 
 /***************************************************************/
 /* get 1BF fields using dipole / quadrupole approximation      */
@@ -131,20 +165,17 @@ void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],
 /* get the E and H fields due to a single SWG basis function   */
 /* populated with unit strength                                */
 /***************************************************************/
-void Get1BFFields(SWGVolume *O, int nf, cdouble k, double X[3],
+void Get1BFFields(SWGVolume *O, int nf, cdouble Omega, double X[3],
                   cdouble EH[6])
 {
-  Get1BFFields_DA(O, nf, k, X, EH, 2);
-#if 0
   SWGFace *F = O->Faces[nf];
   double rRel = VecDistance(X, F->Centroid) / F->Radius;
-  if (rRel > 20.0)
-   Get1BFFields_DA(O, nf, k, X, EH, 1);
-  else if (rRel > 10.0)
-   Get1BFFields_DA(O, nf, k, X, EH, 2);
+  if (rRel > 10.0)
+   Get1BFFields_DA(O, nf, Omega, X, EH, 2);
+  else if (rRel>2.0)
+   Get1BFFields_VI(O, nf, Omega, X, EH, 4);
   else
-   Get1BFFields_SI(O, nf, k, X, EH, 20);
-#endif
+   Get1BFFields_VI(O, nf, Omega, X, EH, 16);
 }
 
 /***************************************************************/

@@ -349,4 +349,84 @@ int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 
 }
 
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+int GetOverlapElements(SWGVolume *O, int nfA,
+                       int Indices[7], double Entries[7])
+{ 
+  int NNZ=0;
+  
+  SWGFace *FA  = O->Faces[nfA];
+  double *QP   = O->Vertices + 3*(FA->iQP);
+  double *V1   = O->Vertices + 3*(FA->iV1);
+  double *V2   = O->Vertices + 3*(FA->iV2);
+  double *V3   = O->Vertices + 3*(FA->iV3);
+  double *QM   = O->Vertices + 3*(FA->iQM);
+  SWGTet *PTet = O->Tets[ FA->iPTet ];
+  SWGTet *MTet = O->Tets[ FA->iMTet ];
+
+  // self-overlap term is always the first entry in the output arrays
+  Indices[0] = nfA;
+  Entries[0] = 0.0;
+  NNZ=1;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  for(int SignA = 1; SignA >= -1; SignA-=2)
+   { 
+     SWGTet *T  = (SignA==1) ? PTet : MTet;
+     double *QA = (SignA==1) ? QP : QM;
+
+     double L1[3], L2[3], L3[3], XmQ[3];
+     VecSub(V1, QA, L1);
+     VecSub(V2, QA, L2);
+     VecSub(V3, QA, L3);
+     VecSub(FA->Centroid, QA, XmQ);
+     double XmQ2=VecNorm2(XmQ);
+     double L2Sum=VecNorm2(L1) + VecNorm2(L2) + VecNorm2(L3);
+
+     // diagonal contribution
+     Entries[0] += (FA->Area)*(FA->Area)*(XmQ2/20.0 + L2Sum/180.0) / T->Volume;
+
+     // off-diagonal contributions
+     for(int iF=0; iF<4; iF++)
+      {
+        int nfB = T->FI[iF];
+        if ( nfB == nfA ) continue;
+        if ( nfB >= O->NumInteriorFaces ) continue;
+
+        SWGFace *FB = O->Faces[ nfB ];
+        double SignB, *QB;
+        if ( FB->iPTet == T->Index )
+         { SignB = 1.0;
+           QB = O->Vertices + 3*FB->iQP;
+         }
+        else
+         { SignB=-1.0;
+           QB = O->Vertices + 3*FB->iQM;
+         };
+
+        double PreFac = 2.0*SignA*SignB*(FA->Area)*(FB->Area)
+                       / (3.0*T->Volume);
+        double XmQdDQ=   XmQ[0]*(QA[0]-QB[0])
+                       + XmQ[1]*(QA[1]-QB[1])
+                       + XmQ[2]*(QA[2]-QB[2]);
+
+        Indices[NNZ] = nfB;
+        Entries[NNZ] = PreFac * (  3.0*XmQ2/40.0
+                                  +L2Sum/120.0
+                                  +XmQdDQ/8.0
+                                );
+        NNZ++;
+
+      }; // for(int iF=0; iF<4; iF++)
+
+   }; // for(int SignA = 1; SignA >=-1; SignA-=2)
+
+  return NNZ;
+
+}
+
 } // namespace buff

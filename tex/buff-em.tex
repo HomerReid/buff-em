@@ -596,7 +596,7 @@ Integrals over the support of SWG basis functions take the form
 Consider a tetrahedron with vertices 
 $\{\vb Q, \vb V_1, \vb V_2, \vb V_3.\}$ 
 A general
-integral over this region takes the form
+integral over this region takes the form 
 %====================================================================%
 \begin{align*}
  \int_{\mc P} \mathcal{I}(\vb x, \vb b ) \, d\vb x
@@ -604,7 +604,6 @@ integral over this region takes the form
   \mathcal{I}\Big( \vb x(u,v,w), \vb b(u,v,w) \Big)
 \end{align*}
 %====================================================================%
-where
 %====================================================================%
 \begin{align*}
  \vb x(u,v,w) 
@@ -618,6 +617,10 @@ where
                         +w \vb L_3 
                  \bigg\}
 \end{align*}
+%====================================================================%
+where
+%====================================================================%
+$$ \vb L_i \equiv \vb V_i - \vb Q_i $$
 %====================================================================%
 and the Jacobian of the transformation is 
 %====================================================================%
@@ -657,7 +660,13 @@ $$
 \\
 &=\sum \pm \frac{2A_\alpha A_\beta}{3V}
   \bigg\{ \frac{1}{120}
-         \Big|\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}\Big|^2
+          \Big|\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}
+          \Big|^2
+         +\frac{1}{120}\Big( |\vb L_{1\alpha}|^2 
+                            +|\vb L_{2\alpha}|^2 
+                            +|\vb L_{3\alpha}|^2 \Big)
+\\
+&\hspace{2in}
          +\frac{1}{24}
          \Big(\vb L_{1\alpha} + \vb L_{2\alpha} + \vb L_{3\alpha}\Big)
           \cdot (\vb Q_\alpha - \vb Q_\beta)
@@ -669,7 +678,13 @@ $$
            basis function $\vb b_\alpha$:}
 &=\sum \pm \frac{2A_\alpha A_\beta}{3V}
   \Big[ \frac{3}{40}(\vb X_{0\alpha}-\vb Q_\alpha)^2 
-         +\frac{1}{8}(\vb X_{0\alpha} - \vb Q_\alpha) \cdot (\vb Q_\alpha-\vb Q_\beta)
+        +\frac{1}{120}\Big( |\vb L_{1\alpha}|^2 
+                           +|\vb L_{2\alpha}|^2 
+                           +|\vb L_{3\alpha}|^2 \Big)
+\\
+&\hspace{1.5in}
+         +\frac{1}{8}(\vb X_{0\alpha} - \vb Q_\alpha) 
+               \cdot (\vb Q_\alpha-\vb Q_\beta)
   \Big].
 \end{align*}
 

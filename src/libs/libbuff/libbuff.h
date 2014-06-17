@@ -236,11 +236,15 @@ class SWGGeometry
 /***************************************************************/
 SWGTet *NewSWGTet(double *Vertices, int iV1, int iV2, int iV3, int iV4);
 
+int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+               double *rRel);
+
+int GetOverlapElements(SWGVolume *O, int nfA,
+                       int Indices[7], double Entries[7]);
+
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
                   bool NeedQ=true);
 
-int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
-               double *rRel);
 
 /***************************************************************/
 /* routines for integrating over tetrahedra and faces          */
