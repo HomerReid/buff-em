@@ -54,17 +54,108 @@ void CalcGC(double R1[3], double R2[3],
 
                }
 
-cdouble ExpRel(cdouble x, int n);
 namespace buff {
+
+void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3);
 
 #define II cdouble(0,1)
 
 /***************************************************************/
 /* get 1BF fields using surface-integral method ****************/
 /***************************************************************/
+typedef struct G1BFData
+ {
+   cdouble k;
+   double *XEval;
+ } G1BFData;
+
+void G1BFSIIntegrand(double *XSource, double *b, double Divb, double *nHat,
+                     void *UserData, double *I)
+{ 
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  G1BFData *Data = (G1BFData *)UserData;
+  cdouble k     = Data->k;
+  double *XEval = Data->XEval;
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  double R[3];
+  R[0] = XEval[0] - XSource[0];
+  R[1] = XEval[1] - XSource[1];
+  R[2] = XEval[2] - XSource[2];
+  double r2 = R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
+  double r = sqrt(r2);
+
+  /*--------------------------------------------------------------*/
+  /*- i think the following calculation could probably be         */
+  /*- accelerated -- in particular, do I really need to be making */
+  /*- two separate calls to ExpRelBar()?                          */
+  /*--------------------------------------------------------------*/
+  cdouble Xi  = II*k*r; 
+  cdouble Xi2 = Xi*Xi;
+  cdouble Xi4 = Xi2*Xi2;
+  cdouble ER2, ER3;
+  ExpRel23(Xi, &ER2, &ER3);
+  cdouble h = ER2 / (4.0*M_PI*Xi);
+  ExpRel23(-Xi, &ER2, &ER3);
+  cdouble ExpFac = exp(II*k*r) / (4.0*M_PI*Xi);
+  cdouble q = ExpFac * ER2 / Xi2;
+  cdouble t = -1.0 * ExpFac * (ER2 + 2.0*ER3) / Xi4;
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  double rdnHat = R[0]*nHat[0] + R[1]*nHat[1] + R[2]*nHat[2];
+
+  cdouble k2     = k*k;
+  double PreFac  = ZVAC*Divb/3.0;
+  cdouble Coeff1 = ZVAC * k2 * rdnHat * q;
+  cdouble Coeff2 = PreFac * ( 3.0*q - h ); 
+  cdouble Coeff3 = PreFac * 3.0*k2*rdnHat*t;
+
+  cdouble *zI = (cdouble *)I;
+  zI[0] = Coeff1*b[0] + Coeff2*nHat[0] - Coeff3*R[0];
+  zI[1] = Coeff1*b[1] + Coeff2*nHat[1] - Coeff3*R[1];
+  zI[2] = Coeff1*b[2] + Coeff2*nHat[2] - Coeff3*R[2];
+  zI[3] = 0.0;
+  zI[4] = 0.0;
+  zI[5] = 0.0;
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 void Get1BFFields_SI(SWGVolume *O, int nf, cdouble k, double X[3],
                      cdouble EH[6], int Order=0)
 {
+  SWGFace *F=O->Faces[nf];
+
+  G1BFData MyData, *Data=&MyData;
+  Data->k = k;
+  Data->XEval = X;
+  
+  EH[0]=EH[1]=EH[2]=EH[3]=EH[4]=EH[5]=0.0;
+  cdouble pResult[6], pError[6];
+  for(int Sign=1; Sign>=-1; Sign-=2)
+   for(int iF=0; iF<4; iF++)
+    { 
+      int nT   = (Sign==1) ? F->iPTet  : F->iMTet;
+      int iFBF = (Sign==1) ? F->PIndex : F->MIndex;
+
+      FaceInt(O, nT, iF, iFBF, Sign, G1BFSIIntegrand, (void *)Data,
+              12, (double *)pResult, (double *)pError, Order, 0, 1.0e-4);
+      EH[0] += pResult[0];
+      EH[1] += pResult[1];
+      EH[2] += pResult[2];
+      EH[3] += pResult[3];
+      EH[4] += pResult[4];
+      EH[5] += pResult[5];
+    };
+
 }
 
 /***************************************************************/
@@ -96,6 +187,8 @@ void GetFields_VIntegrand(double *XSource, double *b, double Divb,
   zI[3] = HPreFac*(CMuNu[0][0]*b[0] + CMuNu[0][1]*b[1] + CMuNu[0][2]*b[2]);
   zI[4] = HPreFac*(CMuNu[1][0]*b[0] + CMuNu[1][1]*b[1] + CMuNu[1][2]*b[2]);
   zI[5] = HPreFac*(CMuNu[2][0]*b[0] + CMuNu[2][1]*b[1] + CMuNu[2][2]*b[2]);
+
+  CalcGC(XDest, XSource, Omega, 1.0, 1.0, GMuNu, CMuNu, 0, 0);
   
 }
 
@@ -170,12 +263,12 @@ void Get1BFFields(SWGVolume *O, int nf, cdouble Omega, double X[3],
 {
   SWGFace *F = O->Faces[nf];
   double rRel = VecDistance(X, F->Centroid) / F->Radius;
-  if (rRel > 10.0)
-   Get1BFFields_DA(O, nf, Omega, X, EH, 2);
-  else if (rRel>2.0)
+  if (rRel>10.0)
    Get1BFFields_VI(O, nf, Omega, X, EH, 4);
-  else
+  else if (rRel>1.0)
    Get1BFFields_VI(O, nf, Omega, X, EH, 16);
+  else
+   Get1BFFields_SI(O, nf, Omega, X, EH, 20);
 }
 
 /***************************************************************/
@@ -281,4 +374,4 @@ void SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
   GetFields(IF, J, Omega, &XMatrix, &FMatrix);
 } 
 
-} // namespace scuff
+} // namespace buff

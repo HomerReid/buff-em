@@ -196,7 +196,7 @@ class SWGGeometry
                                 const char *Tag, ...);
 
    // scattering API
-   HMatrix *AllocateVIEMatrix();
+   HMatrix *AllocateVIEMatrix(bool PureImagFreq=false);
    HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M);
    HVector *AllocateRHSVector();
    HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V);
@@ -205,8 +205,11 @@ class SWGGeometry
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
 
    // compute individual matrix blocks
-   HMatrix *AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                                   HMatrix *M, int RowOffset=0, int ColOffset=0);
+   void AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
+                               HMatrix *M, 
+                               int RowOffset=0, int ColOffset=0);
+   void AssembleUBlock(int noa, int nob, cdouble Omega, HMatrix *M);
+   void AssembleTBlock(int no, cdouble Omega, HMatrix *M);
 
    // miscellaneous routines
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);

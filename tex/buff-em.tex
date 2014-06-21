@@ -158,13 +158,17 @@ $\vbeps(\vb x)\ne \vb 1$, we can invert this equation to read
 \label{ContinuousVIE}
 \end{align}
 where
-$$
+\numeq{TOperator}
+{
   \bbTInv(\vb x, \vb x^\prime) 
   =
   \bbVInv(\vb x) \delta(\vb x-\vb x^\prime)+ \mathbb{G}(\vb x,\vb x^\prime).
-$$
+}
 (The symbol $\bbTInv$ is pronounced ``tee-inverse'' or ``eet''.)
 
+%=================================================
+%=================================================
+%=================================================
 \subsection*{Discretized VIE formulation}
 
 Now let $\vb b_\alpha$ be some convenient set of $N$ vector-valued 
@@ -193,6 +197,89 @@ $\vbTInv$ and $\vb v$ are
  \qquad
  v_{\alpha}=-\frac{1}{ikZ_0} \inpB{\vb E\sups{inc}}{\vb b_\beta}.
 }
+%====================================================================%
+
+\subsubsection*{VIE matrix for geometries containing multiple bodies}
+
+Equation (\ref{VIESystem}) applies to the case in which we 
+have only a single material body. For a geometry involving
+$N$ separate bodies, this is generalized to read
+%====================================================================%
+\numeq{VIESystem2}
+{
+ \underbrace{
+ \left(\begin{array}{cccc}
+ \vbTInv_1  & \vb U_{12}  & \cdots & \vb U_{1N} \\
+ \vb U_{21} & \vbTInv_{2} & \cdots & \vb U_{2N} \\ 
+ \vdots     & \vdots      & \ddots & \vdots     \\ 
+ \vb U_{N1} & \vb U_{N2}  & \cdots & \vbTInv_N 
+ \end{array}\right)
+            }_{\vb M}
+%--------------------------------------------------------------------%
+\left(\begin{array}{c} 
+ \vphantom{\vbTInv_1} \vb j_1 \\
+ \vphantom{\vbTInv_1} \vb j_2 \\
+ \vphantom{\ddots}    \vdots  \\
+ \vphantom{\vbTInv_1} \vb j_N \\
+\end{array}\right)
+%--------------------------------------------------------------------%
+ =
+\left(\begin{array}{c} 
+ \vphantom{\vbTInv_1} \vb v_1 \\
+ \vphantom{\vbTInv_1} \vb v_2 \\
+ \vphantom{\ddots}    \vdots  \\
+ \vphantom{\vbTInv_1} \vb v_N \\
+\end{array}\right).
+}
+%====================================================================%
+where $\vb M$ is the VIE matrix for the composite system.
+Here the diagonal blocks involve just the matrix elements
+of the $\mathbb{T}$-operator [defined by equation (\ref{TOperator})
+with the $\bbVInv$ operator appropriate for the $n$th body]
+while the off-diagonal blocks involve only the matrix elements of 
+the $\mathbb{G}$ operator. 
+
+
+\subsection*{Symmetries of the VIE matrix}
+
+\subsubsection*{Symmetries of the $\bbVInv$ matrix} 
+
+%====================================================================%
+\begin{align}
+ \exptwoB{\vb b_\alpha}{\bbVInv}{\vb b_\beta}
+&=\frac{1}{k^2} 
+   \int \, d\vb x \,
+   b_{\alpha i}(\vb x_\alpha) 
+   \Big[\vb {1} - \vbeps(\vb x)\Big]^{-1}_{ij}
+   b_{\beta j}(\vb x_\beta)
+\nn
+&=\exptwoB{\vb b_\beta}{\bbVInv}{\vb b_\alpha}
+\label{VInvSymmetric}
+\intertext{\textbf{if} we have that}
+\vbeps &= \vbeps^T \qquad (\textit{not } \vbeps=\vbeps^\dagger!).
+\label{EpsSymmetric}
+\end{align}
+
+\subsubsection*{Symmetries of the $\mathbb{G}$ matrix} 
+%====================================================================%
+\begin{align*}
+ \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
+&=\int \, d\vb x_\alpha \, d\vb x_\beta \,
+   b_{\alpha i}(\vb x_\alpha) 
+   \mathbb{G}_{ij}(\vb x_\alpha-\vb x_\beta)
+   b_{\beta j}(\vb x_\beta)
+\\
+\intertext{Now invoke the relation 
+           $\mathbb{G}_{ij}(\vb r) = \mathbb{G}_{ji}(-\vb r):$
+          }
+&=\int \, d\vb x_\alpha \, d\vb x_\beta \,
+   b_{\beta j}(\vb x_\beta)
+   \mathbb{G}_{ji}(\vb x_\beta - \vb x_\alpha)
+   b_{\alpha i}(\vb x_\alpha) 
+\\
+&=
+ \exptwoB{\vb b_\beta}{\mathbb{G}}{\vb b_\alpha}
+\end{align*}
 %====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -326,68 +413,6 @@ functions differ only in their normalization).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{SWG Matrix Elements of the $\mathbb{T}^{-1}$ Operator}
-
-The basic observation underlying our approach is that,
-while the $\mathbb{T}$ operator is highly unwieldy in position space,
-the \textit{inverse} $\mathbb{T}$ operator is quite easy to 
-describe in position space---in fact, it is just equal to the 
-$\mathbb{G}$ operator plus a correction which is \textit{diagonal}
-in the position-space basis. 
-
-What this means is that, numerically, it's easy to compute
-matrix elements of the \textit{inverse} $\mathbb{T}$ operator.
-Our approach is to compute the matrix of this operator in 
-a basis of SWG functions,
-then simply \textit{invert} this matrix numerically to obtain
-the actual $\mathbb{T}$ matrix.
-
-\subsection{Matrix Elements of the Inverse $\mathbb{T}$ Operator}
-
-For nonmagnetic materials $(\mu=1)$, the inverse $\mathbb{T}$ operator 
-may be expressed in position space in the form
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\numeq{TInverseRealSpace}
-{\mathbb{T}^{-1}(\omega; \vb x, \vb x^\prime)
-   =\frac{c^2 }{\omega^2} 
-    \underbrace{
-    \Big[1-\vbeps(\omega, \vb x)\Big]^{-1}
-               }_{\vb Y(\omega,\vb x)}
-    \delta(\vb x-\vb x^\prime)
-    + \mathbb{G}_0(\omega; \vb x, \vb x^\prime)
-}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where $\vbeps$ is the frequency- and position-dependent relative
-dielectric permittivity tensor.
-
-Using (\ref{TInverseRealSpace}), the matrix elements of $\mathbb{T}^{-1}$
-take the form
-%====================================================================%
-\begin{align}
-  \exptwoB{\vb b_\alpha}{\mathbb{T}^{-1}}{\vb b_\beta}
-&=
-  \frac{c^2}{\omega^2}
-  \int \vb b_\alpha(\vb x) \cdot \vb Y(\omega,\vb x) \cdot \vb b_\beta(\vb x)
-  \, d\vb x
-  +
-  \exptwoB{\vb b_\alpha}{\mathbb{G}}{\vb b_\beta}
-\label{TInvME}
-\end{align}
-%====================================================================%
-where $\vb Y$ at each point is computed as a $3\times 3$ matrix 
-inverse:
-%====================================================================%
-$$\vb Y(\omega,\vb x) \equiv \Big[1 - \epsilon(\omega,\vb x)\Big]^{-1}.$$
-%====================================================================%
-The first integral in (\ref{TInvME}) extends over the common support of 
-basis functions $\vb b_\alpha,\vb b_\beta$. For the SWG basis, each 
-function shares support with only a small number (typically 7) of other 
-functions, so this term amounts to a sparse update to the second term in 
-(\ref{TInverseRealSpace}), which is dense.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 \section{Fields of Individual SWG Basis Functions}
 
@@ -442,47 +467,119 @@ Note the minus sign in the second term.
 
 \subsection*{Nearby case: Surface-integral formulation}
 
+The vector and scalar potentials due to a current distribution
+$\vb J$ are 
 %====================================================================%
 \begin{align*}
- \mathbb{E}_{\alpha}(\vb x)
-&=   ikZ_0 \mathbb{A}_{\alpha}(\vb x)
-  - \nabla \mathbb{P}_\alpha(\vb x)
+ \vb A(\vb x) 
+&= 
+ \mu_0 \int_{\mc V} \vb J(\vb x^\prime) G_0(\vb r) dV
+\\
+ \Phi(\vb x)
+&= 
+ \frac{1}{\epsilon_0} \int_{\mc V} \rho(\vb x^\prime) G_0(\vb r) dV
+\\
+&= 
+ \frac{1}{i\omega \epsilon_0} 
+ \int_{\mc V} \Big[\nabla \cdot \vb J\Big] G_0(\vb r) dV
 \end{align*}
 %====================================================================%
+where in the last line we use $\rho = \frac{1}{i\omega}\nabla \cdot \vb J$
+and 
+$$ G_0(\vb r) = \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
+   =\frac{1}{ik}\nabla^2 h(\vb r),
+   \qquad 
+   \vb 
+   r=\vb x-\vb x^\prime.
+$$
+%====================================================================%
+The $\vb E$-field is 
+%====================================================================%
+$$ \vb E = i\omega\vb A - \nabla \Phi.$$
+%====================================================================%
+Now putting $\vb J=\vb b_\alpha(\vb x)$ and using $\omega \mu_0 =k Z_0$
+and $\omega\epsilon_0=k/Z_0$ we find, for the $\vb E$-field of a
+single SWG function
+%====================================================================%
+\begin{align}
+ \mathbb{E}_{\alpha}(\vb x)
+&= ikZ_0\left[ \int \vb b_\alpha(\vb x^\prime) G_0(\vb r) d V
+              +\frac{1}{k^2}\nabla 
+              \int \Big[\nabla \cdot \vb b_\alpha\Big]
+                    G_0(\vb r) d\vb x^\prime
+        \right].
+\label{EAlpha}
+\end{align}
+%====================================================================%
+First integral:
+%====================================================================%
 \begin{align*}
-\mathbb{A}_{\alpha}(\vb x)
-&= \int_{\mc V} \vb b_\alpha(\vb x^\prime) \frac{e^{ikr}}{4\pi r}\, d\vb x^\prime
-\\
-&= -\frac{A}{3k^2V} \int_{\mc V} (\vb x^\prime - \vb Q) \Big[\nabla_{\vb x^\prime}^2 h(\vb r)\Big] 
-  d\vb x^\prime
+\int_{\mc V} 
+ \vb b_\alpha(\vb x^\prime) G_0(\vb r) dV
+&=\sum \pm \frac{A}{3ik V} 
+  \int_{\mc V} (\vb x^\prime - \vb Q) 
+               \Big[\nabla_{\vb x^\prime}^2 h(\vb r)\Big]
+  dV
 \intertext{Use (\ref{GreensTheorem}a):}
-&= -\frac{A}{3k^2 V} 
+&= \sum \pm \frac{A}{3ik V} 
     \int_{\partial \mc V} \Big[ (\vb x^\prime - \vb Q)
                        \big[\vbhat{n} \cdot \nabla_{\vb x^\prime} h(\vb r)\big]
                        - \vbhat{n} h(\vb r) 
-                 \Big] \, d\vb x^\prime
-\\[5pt]
-\nabla_{\vb x}
-\mathbb{P}_\alpha(\vb x)
-&= \frac{Z_0}{ik} \nabla_{\vb x}
-   \int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
-                g(\vb r) \, d\vb x^\prime
- \qquad \left[ g(\vb r) \equiv \frac{e^{ik|\vb r|}}{4\pi |\vb r|}\right]
-\\
-&= -\frac{A Z_0}{k^2 V}
-    \int_{\mc V} \nabla_{\vb x} \, g(\vb r) \, d\vb x^\prime
-\\
-&= +\frac{A Z_0}{k^2 V}
-    \int_{\mc V} \nabla_{\vb x^\prime} \, g(\vb r) \, d\vb x^\prime
-\\
-&= +\frac{A Z_0}{k^2 V}
-    \int_{\partial \mc V} g(\vb r) \, \vbhat{n} \, d\vb x^\prime
+                 \Big] \, dA
+\intertext{Use $\nabla_{\vb x^\prime} h(\vb r) = +k^2 q(\vb r)\,\vb r$:}
+&=\sum \pm \frac{A}{3ik V}
+    \int_{\partial \mc V} 
+    \Big[ (\vb x^\prime - \vb Q)
+          k^2 (\vb{r} \cdot \vbhat{n}) q(\vb r)
+                        - \vbhat{n} h(\vb r) 
+    \Big] \, dA
 \end{align*}
-Putting it all together, 
-$$ 
-\mathbb{E}_{\alpha}
-= \int_{\partial \mc V}
-$$ 
+%====================================================================%
+Second integral:
+%====================================================================%
+\begin{align*}
+\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
+             G_0(\vb r) \, dV
+&=\sum \pm \frac{A}{ik V} 
+   \int_{\mc V} \nabla_{\vb x^\prime}^2 h(\vb r) \, dV
+\\
+&=\sum \pm \frac{A}{ik V} 
+   \int_{\partial \mc V} 
+   \nabla_{\vb x \prime} h(\vb r) \cdot \vbhat{n} 
+   \, dA
+\\
+&=-ik\sum \pm \frac{A}{V}
+   \int_{\partial \mc V} q(\vb r) (\vb r\cdot \vbhat{n})
+   \, dA
+\end{align*}
+%====================================================================%
+The quantity that enters (\ref{EAlpha}) is 
+%====================================================================%
+\begin{align*}
+\frac{1}{k^2} \nabla 
+\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
+             G_0(\vb r) \, dV
+&=\sum \pm \frac{A}{ikV}
+  \int_{\partial \mc V}
+  \Big[ q(\vb r)\vbhat{n} - k^2 (\vb r\cdot \vbhat{n})t(\vb r) \vb r\Big]
+  dA
+\end{align*}
+%====================================================================%
+Putting it all together, the surface integral for the $\vb E$ field
+of an individual SWG function is 
+%====================================================================%
+\begin{align}
+ \mathbb{E}_{\alpha}(\vb x)
+&=Z_0 \sum \pm \frac{A}{3V} \int_{\partial \mc V}
+   \Bigg\{ k^2 (\vb r \cdot \vbhat{n}) q(\vb r) (\vb x^\prime - \vb Q)
+          +\big[3q(\vb r) - h(\vb r)\big ]\vbhat{n} 
+\nn
+&\hspace{2in}
+          -3k^2(\vb r \cdot \vbhat{n}) t(\vb r)\vb r
+   \Bigg\}dA.
+\end{align}
+%====================================================================%
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -761,35 +858,37 @@ Similarly, the quadrupole moments are related to the quantity
 Begin by introducing the function
 %====================================================================%
 \begin{align}
- h(\vbxi) &\equiv \frac{e^{|\vbxi|} - 1 - |\vbxi|}{4\pi |\vbxi|}
+ h(r) &\equiv \frac{e^{ikr} - 1 - ikr}{4\pi ikr}
 \intertext{with gradient}
- \nabla_{\vbxi } h &= \frac{1+\big(|\xi|-1\big) e^{\vbxi}}{4\pi \xi^3}
+ \nabla_{\vb r} h 
+ &= \frac{1+e^{ikr}(-1+ikr)}{4ik\pi r^3} \vb {r}
 \intertext{and Laplacian}
- \nabla_{\vbxi} \cdot \nabla_{\vbxi}h &= 
- \frac{e^{|\vbxi|}}{{4\pi|\vbxi|}}.
+ \nabla_{\vb r}^2 h &= 
+ ik \cdot \frac{e^{ikr}}{4\pi r}.
 \label{DelDelh}
 \end{align}
+It is convenient to write the gradient of $h$ in the form
 %====================================================================%
-Before proceeding it is useful to note the following
-alternative form of (\ref{DelDelh}): 
-If 
-$$\vbxi=\alpha(\vb x-\vb x^\prime)=\alpha \vb r$$
-%====================================================================%
-$$ \nabla_{\vbxi} 
-   =  \frac{1}{\alpha}\nabla_{\vb x} 
-   = -\frac{1}{\alpha}\nabla_{\vb x^\prime}
-$$
-%====================================================================%
-and hence
-\begin{subequations}
-\begin{align}
- \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
- &=-\frac{1}{k^2} \nabla^2_{\vb x} h(\vb r) 
+\begin{align*}
+ \nabla_{\vb r} h 
+ = -k^2 q(r) \, \vb r, \, 
+   \qquad q(r)&\equiv\frac{1+e^{ikr}(-1+ikr)}{4\pi(ikr)^3}.
 \\
- &=\frac{1}{k^2} \nabla_{\vb x} \nabla_{\vb x^\prime}  h(\vb r).
+              &\equiv\frac{e^{ikr}}{4\pi(ikr)^3}\cdot \texttt{ExpRelBar}(-ikr,2)
+\end{align*}
+and to write the gradient of $q$ in the form
+%====================================================================%
+\begin{align}
+ \nabla_{\vb r} q
+ = -k^2 t(r) \, \vb r, \,
+   \qquad t(r)&\equiv\frac{-3+e^{ikr}(3-3ikr+(ikr)^2)}{4\pi(ikr)^5}.
+\\
+              &\equiv-\frac{e^{ikr}}{4\pi(ikr)^5}
+               \Big\{     \texttt{ExpRelBar}(-ikr,2) 
+                       + 2\texttt{ExpRelBar}(-ikr,3)
+               \Big\}.
 \end{align}
-\label{gNNh}
-\end{subequations}
+%====================================================================%
 Also useful is
 $$ \frac{e^{ik|\vb r|}}{4\pi|\vb r|}
    =\frac{1}{4\pi i k} \nabla_{\vb r} \cdot \vb F(\vb r),

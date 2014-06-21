@@ -60,17 +60,22 @@ namespace buff {
 #define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
 void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3)
 {
-  cdouble Term2=x*x/2.0, Term=Term2;
-
-  cdouble Sum=0.0;
-  for(int m=3; m<100; m++)
-   { Term*=x/((double)m);
-     Sum+=Term;
-     if ( norm(Term) < EXPRELTOL2*norm(Sum) )
-      break;
+  if ( abs(x) >= 0.1 )
+   { *ExpRel2 = exp(x) - 1.0 - x;
+     *ExpRel3 = *ExpRel2 - 0.5*x*x;
+   }
+  else
+   { 
+     cdouble Term2=x*x/2.0, Term=Term2, Sum=0.0;
+     for(int m=3; m<100; m++)
+      { Term*=x/((double)m);
+        Sum+=Term;
+        if ( norm(Term) < EXPRELTOL2*norm(Sum) )
+         break;
+      };
+     *ExpRel3=Sum;
+     *ExpRel2=Sum + Term2;
    };
-  *ExpRel3=Sum;
-  *ExpRel2=Sum + Term2;
 } 
 
 /***************************************************************/
@@ -507,8 +512,8 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                                             HMatrix *M, int RowOffset, int ColOffset)
+void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
+                                         HMatrix *M, int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -560,8 +565,25 @@ HMatrix *SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void SWGGeometry::AssembleUBlock(int noa, int nob, cdouble Omega, HMatrix *U)
+{ AssembleVIEMatrixBlock(noa, nob, Omega, U, 0, 0); }
+
+void SWGGeometry::AssembleTBlock(int no, cdouble Omega, HMatrix *T)
+{ AssembleVIEMatrixBlock(no, no, Omega, T, 0, 0); }
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 {
+  if ( M && ( (M->NR!=TotalBFs) || (M->NR != M->NC) ) )
+   { Warn("wrong-size M-matrix passed to AssembleVIEMatrix (reallocating...)");
+     delete M;
+     M=0;
+   };
+  if (!M)
+   M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
+
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     AssembleVIEMatrixBlock(noa, nob, Omega, M, 
@@ -569,16 +591,21 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
-    M->SetEntry(nr, nc, conj(M->GetEntry(nc,nr)));
+    M->SetEntry(nr, nc, M->GetEntry(nc,nr));
+
+  return M;
 
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::AllocateVIEMatrix()
+HMatrix *SWGGeometry::AllocateVIEMatrix(bool PureImagFreq)
 {
-  return new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
+  if (PureImagFreq)
+   return new HMatrix(TotalBFs, TotalBFs, LHM_REAL);
+  else
+   return new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 }
 
 } // namespace buff
