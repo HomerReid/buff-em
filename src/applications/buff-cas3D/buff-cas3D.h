@@ -55,7 +55,7 @@ typedef struct BC3Data
    SWGGeometry *G;
 
    int N, N1;
-   HMatrix **TInvBlocks, **UBlocks, **dUBlocks, *M, *dM;
+   HMatrix **TInvBlocks, **UBlocks, ***dUBlocks, *M, *dM;
    HVector *MInfLUDiagonal;
    int *ipiv;
 

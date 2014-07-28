@@ -63,7 +63,7 @@ double GetLNDetMInvMInf(BC3Data *BC3D)
   /*--------------------------------------------------------------*/
   // paraphrasing the physicists of the 1930s, 'just because
   // something is infinite doesn't mean that it's zero.' and yet...
-  if (!isfinite(LNDet))
+  if (!IsFinite(LNDet))
    LNDet=0.0;
   return -LNDet/(2.0*M_PI);
 
@@ -73,16 +73,15 @@ double GetLNDetMInvMInf(BC3Data *BC3D)
 /* compute \trace \{ M^{-1} dMdAlpha\},                        */
 /* where Alpha=x, y, z                                         */
 /***************************************************************/
-#if 0
 double GetTraceMInvdM(BC3Data *BC3D, char XYZT)
 { 
   /***************************************************************/
   /* unpack fields from workspace structure **********************/
   /***************************************************************/
-  SWGGeometry *G     = BC3D->G;
-  HMatrix *M         = BC3D->M;
-  HMatrix *dM        = BC3D->dM;
-  HMatrix **dUBlocks = BC3D->dUBlocks;
+  SWGGeometry *G      = BC3D->G;
+  HMatrix *M          = BC3D->M;
+  HMatrix *dM         = BC3D->dM;
+  HMatrix ***dUBlocks = BC3D->dUBlocks;
 
   int Mu;
   switch(XYZT)
@@ -104,8 +103,8 @@ double GetTraceMInvdM(BC3Data *BC3D, char XYZT)
   /* then sum the diagonals of the upper matrix block            */
   /***************************************************************/
   dM->Zero();
-  for(int ns=1; ns<G->NumObjects; no++)
-   dM->InsertBlockTranspose(dUBlocks[ 6*(ns-1) + Mu ], G->BFIndexOffset[ns], 0);
+  for(int nop=1; nop<G->NumObjects; nop++)
+   dM->InsertBlockTranspose(dUBlocks[nop][Mu], G->BFIndexOffset[nop], 0);
 
   M->LUSolve(dM);
 
@@ -116,12 +115,11 @@ double GetTraceMInvdM(BC3Data *BC3D, char XYZT)
 
   // paraphrasing the physicists of the 1930s, 'just because
   // something is infinite doesn't mean that it's zero.' and yet...
-  if (!isfinite(Trace))
+  if (!IsFinite(Trace))
    Trace=0.0;
 
   return -Trace/(2.0*M_PI);
 } 
-#endif
 
 
 /***************************************************************/
@@ -225,7 +223,7 @@ void GetXiIntegrand(BC3Data *BC3D, double Xi, double *EFT)
       };
 
      Log("Assembling TInv%i at Xi=%e...",no+1,Xi);
-     AssembleTInvMatrix(G->Objects[no], Omega, BC3D->TInvBlocks[no]);
+     G->AssembleTInvBlock(no, Omega, BC3D->TInvBlocks[no]);
 
    }; // for(no=0; no<G->NumObjects; no++)
 
@@ -318,13 +316,13 @@ void GetXiIntegrand(BC3Data *BC3D, double Xi, double *EFT)
      /******************************************************************/
      Log("Applying transform %s...",Tag);
      G->Transform( BC3D->GTCList[nt] );
-/*
+#if 0
      for(int no=0; no<G->NumObjects; no++)
       if (G->ObjectMoved[no]) ObjectNeverMoved[no]=false;
-*/
+#endif
 
      /***************************************************************/
-     /* assemble U_{a,b} blocks and dUdXYZT_{0,b} blocks            */
+     /* assemble U_{a,b} blocks and dU{0,b} blocks                  */
      /***************************************************************/
      for(int nb=0, no=0; no<G->NumObjects; no++)
       for(int nop=no+1; nop<G->NumObjects; nop++, nb++)
@@ -336,8 +334,8 @@ void GetXiIntegrand(BC3Data *BC3D, double Xi, double *EFT)
           continue;
 
          Log(" Assembling U(%i,%i)",no,nop);
-         AssembleGMatrix(G->Objects[no], G->Objects[nop],
-                         Omega, BC3D->UBlocks[no]);
+         G->AssembleUBlock(no, nop, Omega, BC3D->UBlocks[nb],
+                           no==0 ? BC3D->dUBlocks[nop] : 0);
 
        };
 
@@ -347,7 +345,6 @@ void GetXiIntegrand(BC3Data *BC3D, double Xi, double *EFT)
      Factorize(BC3D);
      if ( BC3D->WhichQuantities & QUANTITY_ENERGY )
       EFT[ntnq++]=GetLNDetMInvMInf(BC3D);
-#if 0
      if ( BC3D->WhichQuantities & QUANTITY_XFORCE )
       EFT[ntnq++]=GetTraceMInvdM(BC3D,'X');
      if ( BC3D->WhichQuantities & QUANTITY_YFORCE )
@@ -360,7 +357,6 @@ void GetXiIntegrand(BC3Data *BC3D, double Xi, double *EFT)
       EFT[ntnq++]=GetTraceMInvdM(BC3D,'2');
      if ( BC3D->WhichQuantities & QUANTITY_TORQUE3 )
       EFT[ntnq++]=GetTraceMInvdM(BC3D,'3');
-#endif
 
      /***************************************************************/
      /***************************************************************/

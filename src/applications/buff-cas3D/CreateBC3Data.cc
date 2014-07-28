@@ -93,7 +93,8 @@ BC3Data *CreateBC3Data(SWGGeometry *G, char *TransFile,
   /*-                      nb==N   <--> (0,N) block               */
   /*-                      nb==N+1 <--> (1,2) block               */
   /*-                     etc.                                    */
-  /*- dUBlocks[6*nb+Mu] = Mu derivative of nbth above-diagonal blk*/
+  /*-                                                             */
+  /*- dUBlocks[nop][Mu] = Mu derivative of (0,nop) block          */
   /*-                     where Mu=0,1,2, for x,y,z-displacement  */
   /*-                           Mu=3,4,5, for axis 1,2,3 rotation */
   /*--------------------------------------------------------------*/
@@ -118,25 +119,39 @@ BC3Data *CreateBC3Data(SWGGeometry *G, char *TransFile,
   // etc.                                         
   int NumBlocks   = NO*(NO-1)/2; // number of above-diagonal blocks 
   BC3D->UBlocks   = (HMatrix **)mallocEC(   NumBlocks * sizeof(HMatrix *));
-  BC3D->dUBlocks  = (HMatrix **)mallocEC( 6*NumBlocks * sizeof(HMatrix *));
+
+  // BC3D->dUBlocks[nop][Mu] = Mu derivative of (0,nop) block  */
+  /*- where Mu=0,1,2, for x,y,z-displacement                   */
+  /*-       Mu=3,4,5, for axis 1,2,3 rotation                  */
+  BC3D->dUBlocks
+   = (HMatrix ***) mallocEC( G->NumObjects * sizeof(HMatrix **) );
+  BC3D->dUBlocks[0] = 0;
+  for(int nop=1; nop<G->NumObjects; nop++)
+   BC3D->dUBlocks[0] = (HMatrix **)mallocEC( 6*sizeof(HMatrix *) );
 
   for(int nb=0, no=0; no<NO; no++)
    for(int nop=no+1; nop<NO; nop++, nb++)
-    { int NBF=G->Objects[no]->NumInteriorFaces;
+    { 
+      int NBF=G->Objects[no]->NumInteriorFaces;
       int NBFp=G->Objects[nop]->NumInteriorFaces;
+
       BC3D->UBlocks[nb] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_XFORCE)
-       BC3D->dUBlocks[6*nb+0] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_YFORCE)
-       BC3D->dUBlocks[6*nb+1] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_ZFORCE)
-       BC3D->dUBlocks[6*nb+2] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_TORQUE1)
-       BC3D->dUBlocks[6*nb+3] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_TORQUE2)
-       BC3D->dUBlocks[6*nb+4] = new HMatrix(NBF, NBFp);
-      if (WhichQuantities & QUANTITY_TORQUE3)
-       BC3D->dUBlocks[6*nb+5] = new HMatrix(NBF, NBFp);
+
+      if ( no==0 )
+       { if ( WhichQuantities & QUANTITY_XFORCE )
+          BC3D->dUBlocks[nop][0] = new HMatrix(NBF, NBFp);
+         if ( WhichQuantities & QUANTITY_YFORCE )
+          BC3D->dUBlocks[nop][1] = new HMatrix(NBF, NBFp);
+         if ( WhichQuantities & QUANTITY_ZFORCE )
+          BC3D->dUBlocks[nop][2] = new HMatrix(NBF, NBFp);
+         if (WhichQuantities & QUANTITY_TORQUE1)
+          BC3D->dUBlocks[nop][3] = new HMatrix(NBF, NBFp);
+         if (WhichQuantities & QUANTITY_TORQUE2)
+          BC3D->dUBlocks[nop][4] = new HMatrix(NBF, NBFp);
+         if (WhichQuantities & QUANTITY_TORQUE3)
+          BC3D->dUBlocks[nop][5] = new HMatrix(NBF, NBFp);
+       };
+
     };
 
   /*--------------------------------------------------------------*/

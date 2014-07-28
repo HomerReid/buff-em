@@ -151,7 +151,8 @@ void SWGVolume::DrawFace(int nf, FILE *f)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::WritePPMesh(const char *FileName, const char *Tag)
+void SWGGeometry::WritePPMesh(const char *FileName, 
+                              const char *Tag)
 {
   /***************************************************************/
   /***************************************************************/ 
@@ -200,6 +201,52 @@ void SWGGeometry::WritePPMesh(const char *FileName, const char *Tag)
    };
   fprintf(f,"};\n");
   fclose(f);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void SWGGeometry::PlotPermittivity(const char *FileName,
+                                   const char *Tag)
+{
+  FILE *f=fopen(FileName,"a");
+  if (!f) return;
+  fprintf(f,"View \"%s\" {\n",Tag);
+  for(int no=0; no<NumObjects; no++)
+   for(int nt=0; nt<Objects[no]->NumTets; nt++)
+    { 
+      SWGVolume *O = Objects[no];
+      SWGTet *T = O->Tets[nt];
+
+      // get average of diagonal permittivity elements
+      // at the four tetrahedra vertices
+      double EpsAvg[4];
+      double *VV[4];
+      for(int n=0; n<4; n++)
+       { 
+         VV[n] = O->Vertices + 3*(T->VI[n]);
+
+         double x0[3];
+         memcpy(x0, VV[n], 3*sizeof(double));
+         if (O->GT)   O->GT->UnApply(x0);
+         if (O->OTGT) O->OTGT->UnApply(x0);
+ 
+         cdouble Eps[3][3];
+         O->MP->GetEps(1.0, x0, Eps);
+
+         EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
+       };
+   
+     fprintf(f,"SS(%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e) {%e,%e,%e,%e};\n",
+                VV[0][0],VV[0][1],VV[0][2],
+                VV[1][0],VV[1][1],VV[1][2],
+                VV[2][0],VV[2][1],VV[2][2],
+                VV[3][0],VV[3][1],VV[3][2],
+                EpsAvg[0], EpsAvg[1], EpsAvg[2], EpsAvg[3]);
+    };
+  fprintf(f,"};\n");
+  fclose(f);
+
 }
 
 /***************************************************************/

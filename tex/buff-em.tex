@@ -591,47 +591,135 @@ of an individual SWG function is
 The Kardar/Jaffe group has derived a number of formulas expressing
 Casimir forces (both equilibrium and non-equilibrium) and
 rates of heat transfer among a collection of material bodies 
-in terms of the $\TT$ and $\GG$ operators of the
-bodies. For example:
+in terms of the $\TT$ and $\GG$ operators of the bodies. 
+
+\paragraph{Notation}
+In the seminal Ref. [Long Matthias paper, PRB 2012], the formulas 
+are presented in a somewhat private language that elides the 
+distinction between matrices of different dimensions. In particular,
+although the quantities $\mathbb{T}_1$ and $\mathbb{T}_2$
+in those formulas always correspond to matrices of dimension 
+$N_1\times N_1$ and $N_2\times N_2$ (where $N_1$ and $N_2$ 
+are the numbers of basis functions allocated to objects 1 and 2), 
+the symbol ``1'' refers ambiguously to $N_1\times N_1$ or 
+$N_2\times N_2$-dimensional unit matrices, while the symbol
+$\mathbb{G}_0$ refers ambiguously to matrices of dimension
+$N_1\times N_1$, $N_1\times N_2$, $N_2\times N_1$, or
+$N_2\times N_2$. In what follows we attempt to dispel this 
+confusion through the use of symbols such as $\vb 1_{N}$ 
+for $N\times N$ unit matrices and $\vb U_{ij}$ for 
+$N_i\times N_j$ matrix representations of the $\mathbb{G}$ operator.
+
+We also assign shorthand notation to two matrices that appear 
+frequently in these formulas:
+%====================================================================%
+\begin{align*}
+\text{``}
+ \text{Im }\mathbb{T}_i - 
+           \mathbb{T}_i \text{Im}[\mathbb{G}_0]\mathbb{T}_i^*
+ \text{''}
+&\,\,\equiv\,\, \vb A_i 
+ = \text{Im }\vb{T}_i - \vb{T}_i \text{Im}[\vb U_{ii}]\vb{T}_i^\dagger
+\\
+\text{``}
+\frac{1}{1-\mathbb{G}_0 \mathbb{T}_i \mathbb{G}_0 \mathbb{T}_j}
+\text{''}
+&\,\,\equiv\,\, \vb B_{ij}
+= \Big[ \mathbf{1}_{N_j}
+         -\vb U_{ji} \vb{T}_i \vb{U}_{ij} \vb T_j
+   \Big]^{-1}
+\end{align*}
+%====================================================================%
+Matrices $\vb A_i$ and $\vb B_{ij}$ have dimensions $N_i\times N_i$ 
+and $N_j \times N_j$ respectively.
+
+Examples of the Kr\"uger/Kardar/Jaffe formulas that we will use
+include
 %====================================================================%
 \begin{description}
  \item[1.] \textit{Equilibrium Casimir energy between two bodies:}
- $$\mathcal{E}=\frac{\hbar c}{2\pi}\int
-   \log\det\Big(\vb{1} - \GG_{12}\mathbb{T}_2\GG_{21}\mathbb{T}_1\Big)
+ \numeq{KJCasimirEnergy}
+  {
+   \mathcal{E}=\frac{\hbar c}{2\pi}\int
+   \log\det\Big(\vb{1} - \vb U_{12}\vb T_2\vb U_{21}\vb T_1\Big)
    d\xi
- $$
+  }
 (where $\xi$ indicates imaginary frequency)
 %====================================================================%
  \item[2.] \textit{Rate of heat radiation from a single body:}
+%====================================================================%
  $$H=\frac{2}{\pi}
-   \int \,\Theta(\omega) 
-   \text{Tr }
-   \Big[   \text{Im }\GG \, \text{Im }\TT 
-         - \text{Im }\GG \, \TT \,
-           \text{Im }\GG\, \TT^\dagger 
-   \Big] \, d\omega
+   \int \,\Theta(\omega) \mc{H}(\omega) d\omega
  $$
-(where $\Theta(\omega)\equiv \frac{\hbar\omega}{e^{\hbar\omega/kT} - 1}$
- is the Bose-Einstein factor)
+where $\Theta(\omega)\equiv \frac{\hbar\omega}{e^{\hbar\omega/kT} - 1}$
+is the Bose-Einstein factor and $\mc H$ reads, in Kr\"uger language, 
+%====================================================================%
+$$
+  \mc H=
+   \text{Tr }\Big[  \text{Im} \big[ \mathbb{G}_0 \big] 
+                    \text{Im} \big[ \mathbb{T}_1 \big]
+                   -\text{Im} \big[ \mathbb{G}_0 \big]
+                    \mathbb{T}_i
+                    \text{Im} \big[ \mathbb{G}_0 \big]
+                    \mathbb{T}_i^\dagger
+             \Big]
+ $$
+%====================================================================%
+or, in our language,
+%====================================================================%
+$$ \mc H = \text{Tr} \Big[ \text{Im}\big[\vb U_{11}\big] \vb A_{1}\Big].$$
 %====================================================================%
  \item[3.] \textit{Heat transfer from body 1 to body 2:}
  $$H_1^{(2)}=\frac{2}{\pi}
    \int \,\Theta(\omega) \mathcal{H}_1^{(2)}(\omega)\,d\omega
  $$
- $$\mathcal{H}_1^{(2)}=\text{Im Tr }
+%====================================================================%
+where, in Kr\"uger language,
+%====================================================================%
+\begin{align}
+\mathcal{H}_1^{(2)}
+&=\text{Im Tr }
    \bigg\{ (1 + \GG \TT_2) \frac{1}{1-\GG \TT_1 \GG \TT_2}
            \GG 
            \Big[ \im \TT_1 - \TT_1 \big(\im \GG\big) \TT_1^\dagger \Big] 
            \GG^\dagger
-           \frac{1}{1-\TT_2^\dagger \GG^\dagger \TT_1^\dagger \GG}\TT_2^\dagger
+           \frac{1}{1-\TT_2^\dagger \GG^\dagger \TT_1^\dagger \GG^\dagger}\TT_2^\dagger
    \bigg\}
- $$
+\nn
+%--------------------------------------------------------------------%
+\intertext{or, in our language,}
+%--------------------------------------------------------------------%
+\mathcal{H}_1^{(2)}
+&=\text{Im Tr }
+   \bigg\{ (\vb 1_{N_2} + \vb U_{22} \vb T_2) \vb B_{12}
+           \vb U_{21} \vb A_{1} \vb U_{21}^\dagger
+           \vb B_{12}^\dagger \vb T_2^\dagger
+   \bigg\}
+\end{align}
 %====================================================================%
- \item[4.] \textit{Momentum transfer (Nonequilibrium Casimir force) from body 1 to body 2:}
- $$F_1^{(2)}=\frac{2}{\pi}
-   \int \,\Theta(\omega) \mathcal{F}_1^{(2)}(\omega)\,d\omega
- $$
- $$\mathcal{F}_1^{(2)}=\text{Re Tr }
+ \item[4.] \textit{ Momentum transfer (Nonequilibrium Casimir force) 
+                    from body 1 to body 1 or body 1 to body 2} 
+%====================================================================%
+ \begin{align*}
+   F_1^{(1)}&=\frac{2}{\pi}
+   \int \,\Theta(\omega) \mathcal{F}_1^{(1)}(\omega)\,\frac{d\omega}{\omega}
+\\
+   F_1^{(2)}&=\frac{2}{\pi}
+   \int \,\Theta(\omega) \mathcal{F}_1^{(2)}(\omega)\,\frac{d\omega}{\omega}
+ \end{align*}
+%====================================================================%
+In Kr\"uger language,
+%====================================================================%
+\begin{align*}
+ \mathcal{F}_1^{(1)}&=\text{Re Tr }
+   \bigg\{ \nabla (1 + \GG \TT_2) 
+           \frac{1}{1-\GG \TT_1 \GG \TT_2}
+           \GG 
+           \Big[ \im \TT_1 - \TT_1 \big(\im \GG\big) \TT_1^\dagger \Big] 
+           \frac{1}{1-\GG_0^* \TT_2^* \GG_0^* \TT_1^*}
+   \bigg\}
+\\
+ \mathcal{F}_1^{(2)}&=\text{Re Tr }
    \bigg\{ \nabla (1 + \GG \TT_2) 
            \frac{1}{1-\GG \TT_1 \GG \TT_2}
            \GG 
@@ -640,8 +728,71 @@ bodies. For example:
            \frac{1}{1-\TT_2^\dagger \GG^\dagger \TT_1^\dagger \GG}
            \TT_2^\dagger
    \bigg\}
- $$
+\\
+\end{align*}
+%====================================================================%
 \end{description}
+%====================================================================%
+
+\subsection*{Equilibrium Casimir force}
+
+Equation (\ref{KJCasimirEnergy}) for the equilibrium Casimir energy 
+is the two-body special case of the more general formula
+%====================================================================%
+\numeq{KJCasimirEnergy2}
+{
+   \mathcal{E}=\frac{\hbar c}{2\pi}\int
+   \log\frac{\det \vb M(\xi)}{\det \vb M_0(\xi)} \, d\xi 
+}
+where $\vb M(\xi)$ is just the full VIE matrix and $\vb M_0$
+is that matrix with the $\vb U$ blocks zeroed out, corresponding
+to the case in which all objects are infinitely separated:
+%====================================================================%
+$$
+\vb M(\xi)=
+   \left(\begin{array}{cccc}
+   \vbTInv_1  & \vb U_{12} & \cdots & \vb U_{1N} \\
+   \vb U_{21} & \vbTInv_2  & \cdots & \vb U_{2N} \\
+   \vdots     & \vdots     & \ddots & \vdots     \\
+   \vb U_{N1} & \vb U_{N2} & \cdots & \vbTInv_{N} 
+   \end{array}\right), 
+\qquad
+\vb M_0(\xi)=
+   \left(\begin{array}{cccc}
+   \vbTInv_1  & 0          & \cdots & 0          \\
+   0          & \vbTInv_2  & \cdots & 0          \\
+   \vdots     & \vdots     & \ddots & \vdots     \\
+   0          & 0          & \cdots & \vbTInv_{N} 
+   \end{array}\right).
+$$
+%====================================================================%
+%====================================================================%
+where the matrix is just the full VIE matrix 
+Differentiating, we obtain a expression for the Casimir force on 
+body $1$:
+%====================================================================%
+\numeq{KJCasimirForce}
+{
+   \mathcal{F}_1=\frac{\hbar c}{2\pi}\int
+   \text{Tr}\Big\{ \vb M^{-1} 
+            \frac{ \partial \vb M}{\partial \vb r_i} 
+            \Big\} \, d\xi
+}
+%====================================================================%
+where the derivative is taken with respect to infinitesimal
+displacement of object 1 in the $i$th cartesian direction:
+%====================================================================%
+$$
+\frac{ \partial \vb M}{\partial \vb r_i} 
+ =
+   \left(\begin{array}{cccc}
+   0                     & \partial_i \vb U_{12} & \cdots & \partial_i \vb U_{1N} \\
+   \partial_i \vb U_{21} & 0                     & \cdots & 0          \\
+   \vdots                & \vdots                & \ddots & \vdots     \\
+   \partial_i \vb U_{N1} & 0                     & \cdots & 0           
+   \end{array}\right),
+$$
+
 %====================================================================%
 
 Although the formulas are expressed as traces of 

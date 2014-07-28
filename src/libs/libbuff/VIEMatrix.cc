@@ -251,6 +251,12 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+typedef struct GVIData
+ {
+   cdouble k;
+   bool NeedGradient;
+ } GVIData;
+ 
 void GVIntegrand(double *xA, double *bA, double DivbA,
                  double *xB, double *bB, double DivbB,
                  void *UserData, double *I)
@@ -266,28 +272,56 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
      return;
    };
 
-  cdouble k = *((cdouble *)UserData);
-  cdouble ExpFac = exp(II*k*r)/(4.0*M_PI*r);
+  GVIData *Data     = (GVIData *)UserData;
+  cdouble k         = Data->k;
+  bool NeedGradient = Data->NeedGradient;
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+  cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
+
+  cdouble IKR = II*k*r;
+  cdouble Phi= exp(IKR)/(4.0*M_PI*r);
 
   cdouble *zI = (cdouble *)I;
-  zI[0] = (DotProduct - DivbA*DivbB/(k*k)) * ExpFac;
+  zI[0] = PolyFac*Phi;
+
+  if (NeedGradient)
+   { 
+     cdouble Psi = (IKR-1.0) * Phi / (r*r);
+     zI[1] = R[0]*PolyFac*Psi;
+     zI[2] = R[1]*PolyFac*Psi;
+     zI[3] = R[2]*PolyFac*Psi;
+   };
+
 }
 
 /***************************************************************/
 /* Compute the G-matrix element between two tetrahedral basis  */
 /* functions using a volume cubature method.                   */
+/* If GradG is non-null, then GradG[0..2] get dG/dR_i, i=x,y,z */
 /***************************************************************/
 cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega, int Order=0)
+                             cdouble Omega, int Order=0,
+                             cdouble *GradG=0)
 {
-  cdouble UVI, Error;
-  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)&Omega,
-          2, (double *)&UVI, (double *)&Error, Order, 10000, 1.0e-8);
+  GVIData MyData, *Data = &MyData;
+  Data->k               = Omega;
+  Data->NeedGradient    = (GradG!=0);
 
-  return UVI;
+  int nFun = GradG ? 8 : 2;
+
+  cdouble Result[4], Error[4];
+  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun, 
+          (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
+
+  if (GradG)
+   { GradG[0] = Result[1];
+     GradG[1] = Result[2];
+     GradG[2] = Result[3];
+   };
+
+  return Result[0];
 }
 
 /***************************************************************/
@@ -492,7 +526,7 @@ cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA,
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega)
+                          cdouble Omega, cdouble *GradG=0)
 {
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
@@ -505,7 +539,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   else if (ncv==1)
    return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9);
   else
-   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16);
+   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16, GradG);
   
 }
 
@@ -513,7 +547,8 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                                         HMatrix *M, int RowOffset, int ColOffset)
+                                         HMatrix *M, HMatrix **GradM,
+                                         int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -523,6 +558,8 @@ void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
   int NFA = OA->NumInteriorFaces;
   int NFB = OB->NumInteriorFaces;
   int SameObject = (noa==nob) ? 1 : 0;
+  cdouble GradGBuffer[3];
+  cdouble *GradG = GradM==0 ? 0 : GradGBuffer;
 
   Log("Assembling U(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
@@ -534,9 +571,23 @@ void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
 #endif
   for(int nfa=0; nfa<NFA; nfa++)
    for(int nfb=SameObject*nfa; nfb<NFB; nfb++)
-    { if (nfb==SameObject*nfa) LogPercent(nfa, NFA);
-      M->SetEntry(RowOffset + nfa, ColOffset + nfb,
-                  GetGMatrixElement(OA, nfa, OB, nfb, Omega) );
+    { 
+      if (nfb==SameObject*nfa) 
+       LogPercent(nfa, NFA);
+
+      int Row=RowOffset + nfa;
+      int Col=ColOffset + nfb;
+      M->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, GradG) );
+
+      if (GradM)
+       { if (GradM[0]) 
+          GradM[0]->SetEntry(Row, Col, GradG[0]);
+         if (GradM[1]) 
+          GradM[1]->SetEntry(Row, Col, GradG[1]);
+         if (GradM[2]) 
+          GradM[2]->SetEntry(Row, Col, GradG[2]);
+       };
+
     };
 
   /***************************************************************/
@@ -565,11 +616,12 @@ void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::AssembleUBlock(int noa, int nob, cdouble Omega, HMatrix *U)
-{ AssembleVIEMatrixBlock(noa, nob, Omega, U, 0, 0); }
+void SWGGeometry::AssembleUBlock(int noa, int nob, cdouble Omega, 
+                                 HMatrix *U, HMatrix **GradU)
+{ AssembleVIEMatrixBlock(noa, nob, Omega, U, GradU); }
 
-void SWGGeometry::AssembleTBlock(int no, cdouble Omega, HMatrix *T)
-{ AssembleVIEMatrixBlock(no, no, Omega, T, 0, 0); }
+void SWGGeometry::AssembleTInvBlock(int no, cdouble Omega, HMatrix *TInv)
+{ AssembleVIEMatrixBlock(no, no, Omega, TInv); }
 
 /***************************************************************/
 /***************************************************************/
@@ -586,7 +638,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
-    AssembleVIEMatrixBlock(noa, nob, Omega, M, 
+    AssembleVIEMatrixBlock(noa, nob, Omega, M, 0,
                            BFIndexOffset[noa], BFIndexOffset[nob]);
 
   for(int nr=1; nr<TotalBFs; nr++)

@@ -192,6 +192,7 @@ class SWGGeometry
 
    // visualization
    void WritePPMesh(const char *FileName, const char *Tag);
+   void PlotPermittivity(const char *FileName, const char *Tag);
    void PlotCurrentDistribution(const char *FileName, HVector *J,
                                 const char *Tag, ...);
 
@@ -206,10 +207,11 @@ class SWGGeometry
 
    // compute individual matrix blocks
    void AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                               HMatrix *M, 
+                               HMatrix *M, HMatrix **GradM=0,
                                int RowOffset=0, int ColOffset=0);
-   void AssembleUBlock(int noa, int nob, cdouble Omega, HMatrix *M);
-   void AssembleTBlock(int no, cdouble Omega, HMatrix *M);
+   void AssembleUBlock(int noa, int nob, cdouble Omega,
+                       HMatrix *U, HMatrix **GradU);
+   void AssembleTInvBlock(int no, cdouble Omega, HMatrix *TInv);
 
    // miscellaneous routines
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);

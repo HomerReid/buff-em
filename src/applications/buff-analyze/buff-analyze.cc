@@ -77,15 +77,17 @@ int main(int argc, char *argv[])
   char *MeshFile=0;
   char *TransFile=0;
   bool WriteGMSHFiles=false;
-  int DrawBFs[10], nDrawBFs;
+  bool PlotPermittivity=false;
+  int PlotBF[10], nPlotBF;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
-   { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,        0, "mesh file"},
-     {"mesh",               PA_STRING, 1, 1, (void *)&MeshFile,       0, "mesh file"},
-     {"meshfile",           PA_STRING, 1, 1, (void *)&MeshFile,       0, "mesh file"},
-     {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles, 0, "output GMSH visualization code"},
-     {"transfile",          PA_STRING, 1, 1, (void *)&TransFile,      0, "output GMSH visualization code"},
-     {"DrawBFs",            PA_INT,    1, 10, (void *)DrawBFs,        &nDrawBFs, "output GMSH visualization code"},
+   { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,          0, ".buffgeo file"},
+     {"mesh",               PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
+     {"meshfile",           PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
+     {"transfile",          PA_STRING, 1, 1, (void *)&TransFile,        0, "list of geometrical transformations"},
+     {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
+     {"PlotPermittivity",   PA_BOOL,   0, 1, (void *)&PlotPermittivity, 0, "color tetrahedra by average local permittivity"},
+     {"PlotBF",             PA_INT,    1, 10, (void *)PlotBF,    &nPlotBF, "draw an individual basis function"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -116,22 +118,41 @@ int main(int argc, char *argv[])
   else
    ErrExit("either --geometry or --mesh / --meshfile option is mandatory");
 
-  if (nDrawBFs)
+  /***************************************************************/
+  /* plot individual basis functions if that was requested       */
+  /***************************************************************/
+  if (nPlotBF)
    { FILE *f=vfopen("%s.BFs.pp","w",GetFileBase(GeoFile));
-     for(int n=0; n<nDrawBFs; n++)
-      G->Objects[0]->DrawBF(DrawBFs[n], f);
+     for(int n=0; n<nPlotBF; n++)
+      G->Objects[0]->DrawBF(PlotBF[n], f);
      fclose(f);
      printf("Individual BF visualizations written to file %s.BFs.pp",
              GetFileBase(GeoFile));
    };
 
+  /***************************************************************/
+  /* plot the overall geometry if that was requested             */
+  /***************************************************************/
   if (WriteGMSHFiles && GeoFile!=0)
    { char FileName[1000];
      sprintf(FileName,"%s.pp",GetFileBase(GeoFile));
-     G->WritePPMesh(FileName,"Default"); 
+     G->WritePPMesh(FileName,"Default");
      printf("GMSH visualization data written to %s.\n",FileName);
    };
 
+  /***************************************************************/
+  /* plot the permittivity if that was requested                 */
+  /***************************************************************/
+  if (PlotPermittivity && GeoFile!=0)
+   { char FileName[1000];
+     sprintf(FileName,"%s.Epsilon.pp",GetFileBase(GeoFile));
+     G->PlotPermittivity(FileName,"Default");
+     printf("GMSH permittivity plot written to %s.\n",FileName);
+   };
+
+  /***************************************************************/
+  /* handle geometrical transformations if any were specified    */
+  /***************************************************************/
   if (TransFile)
    { 
      if (!G) 
