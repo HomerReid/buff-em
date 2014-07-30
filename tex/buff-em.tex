@@ -48,38 +48,56 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{SWG Basis Functions}
+\section{Overview}
+\label{OverviewSection}
 
-SWG basis functions are the three-dimensional analog of
-RWG basis functions. They are defined on pairs of adjacent tetrahedra:
-%====================================================================%
-$$ \vb b_\alpha(\vb x) = 
-  \begin{cases}
-   \displaystyle{
-    +\frac{A_\alpha}{3V_\alpha^+}(\vb x - \vb Q_\alpha^+), 
-                }
-    \qquad &\vb x\in \mc P_\alpha^+
-\\[5pt]
-   \displaystyle{
-  -\frac{A\alpha}{3V_\alpha^-}(\vb x - \vb Q_\alpha^-), 
-                } 
-    \qquad &\vb x\in \mc P_\alpha^-
-  \end{cases}
-$$
-%====================================================================%
-where $\mc P_\alpha^\pm$ are the two tetrahedra associated with basis
-function $\alpha$, $V_\alpha^\pm$ are their volumes, $\vb Q_\alpha\pm$
-are the source/sink vertices, and $A_\alpha$ is the area of the 
-triangular face shared by $\mc P_\alpha^\pm$. (I denote tetrahedra 
-by $\mc P$, which stands for ``pyramid,'' to avoid confusion with
-the symbol $\mc T$, which stands for ``triangle'' in my memos on
-RWG basis functions.)
+The MIT Casimir theory group, led by Professors Kardar and 
+Jaffe, has derived a number of formulas expressing
+Casimir forces (both equilibrium and non-equilibrium) and
+rates of heat transfer among a collection of material bodies 
+in terms of the $\TT$ and $\GG$ operators of the bodies
+\cite{Rahi2009, Kruger2012}.
+Although the formulas are expressed as traces of 
+certain linear-algebraic combinations of the operators 
+and are are thus---in principle---basis-independent, in 
+practice the definition of the $\mathbb{T}$ operator is so
+unwieldy in the position-space basis that to date the formulas 
+have only ever been applied to certain high-symmetry geometries, 
+in which the known special forms of the Maxwell solutions allow
+analytical evaluation of $\mathbb{T}$-matrix elements in
+special bases (such as spherical wave functions for spherical
+scatterers).
+In effect, this amounts to working in a basis of globally-defined
+wave functions, which are typically specific to the 
+particular shapes of the objects in question and thus not 
+amenable to the treatment of more general geometries.
+In particular, to date there has been no obvious way to use
+$\mathbb{T}/\mathbb{G}$ formulas to handle \textit{inhomogeneous}
+bodies with continuously varying material properties, since 
+the $\mathbb{T}$-matrices cannot be computed analytically
+for such bodies even if their shapes are highly symmetric.
 
-The divergence of the SWG basis function is 
-%====================================================================%
-$$ \nabla \cdot \vb b_\alpha(\vb x) = 
-    \pm \frac{A_\alpha}{V_\alpha^\pm}, \qquad \vb x\in \mc P_\alpha^\pm.
-$$
+Here I show that in fact the restriction to special-function
+bases is in fact unnecessary, and that, indeed, it is possible
+to compute $\mathbb{T}$-matrices \textit{numerically} for
+arbitrary inhomogeneous objects using a basis of \textit{localized}
+functions. The key observation is that, although it is difficult 
+to work with the $\mathbb{T}$ operator in real space, the
+$\textit{inverse}$ of this operator has a convenient real-space
+description.
+This insight leads to a general-purpose approach
+that is capable, in principle, of predicting Casimir and
+heat-transfer phenomena for bodies of arbitrary shapes and
+arbitrary anisotropic continuously-varying material properties.
+
+As it turns out, the inverse $\mathbb{T}$ operator is 
+closely related to the matrix that enters the classical
+volume-integral-equation (VIE) method of computational 
+electromagnetism~\cite{SWG1984}. Thus, the implementation
+of a numerical $\mathbb{T}-$matrix-based computation scheme
+for fluctuation physics amounts in practice to the 
+implementation of a VIE solver. This is the motivation
+for {\sc buff-em}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,7 +151,7 @@ according to
 \end{align*}
 %====================================================================%
 where $\mathbb{V}\equiv k^2\big[\vb 1 - \vbeps(\vb x)\big]$ is
-sometimes known\footnote{Jamal's paper.} as the ``potential.''
+sometimes known~\cite{Rahi2009} as the ``potential.''
 At points not in free space, i.e. points at which 
 $\vbeps(\vb x)\ne \vb 1$, we can invert this equation to read
 %====================================================================%
@@ -286,12 +304,50 @@ the $\mathbb{G}$ operator.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\section{SWG Basis Functions}
+
+SWG basis functions are the three-dimensional analog of
+RWG basis functions. They are defined on pairs of adjacent tetrahedra:
+%====================================================================%
+$$ \vb b_\alpha(\vb x) = 
+  \begin{cases}
+   \displaystyle{
+    +\frac{A_\alpha}{3V_\alpha^+}(\vb x - \vb Q_\alpha^+), 
+                }
+    \qquad &\vb x\in \mc P_\alpha^+
+\\[5pt]
+   \displaystyle{
+  -\frac{A\alpha}{3V_\alpha^-}(\vb x - \vb Q_\alpha^-), 
+                } 
+    \qquad &\vb x\in \mc P_\alpha^-
+  \end{cases}
+$$
+%====================================================================%
+where $\mc P_\alpha^\pm$ are the two tetrahedra associated with basis
+function $\alpha$, $V_\alpha^\pm$ are their volumes, $\vb Q_\alpha\pm$
+are the source/sink vertices, and $A_\alpha$ is the area of the 
+triangular face shared by $\mc P_\alpha^\pm$. (I denote tetrahedra 
+by $\mc P$, which stands for ``pyramid,'' to avoid confusion with
+the symbol $\mc T$, which stands for ``triangle'' in my memos on
+RWG basis functions.)
+
+The divergence of the SWG basis function is 
+%====================================================================%
+$$ \nabla \cdot \vb b_\alpha(\vb x) = 
+    \pm \frac{A_\alpha}{V_\alpha^\pm}, \qquad \vb x\in \mc P_\alpha^\pm.
+$$
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{SWG Matrix Elements of the $\mathbb{G}$ operator}
 
 %=================================================
 %=================================================
 %=================================================
-\subsection{Distant case: Dipole and Quadrupole Approximations}
+\subsection{Distant case: Volume-integral method}
 
 The $\mathbb{G}$-matrix element between two SWG basis functions
 is
@@ -320,39 +376,44 @@ the basis functions.
 
 When the two basis functions are well separated 
 (i.e. $|\vb R_0| \gg |\overline{\vb x}_\alpha|, |\overline{\vb x}_\beta|$),
-we may retain just the first two terms in the Taylor expansion of 
-$\mathbb G_{ij}$ about $\vb R_0$:
-%====================================================================%
-\numeq{TaylorExpansion}
-{ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
-  \,\approx\, \mathbb{G}_{ij}^0
-         +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
-         -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
-         +\cdots
-}
-%====================================================================%
-where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
-and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
-Equation (\ref{bGb}) then reads (with a summation convention in force)
-%====================================================================%
-\numeq{DQApprox}
-{
- \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
-\approx 
-  \mc J_{\alpha i} \mathbb{G}^0_{ij} \mc J_{\beta j}
- +\mc Q_{\alpha ik} \mathbb{G}^0_{ijk} \mc J_{\beta j}
- -\mc J_{\alpha i} \mathbb{G}^0_{ijk} \mc Q_{\beta jk}
-}
-%====================================================================%
-Here we have introduced the first and second moments
-of the current distributions of the SWG functions:
-\begin{align*}
- \mc J_{\alpha i}
-\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x)\,d\vb x
-\\
- \mc Q_{\alpha ij}
-\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x) x_j\,d\vb x
-\end{align*}
+we may compute (\ref{bGb}) to sufficient accuracy using a volume-integral
+method in which the 6-dimensional integration over each of the
+four pairs of tetrahedra is carried out by simple low-order
+numerical cubature.
+ 
+%
+%Expand $\mathbb G_{ij}$ about $\vb R_0$:
+%%====================================================================%
+%\numeq{TaylorExpansion}
+%{ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+%  \,\approx\, \mathbb{G}_{ij}^0
+%         +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
+%         -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
+%         +\cdots
+%}
+%%====================================================================%
+%where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
+%and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
+%Equation (\ref{bGb}) then reads (with a summation convention in force)
+%%====================================================================%
+%\numeq{DQApprox}
+%{
+% \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+%\approx 
+%  \mc J_{\alpha i} \mathbb{G}^0_{ij} \mc J_{\beta j}
+% +\mc Q_{\alpha ik} \mathbb{G}^0_{ijk} \mc J_{\beta j}
+% -\mc J_{\alpha i} \mathbb{G}^0_{ijk} \mc Q_{\beta jk}
+%}
+%%====================================================================%
+%Here we have introduced the first and second moments
+%of the current distributions of the SWG functions:
+%\begin{align*}
+% \mc J_{\alpha i}
+%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x)\,d\vb x
+%\\
+% \mc Q_{\alpha ij}
+%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x) x_j\,d\vb x
+%\end{align*}
 
 %=================================================
 %=================================================
@@ -588,11 +649,6 @@ of an individual SWG function is
 \section{$\mathbb{T}\mathbb{G}$ Formulas
          for Casimir Forces and Heat-Transfer Rates}
 
-The Kardar/Jaffe group has derived a number of formulas expressing
-Casimir forces (both equilibrium and non-equilibrium) and
-rates of heat transfer among a collection of material bodies 
-in terms of the $\TT$ and $\GG$ operators of the bodies. 
-
 \paragraph{Notation}
 In the seminal Ref. [Long Matthias paper, PRB 2012], the formulas 
 are presented in a somewhat private language that elides the 
@@ -794,33 +850,6 @@ $$
 $$
 
 %====================================================================%
-
-Although the formulas are expressed as traces of 
-certain linear-algebraic combinations of the operators 
-and are are thus---in principle---basis-independent, in practice the 
-$\mathbb{T}$ operator is so unwieldy that the formulas have only
-ever been applied to certain high-symmetry geometries, in which
-the known special forms of the Maxwell solutions allow 
-analytical evaluation of $\mathbb{T}$-matrix elements.
-In effect, this amounts to working in a basis of globally-defined
-wave functions, which are typically highly specific to the 
-particular shapes of the objects in question and thus not 
-amenable to the treatment of more general geometries.
-In particular, to date there has been no obvious way to use
-$\mathbb{T}/\mathbb{G}$ formulas to handle \textit{inhomogeneous}
-bodies with continuously varying material properties, since 
-the $\mathbb{T}$-matrices cannot be computed analytically
-for such bodies even if their shapes are highly symmetric.
-
-Here I show that in fact the restriction to special-function
-bases is in fact unnecessary. Instead, it is possible to compute 
-$\mathbb{T}$-matrices \textit{numerically} for arbitrary 
-inhomogeneous objects using a basis of \textit{localized} 
-functions. This insight leads to a general-purpose approach
-that is capable, in principle, of predicting Casimir and 
-heat-transfer phenomena for bodies of arbitrary shapes and
-arbitrary anisotropic continuously-varying material properties. 
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1245,6 +1274,13 @@ spatial moment of the SWG basis function:
 \begin{align*}
  \text{Im } \exptwob{\vb b_\alpha}{\mathbb{G}}{\vb b_\alpha}
 = \frac{k}{6\pi} \Big|\bmc J_\alpha\Big|^2.
-\end{align*}
+\end{align*} 
+
+%====================================================================%
+%====================================================================%
+%====================================================================%
+\newpage
+\bibliographystyle{ieeetr}
+\bibliography{buff-em}
 
 \end{document}
