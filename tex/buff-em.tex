@@ -1,6 +1,7 @@
 \documentclass[letterpaper]{article}
 
 \input{physcmds}
+\usepackage{cite}
 
 \graphicspath{{figures/}}
 \newcommand{\TInv}{\rotatebox[origin=c]{180}{$T$}}
@@ -8,6 +9,9 @@
 \newcommand{\vbTInvSmall}{\rotatebox[origin=c]{180}{\scriptsize{$\vb T$}}}
 \newcommand{\bbTInv}{\rotatebox[origin=c]{180}{$\mathbb{T}$}}
 \newcommand{\bbVInv}{\rotatebox[origin=c]{180}{$\mathbb{V}$}}
+
+\newcommand{\citeasnoun}[1]{Ref.~\citen{#1}}
+\newcommand{\citeasnouns}[1]{Refs.~\citen{#1}}
 
 %------------------------------------------------------------
 %------------------------------------------------------------
@@ -379,7 +383,7 @@ When the two basis functions are well separated
 we may compute (\ref{bGb}) to sufficient accuracy using a volume-integral
 method in which the 6-dimensional integration over each of the
 four pairs of tetrahedra is carried out by simple low-order
-numerical cubature.
+numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
  
 %
 %Expand $\mathbb G_{ij}$ about $\vb R_0$:
@@ -422,8 +426,8 @@ numerical cubature.
 When the basis functions are not well separated, the
 dipole/quadrupole expansion method of the previous 
 subsection is inaccurate. In this case it is convenient 
-to follow the work of Bleszynski et al.~\cite{} by reducing 
-the volume integral (\ref{bGb}) to a nonsingular 
+to follow the work of Bleszynski et al.~\cite{Bleszynski2013}
+by reducing the volume integral (\ref{bGb}) to a nonsingular 
 \textit{surface} integral:
 %====================================================================%
 \numeq{GSurfaceIntegral}
@@ -471,6 +475,16 @@ I call this \texttt{ExpRelBar} because it is similar to
 a similar function known as \texttt{ExpRel} (the two
 functions differ only in their normalization).
 
+%=================================================
+%=================================================
+%=================================================
+\subsection{Derivatives}
+
+For computation of non-equilibrium Casimir forces and 
+torques we require derivatives of $\mathbb{G}$-matrix
+elements with respect to the quantity $\vb R_0$ in
+equation (\ref{bGb}).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -502,7 +516,8 @@ where $\{\mathbb{E}_\alpha, \mathbb{H}_\alpha\}$ are the
 electric and magnetic fields produced by the current distribution
 of basis function $\vb b_\alpha$ populated with unit strength:
 %====================================================================%
-\begin{align*}
+\begin{subequations}
+\begin{align}
  \mathbb{E}_\alpha(\vb x)
 &= ikZ_0 
    \int_{\sup \vb b_\alpha} \mathbb{G}(\vb x, \vb x_\alpha) \cdot \vb b_\alpha
@@ -510,21 +525,18 @@ of basis function $\vb b_\alpha$ populated with unit strength:
 \\
  \mathbb{H}_\alpha(\vb x)
 &= 
-\end{align*}
+\end{align}
+\label{EHAlpha}
+\end{subequations}
 %====================================================================%
 
-\subsection*{Distant case: Dipole / Quadrupole approximation}
+\subsection*{Distant case: Volume-integral technique}
 
-When the evaluation point is far from the centroid of the basis
-function we can use the Taylor expansion (\ref{TaylorExpansion}):
-$$
- \mathbb{E}_{\alpha i}(\vb x)
- \approx
- ikZ_0 \Big[   \mathbb{G}^0_{ij} \mc{J}_{\alpha j} 
-             - \mathbb{G}^0_{ijk} \mc{Q}_{\alpha jk}
-       \Big]
-$$
-Note the minus sign in the second term.
+When the two basis functions are well separated, 
+we may compute (\ref{EHAlpha}) to sufficient accuracy using a volume-integral
+method in which the 3-dimensional integration over each of the
+two tetrahedra is carried out by simple low-order
+numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
 
 \subsection*{Nearby case: Surface-integral formulation}
 
@@ -650,7 +662,8 @@ of an individual SWG function is
          for Casimir Forces and Heat-Transfer Rates}
 
 \paragraph{Notation}
-In the seminal Ref. [Long Matthias paper, PRB 2012], the formulas 
+In the seminal~\citeasnouns{Rahi2009, Kruger2012}, the 
+formulas
 are presented in a somewhat private language that elides the 
 distinction between matrices of different dimensions. In particular,
 although the quantities $\mathbb{T}_1$ and $\mathbb{T}_2$
@@ -859,7 +872,9 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Volume integrals involving SWG basis functions}
+\label{VolumeIntegralAppendix}
 
 Integrals over the support of SWG basis functions take the form
 \numeq{SWGVolumeIntegral}
