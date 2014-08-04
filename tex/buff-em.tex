@@ -107,7 +107,13 @@ for {\sc buff-em}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Volume-Integral Scattering Formulation}
+\section{Volume-Integral Approach to Classical Electromagnetic Scattering}
+
+In this section I rederive the volume-integral-equation (VIE)
+approach to classical electromagnetic scattering. This formulation
+is standard, but I here describe it using terminology and
+symbols that emphasize the connection to the $\mathbb{T}$-matrix
+scattering approach used by the Kardar-Jaffe group.
 
 \subsection*{Continuous VIE formulation}
 
@@ -301,6 +307,129 @@ the $\mathbb{G}$ operator.
 \\
 &=
  \exptwoB{\vb b_\beta}{\mathbb{G}}{\vb b_\alpha}
+\end{align*}
+%====================================================================%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{FVC approach to electromagnetic fluctuations}
+
+\subsection*{Field in body 2 due to (deterministic) sources in body 1}
+
+In this subsection we first use the VIE formulation outlined in the 
+previous section to compute the fields in body 2 due to a classical, 
+deterministic source distribution $\vb J_f$ in body 1. In the next 
+subsection we will perform a statistically-weighted average over all 
+possible distributions $\vb J_f$ to compute the average, over
+thermal and quantum-mechanical fluctuations, of bilinear products
+of these fields.
+
+Thus consider a ``free'' deterministic current distribution $\vb J^f(\vb x)$
+confined to the volume of body 1. ($\vb J^f$ is ``free'' in the sense
+that we think of it as externally fixed and simply imposed by fiat
+to exist in body 1; this is in contrast to the \textit{induced} 
+distribution $\vb J(\vb x)$ which is present in both bodies
+and is excited by any incident fields that may be present.)
+In this case the incident field in the VIE scattering problem
+(\ref{ContinuousVIE}) is simply that due to $\vb J^f$
+itself, i.e. we have 
+%====================================================================%
+$$ \vb E\sups{inc}(\vb r) = ikZ_0 \mathbb{G} \star \vb J^f.$$
+%====================================================================%
+The vector on the RHS of the discretized VIE system (\ref{VIESystem2}) 
+then takes the form 
+%====================================================================%
+$$ \left(\begin{array}{c}
+   \vb v_1 \\ \vb v_2
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   =-\frac{1}{ikZ_0}
+   \left(\begin{array}{cc}
+   \vb U_{11} & \vb U_{12} \\
+   \vb U_{21} & \vb U_{22} 
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   \left(\begin{array}{c}
+   \vb j^f_{1} \\ 0
+   \end{array}\right)
+$$
+%====================================================================%
+where $\vb j_1^f$ is the projection of $\vb J^f$ onto the 
+basis functions in body 1; the lower entry in the vector on
+the RHS here vanishes because $\vb J^f$ is confined to body 1.
+
+Equation (\ref{VIESystem2}) then reads
+%====================================================================%
+\begin{align*}
+   \left(\begin{array}{cc}
+   \vbTInv_1  & \vb U_{12}  \\
+   \vb U_{21} & \vbTInv_{2} 
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   \left(\begin{array}{c}
+   \vb j_1 \\ \vb j_2
+   \end{array}\right)
+%--------------------------------------------------------------------%
+ &= -\frac{1}{ikZ_0}
+   \left(\begin{array}{cc}
+   \vb U_{11} & \vb U_{12} \\
+   \vb U_{21} & \vb U_{22} 
+   \end{array}\right)
+   \left(\begin{array}{c}
+   \vb j^f_{1} \\ 0
+   \end{array}\right)
+%--------------------------------------------------------------------%
+\intertext{or}
+%--------------------------------------------------------------------%
+   \left(\begin{array}{c}
+   \vb j_1 \\ \vb j_2
+   \end{array}\right)
+%--------------------------------------------------------------------%
+&= -\frac{1}{ikZ_0}
+   \left(\begin{array}{cc}
+   \vbTInv_1  & \vb U_{12}  \\
+   \vb U_{21} & \vbTInv_{2} 
+   \end{array}\right)^{-1}
+%--------------------------------------------------------------------%
+   \left(\begin{array}{cc}
+   \vb U_{11} & \vb U_{12} \\
+   \vb U_{21} & \vb U_{22} 
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   \left(\begin{array}{c}
+   \vb j^f_{1} \\ 0
+   \end{array}\right)
+\end{align*}
+%====================================================================%
+Finally, the fields in bodies 1 and 2 are obtained by summing 
+the contributions of both the free current $\vb j_1^f$ and the induced 
+currents $\vb j_1, \vb j_2$:
+%====================================================================%
+\begin{align*}
+%--------------------------------------------------------------------%
+ \left(\begin{array}{c}
+ \vb e_1 \\ \vb e_2 
+ \end{array}\right)
+%--------------------------------------------------------------------%
+&= ikZ_0
+   \left(\begin{array}{cc}
+   \vb U_{11} & \vb U_{12} \\
+   \vb U_{21} & \vb U_{22} 
+   \end{array}\right)
+   \left[
+   \left(\begin{array}{c}
+   \vb j^f_{1} \\ 0
+   \end{array}\right)
+   +
+   \left(\begin{array}{c}
+   \vb j_{1} \\ \vb j_2
+   \end{array}\right)
+   \right[
+\\
+%--------------------------------------------------------------------%
+&= \Big[ ikZ_0 \vb U - \vb U \vb W \vb U \Big] \vb j^f
 \end{align*}
 %====================================================================%
 
