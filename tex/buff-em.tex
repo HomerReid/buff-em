@@ -107,7 +107,7 @@ for {\sc buff-em}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Volume-Integral Approach to Classical Electromagnetic Scattering}
+\section{VIE formulation of classical EM scattering}
 
 In this section I rederive the volume-integral-equation (VIE)
 approach to classical electromagnetic scattering. This formulation
@@ -237,10 +237,10 @@ $N$ separate bodies, this is generalized to read
 {
  \underbrace{
  \left(\begin{array}{cccc}
- \vbTInv_1  & \vb U_{12}  & \cdots & \vb U_{1N} \\
- \vb U_{21} & \vbTInv_{2} & \cdots & \vb U_{2N} \\ 
+ \vbTInv_1  & \vb G_{12}  & \cdots & \vb G_{1N} \\
+ \vb G_{21} & \vbTInv_{2} & \cdots & \vb G_{2N} \\ 
  \vdots     & \vdots      & \ddots & \vdots     \\ 
- \vb U_{N1} & \vb U_{N2}  & \cdots & \vbTInv_N 
+ \vb G_{N1} & \vb G_{N2}  & \cdots & \vbTInv_N 
  \end{array}\right)
             }_{\vb M}
 %--------------------------------------------------------------------%
@@ -262,11 +262,10 @@ $N$ separate bodies, this is generalized to read
 %====================================================================%
 where $\vb M$ is the VIE matrix for the composite system.
 Here the diagonal blocks involve just the matrix elements
-of the $\mathbb{T}$-operator [defined by equation (\ref{TOperator})
+of the inverse $\mathbb{T}$-operator [defined by equation (\ref{TOperator})
 with the $\bbVInv$ operator appropriate for the $n$th body]
 while the off-diagonal blocks involve only the matrix elements of 
 the $\mathbb{G}$ operator. 
-
 
 \subsection*{Symmetries of the VIE matrix}
 
@@ -314,124 +313,191 @@ the $\mathbb{G}$ operator.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{FVC approach to electromagnetic fluctuations}
+\section{FVC approach to fluctuation-induced phenomena}
 
-\subsection*{Field in body 2 due to (deterministic) sources in body 1}
+In this section I consider a collection of one or 
+more material bodies $\{\mc B_n\}$, at various temperatures
+$\{T_n\}$ and embedded in an environment at
+temperature $T\subs{env}$, and derive a sequence of concise
+matrix-trace formulas expressing thermally and quantum-mechanically 
+averaged heat-transfer rates, forces, and torques on the bodies 
+in terms of the $\vb T$ and $\vb G$ matrices discussed in the 
+previous section. Because the resulting energy and momentum
+transfers may be viewed as arising from fluctuations in volume 
+currents in the bodies, I term this the 
+``fluctuating volume-current'' (FVC) approach to fluctuation
+physics.
 
-In this subsection we first use the VIE formulation outlined in the 
-previous section to compute the fields in body 2 due to a classical, 
-deterministic source distribution $\vb J_f$ in body 1. In the next 
-subsection we will perform a statistically-weighted average over all 
-possible distributions $\vb J_f$ to compute the average, over
-thermal and quantum-mechanical fluctuations, of bilinear products
-of these fields.
+The derivation proceeds in two steps.
 
-Thus consider a ``free'' deterministic current distribution $\vb J^f(\vb x)$
-confined to the volume of body 1. ($\vb J^f$ is ``free'' in the sense
-that we think of it as externally fixed and simply imposed by fiat
-to exist in body 1; this is in contrast to the \textit{induced} 
-distribution $\vb J(\vb x)$ which is present in both bodies
-and is excited by any incident fields that may be present.)
-In this case the incident field in the VIE scattering problem
-(\ref{ContinuousVIE}) is simply that due to $\vb J^f$
-itself, i.e. we have 
-%====================================================================%
-$$ \vb E\sups{inc}(\vb r) = ikZ_0 \mathbb{G} \star \vb J^f.$$
-%====================================================================%
-The vector on the RHS of the discretized VIE system (\ref{VIESystem2}) 
-then takes the form 
-%====================================================================%
-$$ \left(\begin{array}{c}
-   \vb v_1 \\ \vb v_2
-   \end{array}\right)
+\begin{enumerate}
 %--------------------------------------------------------------------%
-   =-\frac{1}{ikZ_0}
-   \left(\begin{array}{cc}
-   \vb U_{11} & \vb U_{12} \\
-   \vb U_{21} & \vb U_{22} 
-   \end{array}\right)
+\item I first consider a fixed, deterministic volume electric 
+current distribution $\vb J\supt{F}(\vb x)$---confined to the interiors
+of our material bodies but otherwise arbitrary---and use
+the VIE formalism of the previous section to derive compact 
+expressions for the rates of energy and momentum absorption 
+by the bodies. These expressions will be quadratic (bilinear) 
+functions of $\vb J\supt{F}$. [The F superscript stands
+for ``free''; it distinguishes the fixed, externally-imposed
+current $\vb J\supt{F}$ from the \textit{induced} current
+$\vb J\supt{I}$ to which it gives rise. $\vb J\supt{I}$
+is the quantity that was denoted simply ``$\vb J$'' in the 
+previous section; it is the unknown for which we are solving 
+in the VIE equation (\ref{ContinuousVIE}).]
 %--------------------------------------------------------------------%
-   \left(\begin{array}{c}
-   \vb j^f_{1} \\ 0
-   \end{array}\right)
+\item I then average over thermal and quantum-mechanical
+fluctuations of $\vb J$ to derive temperature-dependent
+mean heat-transfer rates and forces on the bodies.
+%--------------------------------------------------------------------%
+\end{enumerate}
+
+In what follows I will go back and forth somewhat freely between
+continuous operator/field notation 
+[involving symbols like $\mathbb{G}$ and $\vb E(\vb x)$] and 
+discretized matrix/vector notation 
+(involving symbols like $\vb G$ and $\vb e$). For a precise
+dictionary of the correspondence, see Appendix \ref{CorrespondenceAppendix}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Energy and momentum transfer from volume-current bilinears}
+
+Consider a collection of material bodies $\{\mc B_n\}$ and a 
+fixed, deterministic volume current distribution $\vb J\supt{F}(\vb x)$
+that is nonzero only inside the bodies.
+(We work at a fixed frequency $\omega$ with all fields and currents 
+varying in time like $e^{-i\omega t}.$)
+In this section we derive formulas expressing time-average rates 
+of energy and momentum absorption by the bodies as bilinear
+functions of $\vb J\supt{F}.$
+
+\subsubsection*{Induced currents from free currents}
+
+The free current distribution $\vb J\supt{F}(\vb x)$ excites an 
+induced current distribution $\vb J\supt{I}(\vb x)$ which we can 
+determine using the VIE techniques of the previous section. 
+Indeed, taking $\vb J\supt{F}$ as the source of the incident field 
+in a scattering problem, we have
+%====================================================================%
+\begin{align}
+ \vb E\sups{inc}(\vb r) &= ikZ_0 \mathbb{G} \star \vb J\supt{F}
+\intertext{and the RHS vector of the discretized VIE system, equation
+           (\ref{VIESystem2}), reads}
+ \vb v                  &= -\vb G \, \vb j\supt{F}
+\label{ScatProbRHS}
+\end{align}
+%====================================================================%
+where, for a geometry consisting of $N$ bodies, the vectors and
+matrices have an $N$-fold block structure:
+%====================================================================%
+\renewcommand{\arraystretch}{1.5}
+$$ \vb v 
+   = 
+   \left(\begin{array}{c} 
+     \vphantom{\vb j\supt{F}_1} \vb v_1 \\
+     \vphantom{\vb j\supt{F}_2} \vb v_2 \\
+     \vdots \\
+     \vphantom{\vb j\supt{F}_N} \vb v_N
+   \end{array}\right),
+%--------------------------------------------------------------------%
+\qquad  
+   \vb G = \left(\begin{array}{cccc}
+    \vphantom{\vb j\supt{F}_1} \vb G_{11} & \vb G_{12}  & \cdots & \vb G_{1N} \\
+    \vphantom{\vb j\supt{F}_1} \vb G_{21} & \vb G_{22}  & \cdots & \vb G_{2N} \\
+    \vdots                          & \vdots      & \ddots & \vdots     \\ 
+    \vphantom{\vb j\supt{F}_1} \vb G_{N1} & \vb G_{N2}  & \cdots & \vb G_{NN}
+   \end{array}\right), 
+\qquad
+%--------------------------------------------------------------------%
+   \vb j\supt{F} 
+   = 
+   \left(\begin{array}{c} 
+     \vb j\supt{F}_1 \\
+     \vb j\supt{F}_2 \\ 
+     \vdots    \\
+     \vb j\supt{F}_N
+   \end{array}\right).
 $$
+\renewcommand{\arraystretch}{1.0}
 %====================================================================%
-where $\vb j_1^f$ is the projection of $\vb J^f$ onto the 
-basis functions in body 1; the lower entry in the vector on
-the RHS here vanishes because $\vb J^f$ is confined to body 1.
-
-Equation (\ref{VIESystem2}) then reads
+In particular, the $n$th subblock of $\vb j\supt{F}$ is the
+projection of the free current distribution\footnote{Note that 
+$\vb J_n\supt{F}(\vb x)$ is just the restriction of $\vb J\supt{F}$ 
+to the interior of $\mc B_n$.} in body $\mc B_n$, 
+$\vb J_n\supt{F}(\vb x)$, onto the subset of basis functions whose 
+support lies in body $n$:
 %====================================================================%
-\begin{align*}
-   \left(\begin{array}{cc}
-   \vbTInv_1  & \vb U_{12}  \\
-   \vb U_{21} & \vbTInv_{2} 
-   \end{array}\right)
-%--------------------------------------------------------------------%
-   \left(\begin{array}{c}
-   \vb j_1 \\ \vb j_2
-   \end{array}\right)
-%--------------------------------------------------------------------%
- &= -\frac{1}{ikZ_0}
-   \left(\begin{array}{cc}
-   \vb U_{11} & \vb U_{12} \\
-   \vb U_{21} & \vb U_{22} 
-   \end{array}\right)
-   \left(\begin{array}{c}
-   \vb j^f_{1} \\ 0
-   \end{array}\right)
-%--------------------------------------------------------------------%
-\intertext{or}
-%--------------------------------------------------------------------%
-   \left(\begin{array}{c}
-   \vb j_1 \\ \vb j_2
-   \end{array}\right)
-%--------------------------------------------------------------------%
-&= -\frac{1}{ikZ_0}
-   \left(\begin{array}{cc}
-   \vbTInv_1  & \vb U_{12}  \\
-   \vb U_{21} & \vbTInv_{2} 
-   \end{array}\right)^{-1}
-%--------------------------------------------------------------------%
-   \left(\begin{array}{cc}
-   \vb U_{11} & \vb U_{12} \\
-   \vb U_{21} & \vb U_{22} 
-   \end{array}\right)
-%--------------------------------------------------------------------%
-   \left(\begin{array}{c}
-   \vb j^f_{1} \\ 0
-   \end{array}\right)
-\end{align*}
+\numeq{jnF}
+{ j_{n\alpha}\supt{F} 
+  = 
+  \int \vb b_{n\alpha}(\vb r) \cdot \vb J_n\supt{F}(\vb r) \, d\vb r.
+}
 %====================================================================%
-Finally, the fields in bodies 1 and 2 are obtained by summing 
-the contributions of both the free current $\vb j_1^f$ and the induced 
-currents $\vb j_1, \vb j_2$:
+Now taking equation (\ref{ScatProbRHS}) to be the RHS of the VIE scattering
+problem (\ref{VIESystem2}), we obtain an expression for the induced
+currents in terms of the free currents, 
 %====================================================================%
-\begin{align*}
-%--------------------------------------------------------------------%
- \left(\begin{array}{c}
- \vb e_1 \\ \vb e_2 
- \end{array}\right)
-%--------------------------------------------------------------------%
-&= ikZ_0
-   \left(\begin{array}{cc}
-   \vb U_{11} & \vb U_{12} \\
-   \vb U_{21} & \vb U_{22} 
-   \end{array}\right)
-   \left[
-   \left(\begin{array}{c}
-   \vb j^f_{1} \\ 0
-   \end{array}\right)
-   +
-   \left(\begin{array}{c}
-   \vb j_{1} \\ \vb j_2
-   \end{array}\right)
-   \right[
+\begin{align}
+  \vb M \, \vb j\supt{I} &= - \vb G \vb j\supt{F} 
 \\
-%--------------------------------------------------------------------%
-&= \Big[ ikZ_0 \vb U - \vb U \vb W \vb U \Big] \vb j^f
+\intertext {or}
+  \vb j\supt{I} &= -\vb W \vb G \vb j\supt{F} 
+\label{jiFromjf}
+\end{align}
+where $\vb W=\vb M^{-1}$ is the inverse of the VIE matrix 
+defined by (\ref{VIESystem2}).
+%====================================================================%
+
+\subsubsection*{Fields from free currents}
+
+The $\vb E$-field at an arbitrary point in space (either
+inside or outside a body) is then simply the sum of 
+contributions from fixed and induced currents:
+%====================================================================%
+\begin{align*}
+ \vb E &= ikZ_0 \mathbb{G} \star (\vb J\supt{F} + \vb J\supt{I})
+\intertext{or, in discretized form (Appendix \ref{CorrespondenceAppendix}),}
+ \vb e &= ikZ_0 \vb G (\vb j\supt{F} + \vb j\supt{I}) 
+\\
+       &= ikZ_0 \vb G \Big( \vb 1 - \vb W \vb G \Big) \vb j\supt{F}
 \end{align*}
 %====================================================================%
+where in going to the last line I used (\ref{jiFromjf}).
+
+\subsubsection*{Power absorption}
+
+The time-average rate at which body $\mc B_n$ absorbs power from
+the source distribution $\vb J\supt{F}$ is obtained by integrating
+the quantity $\vb E^* \cdot \vb E$ over the the interior of 
+$\mc B_n$; here $\vb J$ is the \textit{total} current in $\mc B_n$,
+consisting of both free and induced contributions:
+
+%====================================================================%
+\begin{align*}
+ P_n(\omega) 
+ &= 
+ -\frac{1}{2}\text{Re }\int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) d\vb r
+\end{align*}
+%====================================================================%
+
+\subsubsection*{Momentum absorption}
+
+The time-average rate at which body $\mc B_n$ absorbs $i$-directed
+\textit{momentum} from the source distribution $\vb J\supt{F}$ is 
+obtained by integrating
+the quantity $\vb J^* \cdot \vb E$ over the the interior of 
+$\mc B_n$; here $\vb J$ is the \textit{total} current in $\mc B_n$,
+consisting of both free and induced contributions:
+
+
+%====================================================================%
+\begin{align*}
+ T_n(\omega) 
+ &= 
+ \frac{1}{2}\text{Re }\int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) d\vb r
+\end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -612,7 +678,7 @@ functions differ only in their normalization).
 For computation of non-equilibrium Casimir forces and 
 torques we require derivatives of $\mathbb{G}$-matrix
 elements with respect to the quantity $\vb R_0$ in
-equation (\ref{bGb}).
+equation (\ref{bGb}). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -805,7 +871,7 @@ $\mathbb{G}_0$ refers ambiguously to matrices of dimension
 $N_1\times N_1$, $N_1\times N_2$, $N_2\times N_1$, or
 $N_2\times N_2$. In what follows we attempt to dispel this 
 confusion through the use of symbols such as $\vb 1_{N}$ 
-for $N\times N$ unit matrices and $\vb U_{ij}$ for 
+for $N\times N$ unit matrices and $\vb G_{ij}$ for 
 $N_i\times N_j$ matrix representations of the $\mathbb{G}$ operator.
 
 We also assign shorthand notation to two matrices that appear 
@@ -817,14 +883,14 @@ frequently in these formulas:
            \mathbb{T}_i \text{Im}[\mathbb{G}_0]\mathbb{T}_i^*
  \text{''}
 &\,\,\equiv\,\, \vb A_i 
- = \text{Im }\vb{T}_i - \vb{T}_i \text{Im}[\vb U_{ii}]\vb{T}_i^\dagger
+ = \text{Im }\vb{T}_i - \vb{T}_i \text{Im}[\vb G_{ii}]\vb{T}_i^\dagger
 \\
 \text{``}
 \frac{1}{1-\mathbb{G}_0 \mathbb{T}_i \mathbb{G}_0 \mathbb{T}_j}
 \text{''}
 &\,\,\equiv\,\, \vb B_{ij}
 = \Big[ \mathbf{1}_{N_j}
-         -\vb U_{ji} \vb{T}_i \vb{U}_{ij} \vb T_j
+         -\vb G_{ji} \vb{T}_i \vb{U}_{ij} \vb T_j
    \Big]^{-1}
 \end{align*}
 %====================================================================%
@@ -839,7 +905,7 @@ include
  \numeq{KJCasimirEnergy}
   {
    \mathcal{E}=\frac{\hbar c}{2\pi}\int
-   \log\det\Big(\vb{1} - \vb U_{12}\vb T_2\vb U_{21}\vb T_1\Big)
+   \log\det\Big(\vb{1} - \vb G_{12}\vb T_2\vb G_{21}\vb T_1\Big)
    d\xi
   }
 (where $\xi$ indicates imaginary frequency)
@@ -865,7 +931,7 @@ $$
 %====================================================================%
 or, in our language,
 %====================================================================%
-$$ \mc H = \text{Tr} \Big[ \text{Im}\big[\vb U_{11}\big] \vb A_{1}\Big].$$
+$$ \mc H = \text{Tr} \Big[ \text{Im}\big[\vb G_{11}\big] \vb A_{1}\Big].$$
 %====================================================================%
  \item[3.] \textit{Heat transfer from body 1 to body 2:}
  $$H_1^{(2)}=\frac{2}{\pi}
@@ -889,8 +955,8 @@ where, in Kr\"uger language,
 %--------------------------------------------------------------------%
 \mathcal{H}_1^{(2)}
 &=\text{Im Tr }
-   \bigg\{ (\vb 1_{N_2} + \vb U_{22} \vb T_2) \vb B_{12}
-           \vb U_{21} \vb A_{1} \vb U_{21}^\dagger
+   \bigg\{ (\vb 1_{N_2} + \vb G_{22} \vb T_2) \vb B_{12}
+           \vb G_{21} \vb A_{1} \vb G_{21}^\dagger
            \vb B_{12}^\dagger \vb T_2^\dagger
    \bigg\}
 \end{align}
@@ -943,16 +1009,16 @@ is the two-body special case of the more general formula
    \log\frac{\det \vb M(\xi)}{\det \vb M_0(\xi)} \, d\xi 
 }
 where $\vb M(\xi)$ is just the full VIE matrix and $\vb M_0$
-is that matrix with the $\vb U$ blocks zeroed out, corresponding
+is that matrix with the $\vb G$ blocks zeroed out, corresponding
 to the case in which all objects are infinitely separated:
 %====================================================================%
 $$
 \vb M(\xi)=
    \left(\begin{array}{cccc}
-   \vbTInv_1  & \vb U_{12} & \cdots & \vb U_{1N} \\
-   \vb U_{21} & \vbTInv_2  & \cdots & \vb U_{2N} \\
+   \vbTInv_1  & \vb G_{12} & \cdots & \vb G_{1N} \\
+   \vb G_{21} & \vbTInv_2  & \cdots & \vb G_{2N} \\
    \vdots     & \vdots     & \ddots & \vdots     \\
-   \vb U_{N1} & \vb U_{N2} & \cdots & \vbTInv_{N} 
+   \vb G_{N1} & \vb G_{N2} & \cdots & \vbTInv_{N} 
    \end{array}\right), 
 \qquad
 \vb M_0(\xi)=
@@ -984,10 +1050,10 @@ $$
 \frac{ \partial \vb M}{\partial \vb r_i} 
  =
    \left(\begin{array}{cccc}
-   0                     & \partial_i \vb U_{12} & \cdots & \partial_i \vb U_{1N} \\
-   \partial_i \vb U_{21} & 0                     & \cdots & 0          \\
+   0                     & \partial_i \vb G_{12} & \cdots & \partial_i \vb G_{1N} \\
+   \partial_i \vb G_{21} & 0                     & \cdots & 0          \\
    \vdots                & \vdots                & \ddots & \vdots     \\
-   \partial_i \vb U_{N1} & 0                     & \cdots & 0           
+   \partial_i \vb G_{N1} & 0                     & \cdots & 0           
    \end{array}\right),
 $$
 
@@ -997,6 +1063,126 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Dictionary of the operator--matrix correspondence}
+\label{CorrespondenceAppendix}
+
+Infinite-dimensional position-space basis 
+$\Longleftrightarrow$ 
+$N\subt{B}$-dimensional basis of discrete expansion functions
+$\{\vb b_\alpha(\vb x)\}.$ 
+
+\subsection*{Notation}
+
+\begin{itemize}
+  \item We use blackboard-bold symbols for position-space 
+        operators: $\mathbb{G}, \mathbb{T}$.
+  \item We use upper-case bold letters for 
+        discrete-basis matrices: $\vb T, \vb G, \vb W.$
+        The elements of these matrices are, e.g.
+        %====================================================================%
+        $$ G_{\alpha\beta} \equiv \int \int 
+           \vb b_\alpha(\vb r) \mathbb{G}(\vb r, \vb r^\prime)
+           \vb b_\beta(\vb r^\prime) \, d\vb r \, d\vb r^\prime
+        $$
+        %====================================================================%
+  \item (At the risk of confusion with the previous item) 
+        We use upper-case bold letters for position-space
+        vectors: $\vb J(\vb x), \vb E(\vb x).$
+  \item We use lower-case bold letters for
+        discrete-basis vectors: $\vb j, \vb e.$ The elements
+        of these vectors are e.g.
+        %====================================================================%
+        $$ e_{\alpha} 
+           \equiv 
+           \int \vb b_\alpha(\vb r) \cdot \vb E(\vb r) d\vb r.
+        $$
+        %====================================================================%
+\end{itemize}
+
+%====================================================================%
+\renewcommand{\arraystretch}{1.5}
+$$\begin{array}{|c|c|}\hline
+   \textbf{Continuous} 
+ & \textbf{Discrete} 
+\\\hline
+%--------------------------------------------------------------------%
+  \mathbb{G}(\vb r, \vb r^\prime)
+& 
+  \vb G\text{ matrix, with elements }
+  U_{\alpha\beta} 
+  = \int \int \vb b_\alpha(\vb r) \mathbb{G}(\vb r, \vb r^\prime)
+              \vb b_\beta(\vb r^\prime) \, d\vb r \, d\vb r^\prime
+\\\hline
+%--------------------------------------------------------------------%
+  \vb{E}(\vb r)
+&
+  \vb e\text{ vector, with elements }
+  e_{\alpha} 
+  = \int \vb b_\alpha(\vb r) \cdot \vb {E}(\vb r) \, d\vb r
+\\\hline
+%--------------------------------------------------------------------%
+\end{array}$$
+%====================================================================%
+
+
+\subsection*{Approximate completeness relation}
+
+One way to conceptualize the transition from the continuous
+to the discrete is to suppose that the basis functions 
+$\{\vb b_\alpha(\vb x)\}$ satisfy an approximate completeness relation
+of the form 
+%====================================================================%
+\begin{subequations}
+\begin{align}
+\sum_{\alpha} b_{\alpha i}(\vb r) b_{\alpha j}(\vb r^\prime)
+&\approx \delta_{ij} \delta(\vb r-\vb r^\prime)
+\intertext{or}
+\sum_\alpha \int b_{\alpha i}(\vb r) b_{\alpha j}(\vb r^\prime) \, d\vb r^\prime
+&=\delta_{ij}
+\end{align}
+\label{SWGCompleteness}
+\end{subequations}
+%====================================================================%
+
+For example, consider the continuous version of the equation
+relating the total current to the total field:
+%====================================================================%
+\begin{align}
+  \vb E &= ikZ_0 \mathbb{G} \star \vb J 
+\intertext{or}
+  E_i(\vb r) &= ikZ_0 \int \mathbb{G}_{ij}(\vb r, \vb r^\prime) 
+                J_j(\vb r^\prime) 
+                d\vb r^\prime.
+\intertext{Insert (\ref{SWGCompleteness}a) [in the form 
+           $\sum b_{\beta j}(\vb r^\prime) 
+                 b_{\beta k}(\vb r^{\prime\prime})
+                 =\delta_{jk}\delta(\vb r^\prime-\vb r^{\prime\prime})
+           $]between $\mathbb{G}$ and $\vb J$ on the RHS:}
+  E_i(\vb r) &= ikZ_0 \sum_{\beta }
+                \left[
+                \int \mathbb{G}_{ij}(\vb r, \vb r^\prime) 
+                     b_{\beta j}(\vb r^\prime)
+                     d\vb r^\prime
+                \right]
+                \underbrace{\left[
+                \int b_{\beta k}(\vb r^{\prime\prime}) 
+                     J_k(\vb r^{\prime\prime})
+                     d\vb r^{\prime\prime}
+                            \right]}_{\vb j_\beta}
+\intertext{As it stands this equation exists in a sort of 
+           hybrid continuous-discrete form. 
+           Now multiply both sides by $\vb b_{\alpha}(\vb r)$ 
+           and integrate over $\vb r$ to find}
+ e_\alpha &= ikZ_0 G_{\alpha\beta} j_\beta
+\intertext{or}
+ \vb e &= ikZ_0 \vb G\, \vb j.
+\end{align}
+%====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
