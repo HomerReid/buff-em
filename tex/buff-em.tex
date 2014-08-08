@@ -9,6 +9,7 @@
 \newcommand{\vbTInvSmall}{\rotatebox[origin=c]{180}{\scriptsize{$\vb T$}}}
 \newcommand{\bbTInv}{\rotatebox[origin=c]{180}{$\mathbb{T}$}}
 \newcommand{\bbVInv}{\rotatebox[origin=c]{180}{$\mathbb{V}$}}
+\newcommand{\vbSigma}{\boldsymbol{\Sigma}}
 \newcommand{\fd}{^{\text{\tiny{F}}\dagger}}
 
 \newcommand{\citeasnoun}[1]{Ref.~\citen{#1}}
@@ -621,7 +622,7 @@ and
 \subsection{Statistical averages of volume-current bilinears}
 
 The classical, deterministic expressions derived above for 
-time-averages quantities $Q$ (where $Q$ is a power, force, 
+time-average quantities $Q$ (where $Q$ is a power, force,
 or torque) all take the form
 
 $$ Q(w) 
@@ -634,10 +635,10 @@ where $\vb Q(\omega)$ is a frequency-dependent matrix.
  \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle
 &=\#
   \left(\begin{array}{cccc}
-  \Theta(T_1) \text{Im }\vb V_1 & 0 & \cdots & 0 \\ 
-  0 & \Theta(T_2) \text{Im }\vb V_2 & \cdots & 0 \\ 
+  \Theta(T_1) \vbSigma_1 & 0 & \cdots & 0 \\ 
+  0 & \Theta(T_2) \vbSigma_2 & \cdots & 0 \\ 
   \vdots & \vdots & \ddots & \vdots \\
-  0 & 0 & \cdots & \Theta(T_N) \text{Im }\vb V_N \\
+  0 & 0 & \cdots & \Theta(T_N) \vbSigma_N \\
  \end{array}\right)
 \end{align*}
 
