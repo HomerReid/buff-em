@@ -9,6 +9,7 @@
 \newcommand{\vbTInvSmall}{\rotatebox[origin=c]{180}{\scriptsize{$\vb T$}}}
 \newcommand{\bbTInv}{\rotatebox[origin=c]{180}{$\mathbb{T}$}}
 \newcommand{\bbVInv}{\rotatebox[origin=c]{180}{$\mathbb{V}$}}
+\newcommand{\fd}{^{\text{\tiny{F}}\dagger}}
 
 \newcommand{\citeasnoun}[1]{Ref.~\citen{#1}}
 \newcommand{\citeasnouns}[1]{Refs.~\citen{#1}}
@@ -267,6 +268,42 @@ with the $\bbVInv$ operator appropriate for the $n$th body]
 while the off-diagonal blocks involve only the matrix elements of 
 the $\mathbb{G}$ operator. 
 
+\subsection*{Vector subblocks and projection matrices}
+
+In problems involving two or more bodies it is convenient 
+to define projection matrices that operate on full vectors,
+like those in (\ref{VIESystem2}), to extract only the 
+portions corresponding to body $n$, i.e. we define the
+$n$th projection matrix $\vb P_n$ according to 
+%====================================================================%
+\numeq{ProjectionMatrix}
+{
+\underbrace{
+  \left(\begin{array}{ccccc} 
+         0 & \cdots & 0     & \cdots & 0 \\
+   \vdots  & \ddots & 0     & \vdots & 0 \\
+         0 &      0 & \vb 1 & \cdots & 0 \\
+   \vdots  & \vdots & 0     & \ddots & 0 \\
+         0 &      0 & 0     & \cdots & 0 \\
+  \end{array}\right)
+           }_{\vb P_n}
+\left(\begin{array}{c} 
+ \vb j_1 \\
+ \vdots  \\
+ \vb j_n \\
+ \vdots  \\
+ \vb j_N
+ \end{array}\right)
+=
+\left(\begin{array}{c} 
+ 0       \\
+ \vdots  \\
+ \vb j_n \\
+ \vdots  \\
+  0       
+ \end{array}\right)
+}
+
 \subsection*{Symmetries of the VIE matrix}
 
 \subsubsection*{Symmetries of the $\bbVInv$ matrix} 
@@ -446,9 +483,17 @@ currents in terms of the free currents,
   \vb j\supt{I} &= -\vb W \vb G \vb j\supt{F} 
 \label{jiFromjf}
 \end{align}
+%====================================================================%
 where $\vb W=\vb M^{-1}$ is the inverse of the VIE matrix 
 defined by (\ref{VIESystem2}).
-%====================================================================%
+
+The \textit{total} current is 
+\begin{align}
+ \vb j &= \vb j\supt{F} + \vb j\supt{I}
+\nn
+  &= \Big[ \vb 1 - \vb W \vb G\Big] \vb j\supt{F}.
+\label{jTot}
+\end{align}
 
 \subsubsection*{Fields from free currents}
 
@@ -456,47 +501,144 @@ The $\vb E$-field at an arbitrary point in space (either
 inside or outside a body) is then simply the sum of 
 contributions from fixed and induced currents:
 %====================================================================%
-\begin{align*}
+\begin{align}
  \vb E &= ikZ_0 \mathbb{G} \star (\vb J\supt{F} + \vb J\supt{I})
+\label{EConvolution} \\
 \intertext{or, in discretized form (Appendix \ref{CorrespondenceAppendix}),}
  \vb e &= ikZ_0 \vb G (\vb j\supt{F} + \vb j\supt{I}) 
-\\
+\nn
        &= ikZ_0 \vb G \Big( \vb 1 - \vb W \vb G \Big) \vb j\supt{F}
-\end{align*}
+\label{efromjf}
+\end{align}
 %====================================================================%
 where in going to the last line I used (\ref{jiFromjf}).
+
+In what follows I will also need the the quantity 
+$\partial_i \vb E(\vb r),$ i.e. the derivative of $\vb E$ with
+respect to the evaluation point. Differentiating both sides of
+(\ref{EConvolution}), we see that the derivative operates
+on the first argument of $\mathbb{G}(\vb r, \vb r^\prime)$
+and leaves everything else on the RHS untouched; thus we find
+simply 
+%====================================================================%
+\numeq{diefromfj}
+{\partial_i \vb e = ikZ_0 \Big[\partial_i \vb G\Big] (\vb j\supt{F} + \vb j\supt{I})}
+%====================================================================%
+where the matrix elements of the quantity in square brackets are
+$$ \Big[ \partial_i \vb G\Big]_{\alpha\beta}
+  = \int \int \vb b_\alpha(\vb r) 
+              \left[\pard{}{\vb r_i} \mathbb{G}(\vb r, \vb r^\prime)\right]
+              \vb b_\beta(\vb r^\prime) \, d\vb r \, d\vb r^\prime.
+$$
 
 \subsubsection*{Power absorption}
 
 The time-average rate at which body $\mc B_n$ absorbs power from
 the source distribution $\vb J\supt{F}$ is obtained by integrating
-the quantity $\vb E^* \cdot \vb E$ over the the interior of 
-$\mc B_n$; here $\vb J$ is the \textit{total} current in $\mc B_n$,
-consisting of both free and induced contributions:
-
+the quantity $\frac{1}{2}\text{Re }\vb J^* \cdot \vb E$ over the 
+interior of $\mc B_n$; here $\vb J$ is the \textit{total} current 
+in $\mc B_n$, consisting of both free and induced contributions:
 %====================================================================%
-\begin{align*}
+\begin{align}
  P_n(\omega) 
  &= 
- -\frac{1}{2}\text{Re }\int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) d\vb r
-\end{align*}
+ \frac{1}{2}\text{Re }\int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) \, d\vb r
+\label{PowerVolumeIntegral} \\
+ &= \frac{1}{2}\text{Re }\vb j_n^\dagger \cdot \vb e_n \nonumber
+\intertext{where we used equation (\ref{VolIntToDotProd}). 
+           The $n$ subscript on vectors picks out the subblock
+           corresponding to body $n$; using the projection matrices
+           $\vb P_n$ defined by (\ref{ProjectionMatrix}), we 
+           could equivalently write this in the form}
+ &= \frac{1}{2}\text{Re }\vb j^\dagger \vb P_n \vb e \nonumber
+\intertext{Now insert equations (\ref{jTot}) and (\ref{efromjf}):}
+ &= \frac{1}{2}\text{Re }\left\{ ikZ_0 \, 
+    \vb j\fd \Big[\vb 1-\vb G^\dagger \vb W^\dagger \Big]
+    \vb P_n
+    \vb G \Big[\vb 1 - \vb W \vb G\Big] \vb j\supt{F} \right\}
+\nn
+ &= -\frac{kZ_0}{2}\text{ Im Tr }\left\{ 
+    \Big[\vb 1-\vb G^\dagger \vb W^\dagger \Big]
+    \vb P_n
+    \vb G \Big[\vb 1 - \vb W \vb G\Big] 
+    \Big[\vb j\supt{F} \vb j\fd \Big]
+    \right\}.
+\label{DeterministicPowerTraceFormula}
+\end{align}
 %====================================================================%
+As advertised, this expression depends quadratically on
+$\vb J\supt{F}$, as witness the appearance of the outer matrix
+product $\vb j\supt{F} \vb j\fd$.
 
+%=================================================
+%=================================================
+%=================================================
 \subsubsection*{Momentum absorption}
 
 The time-average rate at which body $\mc B_n$ absorbs $i$-directed
-\textit{momentum} from the source distribution $\vb J\supt{F}$ is 
-obtained by integrating
-the quantity $\vb J^* \cdot \vb E$ over the the interior of 
-$\mc B_n$; here $\vb J$ is the \textit{total} current in $\mc B_n$,
-consisting of both free and induced contributions:
-
-
+\textit{momentum} from the source distribution $\vb J\supt{F}$---that
+is, the $i$-directed force on the body---may be expressed as a
+volume-integral expression very similar to that of
+(\ref{PowerVolumeIntegral})
+but with 
+ \textbf{(i)} ``Re'' replaced by ``Im,''
+ \textbf{(ii)} $\vb E$ replaced by $\partial_i \vb E$, 
+and 
+ \textbf{(iii)} an extra factor of $\omega$ in the denominator:
 %====================================================================%
 \begin{align*}
  T_n(\omega) 
  &= 
- \frac{1}{2}\text{Re }\int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) d\vb r
+ \frac{1}{2\omega}
+ \text{Im }\int_{\mc B_n} \vb J^*(\vb r) \cdot \partial_i \vb E(\vb r) d\vb r.
+\intertext{(This expression is quoted in~\citeasnoun{Kruger2012}; I
+            also provide a quick derivation in
+            Appendix \ref{ForceFormulaAppendix}.)
+            Going over to the discrete world, we have}
+ &= 
+ \frac{1}{2\omega}
+ \text{Im }\vb j^\dagger \vb P_n (\partial_i \vb e)
+\intertext{Insert (\ref{jTot}) and (\ref{efromjf}):}
+ &= 
+\frac{1}{2\omega}\text{Im }
+    \left\{ ikZ_0 \, 
+    \vb j\fd \Big[\vb 1-\vb G^\dagger \vb W^\dagger \Big]
+    \vb P_n
+    (\partial_i \vb G) \Big[\vb 1 - \vb W \vb G\Big] \vb j\supt{F} \right\}
+\nn
+&= \frac{kZ_0}{2\omega}\text{Re Tr}
+    \left\{ 
+    \Big[\vb 1-\vb G^\dagger \vb W^\dagger \Big]
+    \vb P_n
+    (\partial_i \vb G) \Big[\vb 1 - \vb W \vb G\Big] \vb j\supt{F} \vb j\fd
+   \right\}
+\end{align*}
+%====================================================================%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Statistical averages of volume-current bilinears}
+
+The classical, deterministic expressions derived above for 
+time-averages quantities $Q$ (where $Q$ is a power, force, 
+or torque) all take the form
+
+$$ Q(w) 
+   \propto 
+   \Tr \Big\{ \vb Q(\omega) \cdot \big(\vb j\supt{F} \vb j\fd\big) \Big\}
+$$
+where $\vb Q(\omega)$ is a frequency-dependent matrix.
+
+\begin{align*}
+ \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle
+&=\#
+  \left(\begin{array}{cccc}
+  \Theta(T_1) \text{Im }\vb V_1 & 0 & \cdots & 0 \\ 
+  0 & \Theta(T_2) \text{Im }\vb V_2 & \cdots & 0 \\ 
+  \vdots & \vdots & \ddots & \vdots \\
+  0 & 0 & \cdots & \Theta(T_N) \text{Im }\vb V_N \\
+ \end{array}\right)
 \end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1149,6 +1291,7 @@ of the form
 \end{subequations}
 %====================================================================%
 
+\subsection*{Convolutions becomes matrix-vector products}
 For example, consider the continuous version of the equation
 relating the total current to the total field:
 %====================================================================%
@@ -1182,6 +1325,114 @@ relating the total current to the total field:
 \intertext{or}
  \vb e &= ikZ_0 \vb G\, \vb j.
 \end{align}
+%====================================================================%
+
+%=================================================
+%=================================================
+%=================================================
+\subsection*{Volume integrals become dot products}
+
+Consider, for example, the integral
+%====================================================================%
+\begin{align}
+\Big\langle \vb J \cdot \vb E \Big\rangle_{\mc B_n}
+ &\equiv
+ \int_{\mc B_n} \vb J^*(\vb r) \cdot \vb E(\vb r) \, d\vb r
+\nonumber
+\intertext{Rewrite this in the seemingly pedantic form}
+ &= 
+ \int_{\mc B_n} \int_{\mc B_n} 
+ J_i^*(\vb r) \delta_{ij} \delta(\vb r-\vb r^\prime)
+                E_j(\vb r^\prime) \, d\vb r \, d\vb r^\prime
+\nonumber
+\intertext{Now insert (\ref{SWGCompleteness}a):}
+ &= 
+ \int_{\mc B_n} \int_{\mc B_n} 
+  J_i^*(\vb r) 
+  \left[ \sum_{\alpha} b_{\alpha i}(\vb r) b_{\alpha j}(\vb r^\prime)\right]
+  E_j(\vb r^\prime) \, d\vb r \, d\vb r^\prime
+\nn
+ &= 
+ \sum_{\alpha}
+ \underbrace{\Big[
+ \int_{\mc B_n} b_{\alpha i}(\vb r)J_i^*(\vb r)  \, d\vb r 
+             \Big]
+            }_{j_{n\alpha}^*}
+ \underbrace{\Big[
+ \int_{\mc B_n} b_{\alpha j}(\vb r^\prime) E_j(\vb r^\prime) \, d\vb r^\prime 
+             \Big]
+            }_{e_{n\alpha}}
+ &= \vb j_n^\dagger \vb e_n.
+\label{VolIntToDotProd}
+\end{align}
+%====================================================================%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Derivation of volume integrals for the force and torque}
+\label{ForceFormulaAppendix}
+
+Consider a body in which exists both a (deterministic) 
+total volume current distribution $\vb J(\vb x)$ and
+electric and magnetic fields $\{\vb E, \vb H\}(\vb x).$
+The time-average force experienced by the currents in 
+an infinitesimal volume $dV$ is
+%====================================================================%
+\begin{align*}
+d\vb F &= \frac{1}{2}\text{Re }
+ \Big[ \rho^* \vb E + \mu_0 \vb J^* \times \vb H \Big]
+\\
+\intertext{Use $\rho=\frac{1}{i\omega}(\nabla \cdot \vb J)$
+           and $\vb H=\frac{1}{i\omega\mu_0}\nabla \times \vb E$:}
+ &=
+ \frac{1}{2}\text{Re }\left\{
+ \frac{1}{i\omega}
+ \Big[ -(\nabla \cdot \vb J^*) \vb E 
+       + \vb J^* \times (\nabla \times \vb E) 
+ \Big]
+                      \right\}
+\intertext{or}
+dF_i &= -\frac{1}{2\omega}\text{Im }
+ \Big[
+ (\partial_j J^*_j) E_i - 
+  \underbrace{ \varepsilon_{ijk}
+               \varepsilon_{k\ell m}
+             }_{\delta_{i\ell}\delta_{jm} - \delta_{im}\delta_{j\ell}}
+  J^*_j \partial_\ell E_m
+ \Big]
+\\
+&= -\frac{1}{2\omega}\text{Im }
+ \Big[ (\partial_j J^*_j) E_i
+       - J^*_j \partial_i E_j
+       + J^*_j \partial_j E_i
+ \Big].
+\intertext{The total force is given by integrating over the volume:}
+F_i
+&= -\frac{1}{2\omega}\text{Im } \int_{\mc B_n}
+ \Big[ (\partial_j J^*_j) E_i
+       - J^*_j \partial_i E_j
+       + J^*_j \partial_j E_i
+ \Big] dV
+\end{align*}
+%====================================================================%
+Rewrite the first term using integration by parts:
+$$     \int_{\mc B_n} (\partial_j J^*_j) E_i \, dV
+    = +\int_{\partial \mc B_n} E_i \, \vb J \cdot d\vb A
+      -\int_{\mc B_n} J^*_j \partial_j E_i \, dV 
+$$
+The first term on the RHS vanishes because $\vb J\cdot \vbhat{n}=0$
+at the surface of the object (no current flows from the body
+into space), while the second term cancels the third term in the
+volume integral above, and we are left simply with
+%====================================================================%
+\numeq{ForceVolumeIntegral}
+{ F_i = \frac{1}{2\omega}\text{Im } \int_{\mc B_n}
+         -J^*_j \partial_i E_j \, dV 
+      = \frac{1}{2\omega}\text{Im } 
+         \int_{\mc B_n} \vb J^* \cdot \partial_i \vb E \, dV.
+}
 %====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
