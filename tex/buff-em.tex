@@ -12,6 +12,10 @@
 \newcommand{\vbSigma}{\boldsymbol{\Sigma}}
 \newcommand{\fd}{^{\text{\tiny{F}}\dagger}}
 
+% 'IEM' stands for 'imaginary part of epsilon matrix'
+\newcommand{\vbIEM}{\boldsymbol{\Sigma}}
+\newcommand{\IEM}{\Sigma}
+
 \newcommand{\citeasnoun}[1]{Ref.~\citen{#1}}
 \newcommand{\citeasnouns}[1]{Refs.~\citen{#1}}
 
@@ -109,6 +113,7 @@ for {\sc buff-em}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\addcontentsline{toc}{section}{\large Part I: Theory}
 \section{VIE formulation of classical EM scattering}
 
 In this section I rederive the volume-integral-equation (VIE)
@@ -123,7 +128,7 @@ Consider a material body with relative permittivity tensor
 $\vbeps(\vb x)$ lying in vacuum and irradiated by monochromatic
 sources which may lie inside or outside the body. 
 Let the electric field due to the sources be $\vb E\sups{inc}$ 
-and let $\vb J(\vb x)$ be the induced volume current
+and let $\vb J\supt{I}(\vb x)$ be the induced volume current
 density throughout the bulk of the body. 
 (We work at frequency $\omega$ and assume time dependence
 of all field and currents $\propto e^{-i\omega t}$.)
@@ -139,51 +144,62 @@ convenient nonetheless.}
 \begin{align}
  \vb E\sups{tot} &= \vb E\sups{inc} + \vb E\sups{scat}
 \\
-                 &= \vb E\sups{inc} + ikZ_0 \mathbb{G}*\vb J
+                 &= \vb E\sups{inc} + ikZ_0 \mathbb{G}*\vb J\supt{I}
 \label{ETot}
 \end{align}
 %====================================================================%
 where $k=\omega/c$ is the (free-space) wavenumber,
-$Z_0=\sqrt{\mu_0/\epsilon_0}$ is the impedance of free space,
+$Z_0=\sqrt{\mu_0/\epsilon_0}$ is the impedance of free 
+space\footnote{Here and throughout we consistently eliminate
+all reference to the free-space permittivity and
+permeability constants $\epsilon_0,\mu_0$ in favor of
+$Z_0=\sqrt{\mu_0/\epsilon_0}$ and $c=1/\sqrt{\epsilon_0 \mu_0}.$
+For example, we write the combinations 
+$\{\epsilon_0\omega, \mu_0\omega\}$ respectively in the form 
+$\{\frac{k}{Z_0}, kZ_0\}$ where
+$k=\omega/c$ is the free space wavelength.},
 $*$ denotes convolution, and $\mathbb{G}$ is the free-space
 dyadic Green's function:
+%====================================================================%
 $$ \mathbb{G}(\vb x, \vb x^\prime) = 
    \Big(\vb 1 - \frac{1}{k^2} \nabla \times \nabla \Big)
    \frac{e^{ikr}}{4\pi r}
    \qquad (r\equiv |\vb x-\vb x^\prime|).
 $$
+%====================================================================%
 On the other hand, the induced current is related to the total field
 according to
 %====================================================================%
 \begin{align*}
- \vb J(\vb x) 
+ \vb J\supt{I}(\vb x) 
 &= -i\frac{k}{Z_0} \big[\vbeps(\vb x) - \vb 1\big]\cdot \vb E\sups{tot}(\vb x)
 \\
 &\equiv -\frac{1}{ikZ_0} \mathbb{V}(\vb x) \cdot \vb E\sups{tot}(\vb x)
 \end{align*}
 %====================================================================%
 where $\mathbb{V}\equiv k^2\big[\vb 1 - \vbeps(\vb x)\big]$ is
-sometimes known~\cite{Rahi2009} as the ``potential.''
+sometimes~\cite{Rahi2009} known as the ``potential.''
 At points not in free space, i.e. points at which 
 $\vbeps(\vb x)\ne \vb 1$, we can invert this equation to read
 %====================================================================%
 \begin{align}
--ikZ_0 \bbVInv(\vb x) \cdot \vb J(\vb x) &= \vb E\sups{tot}(\vb x)
+-ikZ_0 \bbVInv(\vb x) \cdot \vb J\supt{I}(\vb x) &= \vb E\sups{tot}(\vb x)
 \nonumber
 \intertext{where $\bbVInv\equiv \mathbb{V}^{-1}.$ Now insert (\ref{ETot}):}
--ikZ_0 \bbVInv(\vb x) \cdot \vb J(\vb x) &= \vb E\sups{inc} + ik Z_0 \mathbb{G} \star \vb J \\
+-ikZ_0 \bbVInv(\vb x) \cdot \vb J\supt{I}(\vb x) 
+&= \vb E\sups{inc} + ik Z_0 \mathbb{G} \star \vb J\supt{I} \\
 \intertext{Rearranging and writing out the convolution, 
-           we obtain a volume-integral equation for $\vb J$:} 
-  -ikZ_0\left[   \bbVInv(\vb x) \cdot \vb J(\vb x)
+           we obtain a volume-integral equation for $\vb J\supt{I}$:} 
+  -ikZ_0\left[   \bbVInv(\vb x) \cdot \vb J\supt{I}(\vb x)
               + \int \mathbb{G}(\vb x, \vb x^\prime) 
-                \cdot \vb J(\vb x^\prime) \,d\vb x^\prime
+                \cdot \vb J\supt{I}(\vb x^\prime) \,d\vb x^\prime
         \right]
 &= \vb E\sups{inc}(\vb x).
 \\
 \intertext{In what follows it will be convenient to think of the RHS 
-           here as the convolution of just a single operator with $\vb J$:}
+           here as the convolution of just a single operator with $\vb J\supt{I}$:}
  -ikZ_0
-  \int \bbTInv(\vb x, \vb x^\prime) \cdot \vb J(\vb x^\prime) \,d\vb x^\prime
+  \int \bbTInv(\vb x, \vb x^\prime) \cdot \vb J\supt{I}(\vb x^\prime) \,d\vb x^\prime
 &= \vb E\sups{inc}(\vb x).
 \label{ContinuousVIE}
 \end{align}
@@ -202,10 +218,10 @@ where
 \subsection*{Discretized VIE formulation}
 
 Now let $\vb b_\alpha$ be some convenient set of $N$ vector-valued 
-basis functions and approximate $j$ in the form
+basis functions and approximate the induced current in the form
 %====================================================================%
 \numeq{JExpansion}
- { \vb J(\vb x) \approx \sum_{\alpha} j_\alpha \vb b_\alpha(\vb x). }
+ { \vb J\supt{I}(\vb x) \approx \sum_{\alpha} j\supt{I}_\alpha \vb b_\alpha(\vb x). }
 %====================================================================%
 Insert into (\ref{ContinuousVIE}) and ``test'' both sides
 with the elements of the set $\{\vb b_\alpha\}$ to obtain a
@@ -214,10 +230,10 @@ $N\times N$ linear system:
 %====================================================================%
 \numeq{VIESystem}
 {
- \vbTInv \cdot \vb j = \vb v
+ \vbTInv \cdot \vb j\supt{I} = \vb v
 }
 %====================================================================%
-where the elements of the vector $\vb j$ are the expansion 
+where the elements of the vector $\vb j\supt{I}$ are the expansion 
 coefficients in (\ref{JExpansion}) and the elements of 
 $\vbTInv$ and $\vb v$ are 
 %====================================================================%
@@ -247,10 +263,10 @@ $N$ separate bodies, this is generalized to read
             }_{\vb M}
 %--------------------------------------------------------------------%
 \left(\begin{array}{c} 
- \vphantom{\vbTInv_1} \vb j_1 \\
- \vphantom{\vbTInv_1} \vb j_2 \\
+ \vphantom{\vbTInv_1} \vb j_1\supt{I} \\
+ \vphantom{\vbTInv_1} \vb j_2\supt{I} \\
  \vphantom{\ddots}    \vdots  \\
- \vphantom{\vbTInv_1} \vb j_N \\
+ \vphantom{\vbTInv_1} \vb j_N\supt{I} \\
 \end{array}\right)
 %--------------------------------------------------------------------%
  =
@@ -376,20 +392,16 @@ of our material bodies but otherwise arbitrary---and use
 the VIE formalism of the previous section to derive compact 
 expressions for the rates of energy and momentum absorption 
 by the bodies. These expressions will be quadratic (bilinear) 
-functions of $\vb J\supt{F}$. [The F superscript stands
+functions of $\vb J\supt{F}$. (The F superscript stands
 for ``free''; it distinguishes the fixed, externally-imposed
 current $\vb J\supt{F}$ from the \textit{induced} current
-$\vb J\supt{I}$ to which it gives rise. $\vb J\supt{I}$
-is the quantity that was denoted simply ``$\vb J$'' in the 
-previous section; it is the unknown for which we are solving 
-in the VIE equation (\ref{ContinuousVIE}).]
+$\vb J\supt{I}$ to which it gives rise.)
 %--------------------------------------------------------------------%
 \item I then average over thermal and quantum-mechanical
-fluctuations of $\vb J$ to derive temperature-dependent
+fluctuations of $\vb J\supt{F}$ to derive temperature-dependent
 mean heat-transfer rates and forces on the bodies.
 %--------------------------------------------------------------------%
 \end{enumerate}
-
 In what follows I will go back and forth somewhat freely between
 continuous operator/field notation 
 [involving symbols like $\mathbb{G}$ and $\vb E(\vb x)$] and 
@@ -624,380 +636,213 @@ and
 The classical, deterministic expressions derived above for 
 time-average quantities $Q$ (where $Q$ is a power, force,
 or torque) all take the form
-
-$$ Q(w) 
+%====================================================================%
+\numeq{QofW}
+{Q(w) 
    \propto 
    \Tr \Big\{ \vb Q(\omega) \cdot \big(\vb j\supt{F} \vb j\fd\big) \Big\}
-$$
-where $\vb Q(\omega)$ is a frequency-dependent matrix.
-
+}
+%====================================================================%
+where $\vb Q(\omega)$ is a frequency-dependent matrix. The
+statistical \textit{average} of such quantities is performed
+by averaging over all possible free current distributions
+$\vb J\supt{F}(\vb r)$, which amounts to computing the statistical
+average of the matrix $\vb j\supt{F} \vb j\fd$:
+%====================================================================%
 \begin{align*}
+ \big\langle Q(\omega) \big\rangle
+   \propto 
+   \Tr \Big\{ \vb Q(\omega) \cdot 
+              \big\langle \vb j\supt{F} \vb j\fd\big\rangle_{\omega} 
+       \Big\}.
+\end{align*}
+This quantity represents just the contribution of frequency-$\omega$
+fluctuations to the average power, force or torque (PFT); the  
+\textit{total} PFT is given by integrating over all frequencies,
+$ Q=\int_{0}^\infty \, \langle Q(\omega) \rangle \,d\omega.$
+
+%====================================================================%
+The elements of the matrix $\vb j\supt{F}\vb j\fd$ are 
+%====================================================================%
+\begin{align}
+ \Big[ \vb j\supt{F} \vb j\fd \Big]_{\alpha\beta}
+&=\int \int     b_{\alpha i}(\vb r) 
+                J\supt{F}_i(\vb r) J^{\text{\tiny{F}}*}_j(\vb r^\prime)
+                b_{\beta j}(\vb r^\prime)
+  \, d\vb r \, d\vb r^\prime
+%--------------------------------------------------------------------%
+\intertext{Now perform the statistical average. The only quantities
+on the RHS that experience averaging are the factors of $J$ in the
+integrand:}
+%--------------------------------------------------------------------%
+ \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle_{\alpha\beta}
+&=\int \int     b_{\alpha i}(\vb r) 
+ \Big\langle
+                J\supt{F}_i(\vb r) J^{\text{\tiny{F}}*}_j(\vb r^\prime)
+ \Big\rangle
+                b_{\beta j}(\vb r^\prime)
+  \, d\vb r \, d\vb r^\prime.
+\label{jjd1}
+\end{align}
+We now make use of the 
+fluctuation-dissipation theorem in the form of the Rytov correlation
+function,\footnote{How do the \textit{units} of this equation work?
+To answer this question, I think it's easiest to multiply both
+sides by $Z_0$ to bring a factor of impedance to the LHS.
+Since $J$ is the Fourier transform of a volume current density, it
+has units of 
+$\frac{\text{current}}{\text{length}^2}\cdot \frac{1}{\text{frequency}}$.
+and the LHS then has units of 
+$\frac{\text{impedance} \cdot \text{current}^2 \cdot \text{time}^2}
+      {\text{length}^4}
+ =\frac{\text{energy}\cdot\text{time}}
+      {\text{length}^4}
+$ where we used that $\text{impedance}\cdot\text{current}^2=\text{power}$
+(for example, recall the $\sim I^2 R$ dependence of Joule heating)
+and $\text{power}\cdot\text{time}=\text{energy}$. Meanwhile, on
+the RHS, the dimensionful factors remaining after multiplying by 
+$Z_0$ are $\Theta$ (energy) and $k\delta(\vb r-\vb r^\prime)$ 
+(length$^{-4}$) so everything works out modulo a factor of inverse 
+frequency on the RHS, which I think must be coming from a factor
+like $\delta(\omega-\omega^\prime)$ that is implicit somewhere.}
+%====================================================================%
+\numeq{Rytov}
+{ \big\langle J\supt{F}_i(\vb r) J^{\text{\tiny{F}}*}_j(\vb r^\prime)
+  \big\rangle
+  = \frac{k}{\pi Z_0} \Theta(T) \delta(\vb r-\vb r^\prime) 
+    \text{Im }\epsilon_{ij}(\vb r).
+}
+%====================================================================%
+Inserting this into (\ref{jjd1}), we find
+%====================================================================%
+$$
+ \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle_{\alpha\beta}
+ = \frac{k}{\pi Z_0}
+     \int \Theta\big[T(\vb r)\big]
+          b_{\alpha i}(\vb r) 
+          \Big[\text{Im }\epsilon_{ij}(\vb r) \Big]
+          \vb b_{\beta  j}(\vb r)
+  \, d\vb r. 
+$$
+%====================================================================%
+For the situation we consider here---involving $N$ material bodies,
+throughout the interior of which the temperature is constant---the
+full matrix takes the form 
+%====================================================================%
+\numeq{jjdMatrix}
+{
  \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle
-&=\#
+ =\frac{k}{\pi Z_0}
   \left(\begin{array}{cccc}
-  \Theta(T_1) \vbSigma_1 & 0 & \cdots & 0 \\ 
-  0 & \Theta(T_2) \vbSigma_2 & \cdots & 0 \\ 
-  \vdots & \vdots & \ddots & \vdots \\
-  0 & 0 & \cdots & \Theta(T_N) \vbSigma_N \\
- \end{array}\right)
-\end{align*}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{SWG Basis Functions}
-
-SWG basis functions are the three-dimensional analog of
-RWG basis functions. They are defined on pairs of adjacent tetrahedra:
-%====================================================================%
-$$ \vb b_\alpha(\vb x) = 
-  \begin{cases}
-   \displaystyle{
-    +\frac{A_\alpha}{3V_\alpha^+}(\vb x - \vb Q_\alpha^+), 
-                }
-    \qquad &\vb x\in \mc P_\alpha^+
-\\[5pt]
-   \displaystyle{
-  -\frac{A\alpha}{3V_\alpha^-}(\vb x - \vb Q_\alpha^-), 
-                } 
-    \qquad &\vb x\in \mc P_\alpha^-
-  \end{cases}
-$$
-%====================================================================%
-where $\mc P_\alpha^\pm$ are the two tetrahedra associated with basis
-function $\alpha$, $V_\alpha^\pm$ are their volumes, $\vb Q_\alpha\pm$
-are the source/sink vertices, and $A_\alpha$ is the area of the 
-triangular face shared by $\mc P_\alpha^\pm$. (I denote tetrahedra 
-by $\mc P$, which stands for ``pyramid,'' to avoid confusion with
-the symbol $\mc T$, which stands for ``triangle'' in my memos on
-RWG basis functions.)
-
-The divergence of the SWG basis function is 
-%====================================================================%
-$$ \nabla \cdot \vb b_\alpha(\vb x) = 
-    \pm \frac{A_\alpha}{V_\alpha^\pm}, \qquad \vb x\in \mc P_\alpha^\pm.
-$$
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{SWG Matrix Elements of the $\mathbb{G}$ operator}
-
-%=================================================
-%=================================================
-%=================================================
-\subsection{Distant case: Volume-integral method}
-
-The $\mathbb{G}$-matrix element between two SWG basis functions
-is
-%====================================================================%
-\numeq{bGb}
-{
- \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
- =\int_{\sup \vb b_\alpha} \, d\vb x_\alpha \,
-  \int_{\sup \vb b_\beta} \, d\vb x_\beta\,
-   b_{\alpha i}(\vb x_\alpha)
-   \mathbb G_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
-   b_{\beta j}(\vb x_\beta)
+  \Theta(T_1) \vbIEM_1 & 0 & \cdots & 0 \\ 
+  0 & \Theta(T_2) \vbIEM_2 & \cdots & 0 \\ 
+  \vdots & \vdots & \ddots & \vdots   \\
+  0 & 0 & \cdots & \Theta(T_N) \vbIEM_N \\
+  \end{array}\right)
 }
 %====================================================================%
-where 
+where $\vbIEM_n$ is just the matrix of basis-function overlaps
+with the imaginary part of the relative dielectric function
+for the $n$th body, i.e.
 %====================================================================%
-$$ \overline{\vb x}_\alpha \equiv \vb x_\alpha - \vb x_{\alpha 0}, 
-   \qquad 
-   \overline{\vb x}_\beta \equiv \vb x_\beta - \vb x_{\beta 0}, 
-   \qquad 
-   \vb R_0 = \vb x_{\alpha 0}-\vb x_{\beta 0}
-$$
-%====================================================================%
-and $\vb x_{\alpha 0}, \vb x_{\beta 0}$ are the centroids of
-the basis functions.
-
-When the two basis functions are well separated 
-(i.e. $|\vb R_0| \gg |\overline{\vb x}_\alpha|, |\overline{\vb x}_\beta|$),
-we may compute (\ref{bGb}) to sufficient accuracy using a volume-integral
-method in which the 6-dimensional integration over each of the
-four pairs of tetrahedra is carried out by simple low-order
-numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
- 
-%
-%Expand $\mathbb G_{ij}$ about $\vb R_0$:
-%%====================================================================%
-%\numeq{TaylorExpansion}
-%{ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
-%  \,\approx\, \mathbb{G}_{ij}^0
-%         +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
-%         -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
-%         +\cdots
-%}
-%%====================================================================%
-%where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
-%and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
-%Equation (\ref{bGb}) then reads (with a summation convention in force)
-%%====================================================================%
-%\numeq{DQApprox}
-%{
-% \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
-%\approx 
-%  \mc J_{\alpha i} \mathbb{G}^0_{ij} \mc J_{\beta j}
-% +\mc Q_{\alpha ik} \mathbb{G}^0_{ijk} \mc J_{\beta j}
-% -\mc J_{\alpha i} \mathbb{G}^0_{ijk} \mc Q_{\beta jk}
-%}
-%%====================================================================%
-%Here we have introduced the first and second moments
-%of the current distributions of the SWG functions:
-%\begin{align*}
-% \mc J_{\alpha i}
-%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x)\,d\vb x
-%\\
-% \mc Q_{\alpha ij}
-%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x) x_j\,d\vb x
-%\end{align*}
-
-%=================================================
-%=================================================
-%=================================================
-\subsection{Nearby case: Surface-integral method}
-When the basis functions are not well separated, the
-dipole/quadrupole expansion method of the previous 
-subsection is inaccurate. In this case it is convenient 
-to follow the work of Bleszynski et al.~\cite{Bleszynski2013}
-by reducing the volume integral (\ref{bGb}) to a nonsingular 
-\textit{surface} integral:
-%====================================================================%
-\numeq{GSurfaceIntegral}
-{
- \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
-=-\frac{1}{4\pi ik} 
-  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\alpha \,
-  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\beta
-  \Big(\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big)
-  \Big[   T_1(\vb x_\alpha, \vb x_\beta)
-        + T_2(\vb x_\alpha, \vb x_\beta)
-  \Big]
+\numeq{IEM}
+{ \Big[\vbIEM_n\Big]_{\alpha\beta} = 
+   \int b_{\alpha i}(\vb r) \Big[ \text{Im } \vbeps_{n}(\vb r)\Big]_{ij}
+        b_{\beta j}(\vb r) d\vb r.
 }
 %====================================================================%
-with
-\begin{align*} 
-     T_1(\vb x_\alpha, \vb x_\beta) 
-  &= \vb b_\alpha(\vb x_\alpha ) \cdot \vb b_\beta(\vb x_\beta)
-     h(ik R)
-\\
-     T_2(\vb x_\alpha, \vb x_\beta) 
-  &= -\frac{9A_\alpha A_\beta}{V_\alpha V_\beta k^2}
-      \Big\{ 9h(ikR) + w(ikR) 
-             +k^2\big[(\vb Q_\alpha - \vb Q_\beta)\cdot \vb R\big]\,p(ikR)
-      \Big\}
-\end{align*} 
-where the scalar functions $h,w,p$ are 
+Here $\vbeps_n$ is the dielectric tensor for body $\mc B_n.$
+For a basis of localized functions, this matrix is highly sparse
+(for the SWG basis discussed below it contains just 7 nonzero elements 
+per row). Moreover, numerical evaluation of the matrix elements of 
+$\vbIEM$ is essentially costless, particularly compared to the cost of 
+computing matrix elements of $\mathbb{G}$;
+it involves just a single three-dimensional numerical cubature
+and may be carried out simultaneously with computation of the 
+matrix elements of the $\bbVInv$ operator needed to assemble the 
+VIE matrix.
+
+Inserting (\ref{jjdMatrix}) into ... 
+
+The total heat transfer to, and the total $i$-directed 
+force and torque on, a destination body $\mc B_d$ are given by
 %====================================================================%
 \begin{align*}
-  h(x) &= \frac{1}{x}\texttt{ExpRelBar}(x,2) \\
-  w(x) &= \texttt{ExpRelBar}(x,3) \\
-  p(x) &= \frac{1}{x^3}\Big[ x\texttt{ExpRelBar}(x,2) 
-                            - \texttt{ExpRelBar}(x,3)\Big] - \frac{1}{3}
-\\
-       &= \frac{h(x)}{x} - \frac{w(x)}{x^3} - \frac{1}{3}.
+ H_d    = \int_0^\infty \mc H_d(\omega) d\Omega,         \qquad 
+ F_{di} = \int_0^\infty \mc F_{di}(\omega) d\Omega, \qquad 
+ T_{di} = \int_0^\infty \mc T_{di}(\omega) d\Omega
 \end{align*}
-Here the function \texttt{ExpRelBar} is defined by 
+%====================================================================%
+where the contribution of each frequency $\omega$ may be written
+as the sum of equilibrium contributions plus non-equilibrium
+contributions from all other bodies acting as sources, with 
+each contribution expressed as a thermal/statistical factor 
+times a generalized flux: 
+%====================================================================%
 \begin{align*}
- \texttt{ExpRelBar}(x,N) 
-&= e^{x} - \sum_{n=0}^{N-1} \frac{x^{n}}{N!}
+ \mc H_d(\omega)
+ &= \sum_{s} 
+    \Big[ \Theta\big(\omega,T_s) - \Theta\big(\omega, T\subs{env}\big) \Big]
+    \Phi\sups{energy}_{s\to d}(\omega)
 \\
-&= \sum_{n=N}^\infty \frac{x^n}{N!}
+ \mc F_{di}(\omega)
+ &= F_{di}\sups{eq}\big( T\subs{env} \big)
+   +\sum_{s} 
+    \Big[ \Theta\big(\omega,T_s) - \Theta\big(\omega, T\subs{env}\big) \Big]
+    \Phi\sups{lin mom}_{s\to d}(\omega)
+\\
+ \mc T_{di}(\omega)
+ &= T_{di}\sups{eq}\big( T\subs{env} \big)
+   +\sum_{s} 
+    \Big[ \Theta\big(\omega,T_s) - \Theta\big(\omega, T\subs{env}\big) \Big]
+    \Phi\sups{ang mom}_{s\to d}(\omega)
 \end{align*}
-I call this \texttt{ExpRelBar} because it is similar to
-a similar function known as \texttt{ExpRel} (the two
-functions differ only in their normalization).
-
-%=================================================
-%=================================================
-%=================================================
-\subsection{Derivatives}
-
-For computation of non-equilibrium Casimir forces and 
-torques we require derivatives of $\mathbb{G}$-matrix
-elements with respect to the quantity $\vb R_0$ in
-equation (\ref{bGb}). 
+%====================================================================%
+(For the heat transfer there is no equilibrium contribution, as there
+is no net exchange of energy between equal-temperature bodies. There
+\textit{is} a net transfer of \textit{momentum}, whereupon the force and
+torque expressions do contain equilibrium contributions.)
+%====================================================================%
+\begin{align*}
+ \Phi\sups{energy}_{s\to d}(\omega)
+&=-\frac{k^2}{2\pi}\text{Im Tr }
+   \left\{ 
+           \Big[ \vb G (\vb 1 - \vb W \vb G)\Big]_{ds}
+           \vbSigma_s
+           \Big[\vb 1 - \vb G^\dagger \vb W^\dagger\Big]_{sd}
+   \right\}
+\\
+ \Phi\sups{lin mom}_{s\to d}(\omega)
+&= \frac{k^2}{2\pi \omega}\text{Re Tr }
+   \left\{ 
+           \Big[ \big(\partial_i \vb G\big) (\vb 1 - \vb W \vb G)\Big]_{ds}
+           \vbSigma_s
+           \Big[\vb 1 - \vb G^\dagger \vb W^\dagger\Big]_{sd}
+   \right\}
+\\
+ \Phi\sups{ang mom}_{s\to d}(\omega)
+&= \frac{k^2}{2\pi \omega}\text{Re Tr }
+   \left\{ 
+           \Big[ \big(\partial_\theta \vb G\big) (\vb 1 - \vb W \vb G)\Big]_{ds}
+           \vbSigma_s
+           \Big[\vb 1 - \vb G^\dagger \vb W^\dagger\Big]_{sd}
+   \right\}
+\end{align*}
+%====================================================================%
+The matrix whose trace we compute in these expressions has the form
+\begin{align*}
+ \vbSigma_s 
+ \Big[ \left(\vb A^\dagger\right)_{sd}
+       \sum_i \left(\vb X_{di} \vb A_{is}\right) 
+ \Big]
+\end{align*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
-\section{Fields of Individual SWG Basis Functions}
-
-Once we have obtained the solution vector $\vb j$ to the 
-linear system (\ref{VIESystem}), we can compute the fields
-at arbitrary points in space according to 
-%====================================================================%
-$$ \left\{ \begin{array}{c} \vb E(\vb x) \\ 
-                            \vb H(\vb x) 
-           \end{array} 
-   \right\}
-   = 
-   \left\{ \begin{array}{c} \vb E\sups{inc}(\vb x) \\ 
-                            \vb H\sups{inc}(\vb x) 
-           \end{array} 
-   \right\}
-  + 
-  \sum_\alpha j_\alpha
-   \left\{ \begin{array}{c} \mathbb{E}_\alpha(\vb x) \\ 
-                            \mathbb{H}_\alpha(\vb x)
-           \end{array} 
-   \right\}
-$$
-%====================================================================%
-where $\{\mathbb{E}_\alpha, \mathbb{H}_\alpha\}$ are the
-electric and magnetic fields produced by the current distribution
-of basis function $\vb b_\alpha$ populated with unit strength:
-%====================================================================%
-\begin{subequations}
-\begin{align}
- \mathbb{E}_\alpha(\vb x)
-&= ikZ_0 
-   \int_{\sup \vb b_\alpha} \mathbb{G}(\vb x, \vb x_\alpha) \cdot \vb b_\alpha
-   d\vb x_\alpha
-\\
- \mathbb{H}_\alpha(\vb x)
-&= 
-\end{align}
-\label{EHAlpha}
-\end{subequations}
-%====================================================================%
-
-\subsection*{Distant case: Volume-integral technique}
-
-When the two basis functions are well separated, 
-we may compute (\ref{EHAlpha}) to sufficient accuracy using a volume-integral
-method in which the 3-dimensional integration over each of the
-two tetrahedra is carried out by simple low-order
-numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
-
-\subsection*{Nearby case: Surface-integral formulation}
-
-The vector and scalar potentials due to a current distribution
-$\vb J$ are 
-%====================================================================%
-\begin{align*}
- \vb A(\vb x) 
-&= 
- \mu_0 \int_{\mc V} \vb J(\vb x^\prime) G_0(\vb r) dV
-\\
- \Phi(\vb x)
-&= 
- \frac{1}{\epsilon_0} \int_{\mc V} \rho(\vb x^\prime) G_0(\vb r) dV
-\\
-&= 
- \frac{1}{i\omega \epsilon_0} 
- \int_{\mc V} \Big[\nabla \cdot \vb J\Big] G_0(\vb r) dV
-\end{align*}
-%====================================================================%
-where in the last line we use $\rho = \frac{1}{i\omega}\nabla \cdot \vb J$
-and 
-$$ G_0(\vb r) = \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
-   =\frac{1}{ik}\nabla^2 h(\vb r),
-   \qquad 
-   \vb 
-   r=\vb x-\vb x^\prime.
-$$
-%====================================================================%
-The $\vb E$-field is 
-%====================================================================%
-$$ \vb E = i\omega\vb A - \nabla \Phi.$$
-%====================================================================%
-Now putting $\vb J=\vb b_\alpha(\vb x)$ and using $\omega \mu_0 =k Z_0$
-and $\omega\epsilon_0=k/Z_0$ we find, for the $\vb E$-field of a
-single SWG function
-%====================================================================%
-\begin{align}
- \mathbb{E}_{\alpha}(\vb x)
-&= ikZ_0\left[ \int \vb b_\alpha(\vb x^\prime) G_0(\vb r) d V
-              +\frac{1}{k^2}\nabla 
-              \int \Big[\nabla \cdot \vb b_\alpha\Big]
-                    G_0(\vb r) d\vb x^\prime
-        \right].
-\label{EAlpha}
-\end{align}
-%====================================================================%
-First integral:
-%====================================================================%
-\begin{align*}
-\int_{\mc V} 
- \vb b_\alpha(\vb x^\prime) G_0(\vb r) dV
-&=\sum \pm \frac{A}{3ik V} 
-  \int_{\mc V} (\vb x^\prime - \vb Q) 
-               \Big[\nabla_{\vb x^\prime}^2 h(\vb r)\Big]
-  dV
-\intertext{Use (\ref{GreensTheorem}a):}
-&= \sum \pm \frac{A}{3ik V} 
-    \int_{\partial \mc V} \Big[ (\vb x^\prime - \vb Q)
-                       \big[\vbhat{n} \cdot \nabla_{\vb x^\prime} h(\vb r)\big]
-                       - \vbhat{n} h(\vb r) 
-                 \Big] \, dA
-\intertext{Use $\nabla_{\vb x^\prime} h(\vb r) = +k^2 q(\vb r)\,\vb r$:}
-&=\sum \pm \frac{A}{3ik V}
-    \int_{\partial \mc V} 
-    \Big[ (\vb x^\prime - \vb Q)
-          k^2 (\vb{r} \cdot \vbhat{n}) q(\vb r)
-                        - \vbhat{n} h(\vb r) 
-    \Big] \, dA
-\end{align*}
-%====================================================================%
-Second integral:
-%====================================================================%
-\begin{align*}
-\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
-             G_0(\vb r) \, dV
-&=\sum \pm \frac{A}{ik V} 
-   \int_{\mc V} \nabla_{\vb x^\prime}^2 h(\vb r) \, dV
-\\
-&=\sum \pm \frac{A}{ik V} 
-   \int_{\partial \mc V} 
-   \nabla_{\vb x \prime} h(\vb r) \cdot \vbhat{n} 
-   \, dA
-\\
-&=-ik\sum \pm \frac{A}{V}
-   \int_{\partial \mc V} q(\vb r) (\vb r\cdot \vbhat{n})
-   \, dA
-\end{align*}
-%====================================================================%
-The quantity that enters (\ref{EAlpha}) is 
-%====================================================================%
-\begin{align*}
-\frac{1}{k^2} \nabla 
-\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
-             G_0(\vb r) \, dV
-&=\sum \pm \frac{A}{ikV}
-  \int_{\partial \mc V}
-  \Big[ q(\vb r)\vbhat{n} - k^2 (\vb r\cdot \vbhat{n})t(\vb r) \vb r\Big]
-  dA
-\end{align*}
-%====================================================================%
-Putting it all together, the surface integral for the $\vb E$ field
-of an individual SWG function is 
-%====================================================================%
-\begin{align}
- \mathbb{E}_{\alpha}(\vb x)
-&=Z_0 \sum \pm \frac{A}{3V} \int_{\partial \mc V}
-   \Bigg\{ k^2 (\vb r \cdot \vbhat{n}) q(\vb r) (\vb x^\prime - \vb Q)
-          +\big[3q(\vb r) - h(\vb r)\big ]\vbhat{n} 
-\nn
-&\hspace{2in}
-          -3k^2(\vb r \cdot \vbhat{n}) t(\vb r)\vb r
-   \Bigg\}dA.
-\end{align}
-%====================================================================%
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\newpage
-\section{$\mathbb{T}\mathbb{G}$ Formulas
-         for Casimir Forces and Heat-Transfer Rates}
+\section{Comparison to the Kardar/Jaffe 
+         $\mathbb{T}\mathbb{G}$ Formulas}
 
 \paragraph{Notation}
 In the seminal~\citeasnouns{Rahi2009, Kruger2012}, the 
@@ -1205,6 +1050,476 @@ $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\addcontentsline{toc}{section}{\large Part II: Implementation}
+\newpage
+\section{SWG Basis Functions}
+
+SWG basis functions are the three-dimensional analog of
+RWG basis functions. They are defined on pairs of adjacent tetrahedra:
+%====================================================================%
+$$ \vb b_\alpha(\vb x) = 
+  \begin{cases}
+   \displaystyle{
+    +\frac{A_\alpha}{3V_\alpha^+}(\vb x - \vb Q_\alpha^+), 
+                }
+    \qquad &\vb x\in \mc P_\alpha^+
+\\[5pt]
+   \displaystyle{
+  -\frac{A\alpha}{3V_\alpha^-}(\vb x - \vb Q_\alpha^-), 
+                } 
+    \qquad &\vb x\in \mc P_\alpha^-
+  \end{cases}
+$$
+%====================================================================%
+where $\mc P_\alpha^\pm$ are the two tetrahedra associated with basis
+function $\alpha$, $V_\alpha^\pm$ are their volumes, $\vb Q_\alpha\pm$
+are the source/sink vertices, and $A_\alpha$ is the area of the 
+triangular face shared by $\mc P_\alpha^\pm$. (I denote tetrahedra 
+by $\mc P$, which stands for ``pyramid,'' to avoid confusion with
+the symbol $\mc T$, which stands for ``triangle'' in my memos on
+RWG basis functions.)
+
+The divergence of the SWG basis function is 
+%====================================================================%
+$$ \nabla \cdot \vb b_\alpha(\vb x) = 
+    \pm \frac{A_\alpha}{V_\alpha^\pm}, \qquad \vb x\in \mc P_\alpha^\pm.
+$$
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{SWG Matrix Elements of the $\mathbb{G}$ operator}
+
+%=================================================
+%=================================================
+%=================================================
+\subsection{Distant case: Volume-integral method}
+
+The $\mathbb{G}$-matrix element between two SWG basis functions
+is
+%====================================================================%
+\numeq{bGb}
+{
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+ =\int_{\sup \vb b_\alpha} \, d\vb x_\alpha \,
+  \int_{\sup \vb b_\beta} \, d\vb x_\beta\,
+   b_{\alpha i}(\vb x_\alpha)
+   \mathbb G_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+   b_{\beta j}(\vb x_\beta)
+}
+%====================================================================%
+where 
+%====================================================================%
+$$ \overline{\vb x}_\alpha \equiv \vb x_\alpha - \vb x_{\alpha 0}, 
+   \qquad 
+   \overline{\vb x}_\beta \equiv \vb x_\beta - \vb x_{\beta 0}, 
+   \qquad 
+   \vb R_0 = \vb x_{\alpha 0}-\vb x_{\beta 0}
+$$
+%====================================================================%
+and $\vb x_{\alpha 0}, \vb x_{\beta 0}$ are the centroids of
+the basis functions.
+
+When the two basis functions are well separated 
+(i.e. $|\vb R_0| \gg |\overline{\vb x}_\alpha|, |\overline{\vb x}_\beta|$),
+we may compute (\ref{bGb}) to sufficient accuracy using a volume-integral
+method: 
+%====================================================================%
+\numeq{bGb}
+{
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+ =\sum \pm \int_{\mc P_\alpha^\pm } d\vb x_\alpha
+           \int_{\mc P_\beta^\pm  } d\vb x_\beta
+           \left[ \vb b_\alpha \cdot \vb b_\beta
+                 -\frac{9}{k^2}
+           \right] \Phi\Big( \big|\vb R_0 + \overline{\vb x}_\alpha
+                                - \overline{\vb x}_\beta
+                             \big|\Big)
+}
+%====================================================================%
+where $\Phi(r) = \frac{e^{ik|\vb r|}}{4\pi |\vb r|}.$
+in which the 6-dimensional integration over each of the
+four pairs of tetrahedra is carried out by simple low-order
+numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
+ 
+%
+%Expand $\mathbb G_{ij}$ about $\vb R_0$:
+%%====================================================================%
+%\numeq{TaylorExpansion}
+%{ \mathbb{G}_{ij}(\vb R_0 + \overline{\vb x}_\alpha - \overline{\vb x}_\beta)
+%  \,\approx\, \mathbb{G}_{ij}^0
+%         +\overline{x}_{\alpha k} \mathbb{G}_{ijk}^0
+%         -\overline{x}_{\beta  k} \mathbb{G}_{ijk}^0
+%         +\cdots
+%}
+%%====================================================================%
+%where $\mathbb{G}^0_{ij}\equiv \mathbb{G}_{ij}(\vb R_0)$ 
+%and $\mathbb{G}_{ijk}^0\equiv \partial_k \mathbb{G}_{ij}(\vb R_0).$ 
+%Equation (\ref{bGb}) then reads (with a summation convention in force)
+%%====================================================================%
+%\numeq{DQApprox}
+%{
+% \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+%\approx 
+%  \mc J_{\alpha i} \mathbb{G}^0_{ij} \mc J_{\beta j}
+% +\mc Q_{\alpha ik} \mathbb{G}^0_{ijk} \mc J_{\beta j}
+% -\mc J_{\alpha i} \mathbb{G}^0_{ijk} \mc Q_{\beta jk}
+%}
+%%====================================================================%
+%Here we have introduced the first and second moments
+%of the current distributions of the SWG functions:
+%\begin{align*}
+% \mc J_{\alpha i}
+%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x)\,d\vb x
+%\\
+% \mc Q_{\alpha ij}
+%\equiv \int_{\sup \vb b_\alpha} b_{\alpha i}(\vb x) x_j\,d\vb x
+%\end{align*}
+
+%=================================================
+%=================================================
+%=================================================
+\subsection{Nearby case: Surface-integral method}
+When the basis functions are not well separated, the
+dipole/quadrupole expansion method of the previous 
+subsection is inaccurate. In this case it is convenient 
+to follow the work of Bleszynski et al.~\cite{Bleszynski2013}
+by reducing the volume integral (\ref{bGb}) to a nonsingular 
+\textit{surface} integral:
+%====================================================================%
+\numeq{GSurfaceIntegral}
+{
+ \exptwoB{\vb b_\alpha}{\mathbb G}{\vb b_\beta}
+=-\frac{1}{4\pi ik} 
+  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\alpha \,
+  \int_{\partial \sup \vb b_\alpha} \, \!\!\!\!\! d\vb x_\beta
+  \Big(\vbhat{n}_\alpha \cdot \vbhat{n}_\beta\Big)
+  \Big[   T_1(\vb x_\alpha, \vb x_\beta)
+        + T_2(\vb x_\alpha, \vb x_\beta)
+  \Big]
+}
+%====================================================================%
+with
+\begin{align*} 
+     T_1(\vb x_\alpha, \vb x_\beta) 
+  &= \vb b_\alpha(\vb x_\alpha ) \cdot \vb b_\beta(\vb x_\beta)
+     h(ik R)
+\\
+     T_2(\vb x_\alpha, \vb x_\beta) 
+  &= -\frac{9A_\alpha A_\beta}{V_\alpha V_\beta k^2}
+      \Big\{ 9h(ikR) + w(ikR) 
+             +k^2\big[(\vb Q_\alpha - \vb Q_\beta)\cdot \vb R\big]\,p(ikR)
+      \Big\}
+\end{align*} 
+where the scalar functions $h,w,p$ are 
+%====================================================================%
+\begin{align*}
+  h(x) &= \frac{1}{x}\texttt{ExpRelBar}(x,2) \\
+  w(x) &= \texttt{ExpRelBar}(x,3) \\
+  p(x) &= \frac{1}{x^3}\Big[ x\texttt{ExpRelBar}(x,2) 
+                            - \texttt{ExpRelBar}(x,3)\Big] - \frac{1}{3}
+\\
+       &= \frac{h(x)}{x} - \frac{w(x)}{x^3} - \frac{1}{3}.
+\end{align*}
+Here the function \texttt{ExpRelBar} is defined by 
+\begin{align*}
+ \texttt{ExpRelBar}(x,N) 
+&= e^{x} - \sum_{n=0}^{N-1} \frac{x^{n}}{n!}
+\\
+&= \sum_{n=N}^\infty \frac{x^n}{n!}
+\end{align*}
+I call this \texttt{ExpRelBar} because it is similar to
+a similar function known as \texttt{ExpRel} (the two
+functions differ only in their normalization). 
+
+Note that the function \texttt{ExpRelBar} satisfies the 
+derivative relationship
+\begin{align*}
+ \frac{d}{dx} \texttt{ExpRelBar}(x,N)
+&= \sum_{n=N}^\infty \frac{n x^{n-1}}{n!} \\
+&= \sum_{n=N}^\infty \frac{x^{n-1}}{(n-1)!} \\
+&= \sum_{n=N-1}^\infty \frac{x^{n}}{n!}
+&= \texttt{ExpRelBar}(x,N-1).
+\end{align*}
+
+Series expansions:
+%====================================================================%
+\begin{align*}
+  h(x)        &= \sum_{n=1}^\infty \frac{x^n}{(n+1)!}   
+  h^\prime(x) &= \sum_{n=1}^\infty \frac{x^n}{(n+1)!}   
+\end{align*}
+%====================================================================%
+
+%=================================================
+%=================================================
+%=================================================
+\subsection{Derivatives with respect to translations}
+
+For computation of non-equilibrium Casimir forces
+we require derivatives of $\mathbb{G}$-matrix
+elements with respect to the quantity $\vb R_0$ in
+equation (\ref{bGb}). 
+
+\subsubsection*{Distant case}
+%====================================================================%
+\numeq{bdiGb}
+{
+ \exptwoB{\vb b_\alpha}{\partial_i \mathbb G}{\vb b_\beta}
+ =\sum \pm \int_{\mc P_\alpha^\pm } d\vb x_\alpha
+           \int_{\mc P_\beta^\pm  } d\vb x_\beta
+           \left[ \vb b_\alpha \cdot \vb b_\beta
+                 -\frac{9}{k^2}
+           \right] 
+           r_i \Psi(|\vb r|)
+}
+%====================================================================%
+where
+%====================================================================%
+$$ \vb r = \vb R_0 - \vb x_\alpha - \vb x_\beta, \qquad
+   \Psi(r) = (ikr-1)\frac{e^{ikr}}{4\pi r^3}.
+$$
+%====================================================================%
+For calculations of torques we need also matrix elements
+of the derivative of $\mathbb{G}(\vb r, \vb r^\prime)$ with respect
+to rotation of $\vb r$ about a coordinate axis pointing in the 
+direction $\vbhat{a}$ and centered at an origin $\vb x_0$. 
+Under rotation through an infinitesimal angle $\Delta \theta$
+about this axis, the point $\vb r$ goes to $\vb r + \Delta \vb r$
+with 
+%====================================================================%
+$$\Delta \vb r = \Big[\vbhat{a}\times (\vb r-\vb x_0)\big] \, \Delta \theta$$
+%====================================================================%
+and the angular derivative of $\mathbb{G}$ is thus
+%====================================================================%
+$$
+ \partial_\theta\mathbb{G}
+ =
+ \varepsilon_{ijk} \vbhat{a}_j (\vb r_\alpha - \vb r_0)_k \partial_i \mathbb{G}
+$$
+%====================================================================%
+with matrix elements
+%====================================================================%
+\begin{align*}
+ \exptwoB{\vb b_\alpha}{\partial_\theta \mathbb G}{\vb b_\beta}
+&=\sum \pm \int_{\mc P_\alpha^\pm } d\vb x_\alpha
+           \int_{\mc P_\beta^\pm  } d\vb x_\beta
+           \left[ \vb b_\alpha \cdot \vb b_\beta
+                 -\frac{9}{k^2}
+           \right]
+           \varepsilon_{ijk} \vbhat{a}_j(\vb r - \vb r_0)_k
+           \vb r_i \Psi(|\vb r|)
+\\
+&=\sum \pm \int_{\mc P_\alpha^\pm } d\vb x_\alpha
+           \int_{\mc P_\beta^\pm  } d\vb x_\beta
+           \left[ \vb b_\alpha \cdot \vb b_\beta
+                 -\frac{9}{k^2}
+           \right]
+           \left\{ \vb r \cdot \Big[\vbhat{a} \times (\vb r-\vb r_0)\Big]\right\}
+           \Psi(|\vb r|).
+\label{bdtGb}
+\end{align*}
+%====================================================================%
+\subsubsection*{Nearby case}
+ 
+For the nearby case we use the surface-integral formula
+(\ref{GSurfaceIntegral}), but with the quantities $T_1, T_2$ 
+replaced by their derivatives. These are 
+%====================================================================%
+\begin{align*}
+ \partial_i T_1 
+&= 
+ ik \frac{r_i}{R} \vb b_\alpha \cdot \vb b_\beta
+\\[5pt]
+ \partial_i T_2 
+&= -ik\frac{r_i}{R}\frac{9A_\alpha A_\beta }{V_\alpha V_\beta k^2}
+    \Big[  9h^\prime(ikR) 
+          + w^\prime(ikR) 
+          + k^2\big[(\vb Q_\alpha - \vb Q_\beta)\cdot \vb R\big]p^\prime(ikR)
+    \Big]
+\\
+&\qquad \qquad 
+   -\frac{9A_\alpha A_\beta}{V_\alpha V_\beta}
+    \big( Q_{\alpha i}- Q_{\beta i} \big) p(ikR)
+\end{align*}
+%====================================================================%
+\begin{align*}
+ h^\prime(ikR) \\
+\end{align*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Fields of Individual SWG Basis Functions}
+
+Once we have obtained the solution vector $\vb j$ to the 
+linear system (\ref{VIESystem}), we can compute the fields
+at arbitrary points in space according to 
+%====================================================================%
+$$ \left\{ \begin{array}{c} \vb E(\vb x) \\ 
+                            \vb H(\vb x) 
+           \end{array} 
+   \right\}
+   = 
+   \left\{ \begin{array}{c} \vb E\sups{inc}(\vb x) \\ 
+                            \vb H\sups{inc}(\vb x) 
+           \end{array} 
+   \right\}
+  + 
+  \sum_\alpha j_\alpha
+   \left\{ \begin{array}{c} \mathbb{E}_\alpha(\vb x) \\ 
+                            \mathbb{H}_\alpha(\vb x)
+           \end{array} 
+   \right\}
+$$
+%====================================================================%
+where $\{\mathbb{E}_\alpha, \mathbb{H}_\alpha\}$ are the
+electric and magnetic fields produced by the current distribution
+of basis function $\vb b_\alpha$ populated with unit strength:
+%====================================================================%
+\begin{subequations}
+\begin{align}
+ \mathbb{E}_\alpha(\vb x)
+&= ikZ_0 
+   \int_{\sup \vb b_\alpha} \mathbb{G}(\vb x, \vb x_\alpha) \cdot \vb b_\alpha
+   d\vb x_\alpha
+\\
+ \mathbb{H}_\alpha(\vb x)
+&= 
+\end{align}
+\label{EHAlpha}
+\end{subequations}
+%====================================================================%
+
+\subsection*{Distant case: Volume-integral technique}
+
+When the two basis functions are well separated, 
+we may compute (\ref{EHAlpha}) to sufficient accuracy using a volume-integral
+method in which the 3-dimensional integration over each of the
+two tetrahedra is carried out by simple low-order
+numerical cubature, as discussed in Appendix \ref{VolumeIntegralAppendix}.
+
+\subsection*{Nearby case: Surface-integral formulation}
+
+The vector and scalar potentials due to a current distribution
+$\vb J$ are 
+%====================================================================%
+\begin{align*}
+ \vb A(\vb x) 
+&= 
+ \mu_0 \int_{\mc V} \vb J(\vb x^\prime) G_0(\vb r) dV
+\\
+ \Phi(\vb x)
+&= 
+ \frac{1}{\epsilon_0} \int_{\mc V} \rho(\vb x^\prime) G_0(\vb r) dV
+\\
+&= 
+ \frac{1}{i\omega \epsilon_0} 
+ \int_{\mc V} \Big[\nabla \cdot \vb J\Big] G_0(\vb r) dV
+\end{align*}
+%====================================================================%
+where in the last line we use $\rho = \frac{1}{i\omega}\nabla \cdot \vb J$
+and 
+$$ G_0(\vb r) = \frac{e^{ik|\vb r|}}{4\pi |\vb r|}
+   =\frac{1}{ik}\nabla^2 h(\vb r),
+   \qquad 
+   \vb 
+   r=\vb x-\vb x^\prime.
+$$
+%====================================================================%
+The $\vb E$-field is 
+%====================================================================%
+$$ \vb E = i\omega\vb A - \nabla \Phi.$$
+%====================================================================%
+Now putting $\vb J=\vb b_\alpha(\vb x)$ and using $\omega \mu_0 =k Z_0$
+and $\omega\epsilon_0=k/Z_0$ we find, for the $\vb E$-field of a
+single SWG function
+%====================================================================%
+\begin{align}
+ \mathbb{E}_{\alpha}(\vb x)
+&= ikZ_0\left[ \int \vb b_\alpha(\vb x^\prime) G_0(\vb r) d V
+              +\frac{1}{k^2}\nabla 
+              \int \Big[\nabla \cdot \vb b_\alpha\Big]
+                    G_0(\vb r) d\vb x^\prime
+        \right].
+\label{EAlpha}
+\end{align}
+%====================================================================%
+First integral:
+%====================================================================%
+\begin{align*}
+\int_{\mc V} 
+ \vb b_\alpha(\vb x^\prime) G_0(\vb r) dV
+&=\sum \pm \frac{A}{3ik V} 
+  \int_{\mc V} (\vb x^\prime - \vb Q) 
+               \Big[\nabla_{\vb x^\prime}^2 h(\vb r)\Big]
+  dV
+\intertext{Use (\ref{GreensTheorem}a):}
+&= \sum \pm \frac{A}{3ik V} 
+    \int_{\partial \mc V} \Big[ (\vb x^\prime - \vb Q)
+                       \big[\vbhat{n} \cdot \nabla_{\vb x^\prime} h(\vb r)\big]
+                       - \vbhat{n} h(\vb r) 
+                 \Big] \, dA
+\intertext{Use $\nabla_{\vb x^\prime} h(\vb r) = +k^2 q(\vb r)\,\vb r$:}
+&=\sum \pm \frac{A}{3ik V}
+    \int_{\partial \mc V} 
+    \Big[ (\vb x^\prime - \vb Q)
+          k^2 (\vb{r} \cdot \vbhat{n}) q(\vb r)
+                        - \vbhat{n} h(\vb r) 
+    \Big] \, dA
+\end{align*}
+%====================================================================%
+Second integral:
+%====================================================================%
+\begin{align*}
+\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
+             G_0(\vb r) \, dV
+&=\sum \pm \frac{A}{ik V} 
+   \int_{\mc V} \nabla_{\vb x^\prime}^2 h(\vb r) \, dV
+\\
+&=\sum \pm \frac{A}{ik V} 
+   \int_{\partial \mc V} 
+   \nabla_{\vb x \prime} h(\vb r) \cdot \vbhat{n} 
+   \, dA
+\\
+&=-ik\sum \pm \frac{A}{V}
+   \int_{\partial \mc V} q(\vb r) (\vb r\cdot \vbhat{n})
+   \, dA
+\end{align*}
+%====================================================================%
+The quantity that enters (\ref{EAlpha}) is 
+%====================================================================%
+\begin{align*}
+\frac{1}{k^2} \nabla 
+\int_{\mc V} \Big[ \nabla \cdot \vb b_\alpha \Big]
+             G_0(\vb r) \, dV
+&=\sum \pm \frac{A}{ikV}
+  \int_{\partial \mc V}
+  \Big[ q(\vb r)\vbhat{n} - k^2 (\vb r\cdot \vbhat{n})t(\vb r) \vb r\Big]
+  dA
+\end{align*}
+%====================================================================%
+Putting it all together, the surface integral for the $\vb E$ field
+of an individual SWG function is 
+%====================================================================%
+\begin{align}
+ \mathbb{E}_{\alpha}(\vb x)
+&=Z_0 \sum \pm \frac{A}{3V} \int_{\partial \mc V}
+   \Bigg\{ k^2 (\vb r \cdot \vbhat{n}) q(\vb r) (\vb x^\prime - \vb Q)
+          +\big[3q(\vb r) - h(\vb r)\big ]\vbhat{n} 
+\nn
+&\hspace{2in}
+          -3k^2(\vb r \cdot \vbhat{n}) t(\vb r)\vb r
+   \Bigg\}dA.
+\end{align}
+%====================================================================%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1381,10 +1696,10 @@ electric and magnetic fields $\{\vb E, \vb H\}(\vb x).$
 The time-average force experienced by the currents in 
 an infinitesimal volume $dV$ is
 %====================================================================%
-\begin{align*}
+\begin{align}
 d\vb F &= \frac{1}{2}\text{Re }
- \Big[ \rho^* \vb E + \mu_0 \vb J^* \times \vb H \Big]
-\\
+ \Big[ \rho^* \vb E + \mu_0 \vb J^* \times \vb H \Big] \, dV
+\nn
 \intertext{Use $\rho=\frac{1}{i\omega}(\nabla \cdot \vb J)$
            and $\vb H=\frac{1}{i\omega\mu_0}\nabla \times \vb E$:}
  &=
@@ -1392,8 +1707,9 @@ d\vb F &= \frac{1}{2}\text{Re }
  \frac{1}{i\omega}
  \Big[ -(\nabla \cdot \vb J^*) \vb E 
        + \vb J^* \times (\nabla \times \vb E) 
- \Big]
-                      \right\}
+ \Big] \,
+                      \right\} dV
+\nonumber
 \intertext{or}
 dF_i &= -\frac{1}{2\omega}\text{Im }
  \Big[
@@ -1402,13 +1718,14 @@ dF_i &= -\frac{1}{2\omega}\text{Im }
                \varepsilon_{k\ell m}
              }_{\delta_{i\ell}\delta_{jm} - \delta_{im}\delta_{j\ell}}
   J^*_j \partial_\ell E_m
- \Big]
-\\
+ \Big] \, dV
+\nn
 &= -\frac{1}{2\omega}\text{Im }
  \Big[ (\partial_j J^*_j) E_i
        - J^*_j \partial_i E_j
        + J^*_j \partial_j E_i
- \Big].
+ \Big] \, dV.
+\label{dFi}
 \intertext{The total force is given by integrating over the volume:}
 F_i
 &= -\frac{1}{2\omega}\text{Im } \int_{\mc B_n}
@@ -1416,25 +1733,63 @@ F_i
        - J^*_j \partial_i E_j
        + J^*_j \partial_j E_i
  \Big] dV
-\end{align*}
+\label{Fi}
+\end{align}
 %====================================================================%
-Rewrite the first term using integration by parts:
-$$     \int_{\mc B_n} (\partial_j J^*_j) E_i \, dV
-    = +\int_{\partial \mc B_n} E_i \, \vb J \cdot d\vb A
-      -\int_{\mc B_n} J^*_j \partial_j E_i \, dV 
-$$
-The first term on the RHS vanishes because $\vb J\cdot \vbhat{n}=0$
-at the surface of the object (no current flows from the body
-into space), while the second term cancels the third term in the
-volume integral above, and we are left simply with
+The first and third terms here together read
+%====================================================================%
+\numeq{Argument}
+{
+ \int \partial_j \big(J_j^* E_i\big ) dV 
+ = \int \nabla \cdot (E_i \, \vb J^*) \, dV
+ = \oint E_i \vb J^* \cdot d\vb A = 0
+}
+%====================================================================%
+because $\vb J\cdot \vbhat{n}=0$ at the surface of the object 
+(no current flows from the body into space). 
+Thus only the middle term in (\ref{Fi}) is nonvanishing,
+and we find simply
 %====================================================================%
 \numeq{ForceVolumeIntegral}
 { F_i = \frac{1}{2\omega}\text{Im } \int_{\mc B_n}
-         -J^*_j \partial_i E_j \, dV 
+         J^*_j \partial_i E_j \, dV 
       = \frac{1}{2\omega}\text{Im } 
          \int_{\mc B_n} \vb J^* \cdot \partial_i \vb E \, dV.
 }
 %====================================================================%
+
+\subsubsection*{Torque}
+
+The contribution of currents in $dV$ to the \textit{torque} 
+about an origin $\vb r_0$ is given by
+%====================================================================%
+\begin{align*} 
+ d\bmc T &= (\vb r - \vb r_0) \times d \vb F
+\intertext{or, in components,}
+ d\mc T_i &= \varepsilon_{ijk} (\vb r - \vb r_0)_j d \vb F_k.
+\intertext{Insert (\ref{dFi}):}
+&= -\frac{1}{2\omega}\text{Im}
+ \left\{
+ \varepsilon_{ijk} (\vb r - \vb r_0)_j
+ \Big[ (\partial_\ell J^*_\ell) E_k
+       - J^*_\ell \partial_k E_\ell
+       + J^*_\ell \partial_\ell E_k
+ \Big]\right\} \, dV.
+\end{align*} 
+The first and third terms here integrate to zero by an 
+argument similar to (\ref{Argument}), and we find
+%====================================================================%
+\numeq{TorqueVolumeIntegral}
+{  \mc T_i 
+ = \frac{1}{2\omega}\text{Im } \int_{\mc B_n}
+   \epsilon_{ijk} (\vb r-\vb r_0)_j J_\ell^* \partial_k E_\ell
+   \,dV
+ = \frac{1}{2\omega}\text{Im } \int_{\mc B_n}
+    \vb J^* \cdot \partial_\theta \vb E \, dV
+}
+where the symbol $\partial_\theta \vb E$ denotes the derivative
+of $\vb E(\vb r)$ with respect to an infinitesimal rotation of the
+point $\vb r$ about the $i$th coordinate axis with origin $\vb r_0.$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

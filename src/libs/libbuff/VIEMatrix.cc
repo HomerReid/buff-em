@@ -56,31 +56,6 @@ namespace buff {
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-#define EXPRELTOL  1.0e-8
-#define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
-void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3)
-{
-  if ( abs(x) >= 0.1 )
-   { *ExpRel2 = exp(x) - 1.0 - x;
-     *ExpRel3 = *ExpRel2 - 0.5*x*x;
-   }
-  else
-   { 
-     cdouble Term2=x*x/2.0, Term=Term2, Sum=0.0;
-     for(int m=3; m<100; m++)
-      { Term*=x/((double)m);
-        Sum+=Term;
-        if ( norm(Term) < EXPRELTOL2*norm(Sum) )
-         break;
-      };
-     *ExpRel3=Sum;
-     *ExpRel2=Sum + Term2;
-   };
-} 
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3])
 {
   cdouble M11=M[0][0], M12=M[0][1], M13=M[0][2];
@@ -325,6 +300,77 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
 }
 
 /***************************************************************/
+/* routine to compute the h, w, p functions described in the   */
+/* memo                                                        */
+/***************************************************************/
+// h/=Xi;
+// cdouble p = h/Xi - w/Xi3 - 1.0/3.0;
+#define EXPRELTOL  1.0e-8
+#define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
+void hwp(cdouble x, cdouble hwp[3], cdouble *hwpPrime)
+{
+  if ( abs(x) >= 0.1 )
+   { 
+     cdouble x2=x*x, x3=x2*x, x4=x3*x;
+     cdouble ExpRel1, ExpRel2, ExpRel3;
+
+     ExpRel1 = exp(x) - 1.0;
+     ExpRel2 = ExpRel1 - x;
+     ExpRel3 = ExpRel2 - 0.5*x2;
+
+     hwp[0] = ExpRel2 / x;
+     hwp[1] = ExpRel3;
+     hwp[2] = hwp[0]/x  - hwp[1]/x3 - 1.0/3.0;
+
+     if (hwpPrime)
+      { hwpPrime[0] = ExpRel1/x - ExpRel2/x2;
+        hwpPrime[1] = ExpRel2;
+        hwpPrime[2] = hwpPrime[0]/x - hwp[0]/x2 + 3.0*hwp[1]/x4 - hwpPrime[1]/x3;
+      };
+   }
+  else
+   { 
+     cdouble x2=x*x;
+
+     hwp[0] = x/2.0 + x2/6.0;
+     hwp[1] = 0.0;
+     hwp[2] = x/8.0 + x2/30.0;
+
+     if (hwpPrime)
+      { hwpPrime[0] = 1.0/2.0 + x/3.0 + x2/8.0;
+        hwpPrime[2] = 1.0/8.0 + x/15.0 + x2/48.0;
+      };
+
+     cdouble Term2=x*x/2.0, Term=Term2, Sum=0.0;
+     double nFact = 2.0;
+     for(int n=3; n<100; n++)
+      { 
+        nFact *= n;
+        double dn = n;
+
+        hwp[0] += xn  / ( (dn+1.0) * nFact );
+        hwp[1] += xn  / nFact;
+        hwp[2] += xn / ( nFact*(dn+1.0)*(dn+3.0) );
+
+        if (hwpPrime)
+         { hwpPrime[0] += xn / ( (dn+2.0) * nFact);
+           hwpPrime[2] += xn / ( (dn+2.0)*(dn+4.0)*nFact);
+         };
+
+        Term*=x/((double)m);
+        Sum+=Term;
+        if ( norm(Term) < EXPRELTOL2*norm(Sum) )
+         break;
+      };
+
+     if (hwpPrime)
+      hwpPrime[1] = hwp[1] + x2/2.0;
+
+   };
+
+} 
+
+/***************************************************************/
 /***************************************************************/
 /***************************************************************/
 typedef struct GSIData
@@ -332,6 +378,7 @@ typedef struct GSIData
    cdouble k;
    double *QA;
    double *QB;
+   bool NeedDerivatives;
 
  } GSIData;
 
@@ -342,10 +389,11 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
-  GSIData *Data = (GSIData *) UserData;
-  cdouble k     = Data->k;
-  double *QA    = Data->QA;
-  double *QB    = Data->QB;
+  GSIData *Data        = (GSIData *) UserData;
+  cdouble k            = Data->k;
+  double *QA           = Data->QA;
+  double *QB           = Data->QB;
+  bool NeedDerivatives = Data->NeedDerivatives;
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -356,7 +404,8 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   R[2] = (xA[2]-xB[2]);
   double r2 = R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
   if ( fabs(r2) < 1.0e-15 )
-   { I[0]=I[1]=0.0; 
+   { int fdim = NeedDerivatives ? 14 : 2;
+     memset(I, 0, fdim*sizeof(double));
      return;
    };
   double r = sqrt(r2);
@@ -375,23 +424,41 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
+  cdouble hwp[3], hwpPrime[3];
+  hwp(Xi, hwp, NeedDerivatives ? hwpPrime : 0 );
+
+  cdouble h=hwp[0];
+  cdouble w=hwp[1];
+  cdouble p=hwp[2];
+
   cdouble k2  = k*k;
   cdouble Xi  = II*k*r;
-  cdouble Xi3 = Xi*Xi*Xi;
-  //cdouble h   = ExpRel(Xi, 2) / Xi;
-  //cdouble w   = ExpRel(Xi, 3);
-  cdouble w, h;
-  ExpRel23(Xi, &h, &w);
-  h/=Xi;
-  cdouble p   = h/Xi - w/Xi3 - 1.0/3.0;
 
-  cdouble T1 = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]) * h;
-
-  cdouble T2 = -DivbA*DivbB*(9.0*h + w + k2*DQdotR*p) / (9.0*k2);
+  double DotProd = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]);
+  double PreFac  = -DivbA*DivbB / (9.0*k2);
+  cdouble T1 = DotProd * h;
+  cdouble T2 = PreFac * (9.0*h + w + k2*DQdotR*p);
 
   cdouble *zI = (cdouble *)I;
-
   zI[0] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
+
+  if (NeedDerivatives)
+   { 
+     cdouble hP=hwpPrime[0];
+     cdouble wP=hwpPrime[1];
+     cdouble pP=hwpPrime[2];
+
+     for(int Mu=0; Mu<3; Mu++)
+      { 
+        T1 = II*k*R[Mu]*DotProd / r; 
+        T2 = II*k*R[Mu]*PreFac*(9.0*hP + wP + k2*DQdotR*pP)
+              +k2*PreFac*(QA[Mu]-QB[Mu])*p;
+
+        zI[1+Mu] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
+
+        zI[3+Mu] = 0.0;
+      };
+   };
 
 }
 
@@ -402,19 +469,23 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 /***************************************************************/
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega, int Order=0)
+                             cdouble Omega, int Order=0,
+                             cdouble *dG=0)
 {
-  int fDim=2;
 
   GSIData MyData, *Data = &MyData;
 
   Data->k = Omega;
+  Data->NeedDerivatives = (dG!=0);
+
+  int fDim = (dG==0) ? 2:14; 
   
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
 
   // 64 surface-surface integrals
   cdouble RetVal=0.0;
+  if (dG) memset(dG, 0, 6*sizeof(cdouble));
   for(int ASign=+1; ASign>=-1; ASign-=2)
    for(int BSign=+1; BSign>=-1; BSign-=2)
     {
@@ -431,12 +502,14 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
       for(int nfP=0; nfP<4; nfP++)
        for(int nfQ=0; nfQ<4; nfQ++)
         { 
-          double PResult[2], PError[2];
+          cdouble Result[7], Error[7];
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
-                      PResult, PError, Order, 10000, 1.0e-8);
-          RetVal += cdouble( PResult[0], PResult[1] );
+                      (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
+          RetVal += Result[0];
+          if (dG)
+           for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };
     };
 
@@ -474,59 +547,11 @@ void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
 }
 
 /***************************************************************/
-/* Compute the G-matrix element between two tetrahedral basis  */
-/* functions in the dipole approximation retaining NumTerms    */
-/* terms (here NumTerms may be 1 or 2).                        */
-/***************************************************************/
-cdouble GetGMatrixElement_DA(SWGVolume *OA, int nfA, 
-                             SWGVolume *OB, int nfB,
-                             cdouble Omega, int NumTerms)
-{
-
-  SWGFace *FA = OA->Faces[nfA];
-  SWGFace *FB = OB->Faces[nfB];
-
-  /***************************************************************/
-  /* get dipole moments ******************************************/
-  /***************************************************************/
-  double JA[3], JB[3];
-  double QA[3][3], QB[3][3];
-  cdouble GMuNu[3][3], GMuNuRho[3][3][3];
-
-  if (NumTerms==1)
-   { 
-     GetDQMoments(OA, nfA, JA, QA, false);
-     GetDQMoments(OB, nfB, JB, QB, false);
-     CalcGC(FA->Centroid, FB->Centroid, Omega, 1.0, 1.0, GMuNu, 0, 0, 0);
-   }
-  else
-   { GetDQMoments(OA, nfA, JA, QA, true);
-     GetDQMoments(OB, nfB, JB, QB, true);
-     CalcGC(FA->Centroid, FB->Centroid, Omega, 1.0, 1.0, GMuNu, 0, GMuNuRho, 0);
-   };
-  
-  cdouble G=0.0;
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    G += JA[Mu]*GMuNu[Mu][Nu]*JB[Nu];
-
-  if (NumTerms==1) return G;
-
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    for(int Rho=0; Rho<3; Rho++)
-     G += GMuNuRho[Mu][Nu][Rho]
-           *( QA[Mu][Rho]*JB[Nu] - JA[Mu]*QB[Nu][Rho] );
-
-  return G;
-}
-
-/***************************************************************/
 /***************************************************************/
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega, cdouble *GradG=0)
+                          cdouble Omega, cdouble *dG=0)
 {
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
@@ -535,20 +560,20 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
   if ( ncv>=2 )
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20, dG);
   else if (ncv==1)
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9,  dG);
   else
-   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16, GradG);
+   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16, dG);
   
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                                         HMatrix *M, HMatrix **GradM,
-                                         int RowOffset, int ColOffset)
+void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
+                                 HMatrix *G, HMatrix **dGMatrix,
+                                 int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -558,10 +583,10 @@ void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
   int NFA = OA->NumInteriorFaces;
   int NFB = OB->NumInteriorFaces;
   int SameObject = (noa==nob) ? 1 : 0;
-  cdouble GradGBuffer[3];
-  cdouble *GradG = GradM==0 ? 0 : GradGBuffer;
+  cdouble dGBuffer[6];
+  cdouble *dG = dGMatrix==0 ? 0 : dGBuffer;
 
-  Log("Assembling U(%i,%i)",noa,nob);
+  Log("Assembling G(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
   Log(" no multithreading...");
 #else
@@ -577,46 +602,59 @@ void SWGGeometry::AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
 
       int Row=RowOffset + nfa;
       int Col=ColOffset + nfb;
-      M->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, GradG) );
+      G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
 
-      if (GradM)
-       { if (GradM[0]) 
-          GradM[0]->SetEntry(Row, Col, GradG[0]);
-         if (GradM[1]) 
-          GradM[1]->SetEntry(Row, Col, GradG[1]);
-         if (GradM[2]) 
-          GradM[2]->SetEntry(Row, Col, GradG[2]);
-       };
-
+      if (dG)
+       for(int Mu=0; Mu<6; Mu++)
+        if (dGMatrix[Mu]) 
+         dGMatrix[Mu]->SetEntry(Row, Col, dG[Mu]);
     };
-
-  /***************************************************************/
-  /**************************************************************/
-  /***************************************************************/
-  if (noa==nob)
-   { 
-     Log("Adding TInv(%i)",noa);
-#ifdef USE_OPENMP
-       int NumThreads=GetNumThreads();
-#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
-#endif
-       for(int nfa=0; nfa<OA->NumInteriorFaces; nfa++)
-        { int Indices[7];
-          cdouble Entries[7];
-          int NNZ = GetVInverseElements(OA, nfa, Omega, Indices, Entries);
-          for(int nnz=0; nnz<NNZ; nnz++)
-           { int nfb = Indices[nnz];
-             M->AddEntry(RowOffset + nfa, ColOffset + nfb, Entries[nnz]);
-           };
-        };
-   };
 
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::AssembleUBlock(int noa, int nob, cdouble Omega, 
+void SWGGeometry::AssembleVInvBlock(int no, cdouble Omega,
+                                    SMatrix *VInv, SMatrix *ImV,
+                                    HMatrix *TInv=0, int Offset=0)
+{
+   Log("Adding TInv(%i)",no);
+   SWGObject *O = Objects[no];
+   int Offset = BFIndexOffset[no];
+
+//BeginAssembly(int est_nnz = 0 /* default: allocate on fly */);
+
+#ifdef USE_OPENMP
+   int NumThreads=GetNumThreads();
+#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
+#endif
+   for(int nr=0; nf<O->NumInteriorFaces; nr++)
+    { int nc[7];
+      cdouble VInvEntries[7];
+      double ImvVntries[7];
+      int NNZ = GetVInvElements(O, nr, Omega, nc,
+                                VInvEntries, ImVEntries);
+      for(int nnz=0; nnz<NNZ; nnz++)
+        { 
+          if (VInv) 
+           VInv->SetEntry(nr, nc[nnz], VInvEntries[nnz]);
+          if (ImV) 
+           ImV->SetEntry(nr, nc[nnz], ImVEntries[nnz]);
+          if (TInv)
+           TInv->AddEntry(Offset + nr, Offset + nc[nnz], VInvEntries[nnz]);
+        };
+   };
+
+//if (VInv)
+// VInv->EndAssembly
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void SWGGeometry::AssembleVBlock(int noa, int nob, cdouble Omega, 
                                  HMatrix *U, HMatrix **GradU)
 { AssembleVIEMatrixBlock(noa, nob, Omega, U, GradU); }
 
@@ -638,8 +676,14 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
-    AssembleVIEMatrixBlock(noa, nob, Omega, M, 0,
-                           BFIndexOffset[noa], BFIndexOffset[nob]);
+    { 
+      AssembleGBlock(noa, nob, Omega, M, 0,
+                     BFIndexOffset[noa], BFIndexOffset[nob]);
+
+      if (nob==noa)
+       AssembleVInvBlock(noa, Omega, 0, 0, M, 
+                         BFIndexOffset[noa], BFIndexOffset[noa]);
+    };
 
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)

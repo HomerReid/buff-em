@@ -22,7 +22,7 @@
  *             -- the spectral density of power/momentum flux at a 
  *             -- single frequency
  *
- * homer reid  -- 6/2014
+ * homer reid  -- 8/2014
  *
  */
 
@@ -42,10 +42,10 @@
 /* Given values for quantities (a)--(d), this routine computes */
 /* a unique index into a big vector storing all the quantities.*/
 /***************************************************************/
-int GetIndex(SNEQData *SNEQD, int nt, int nos, int nod, int nq)
+int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq)
 {
-  int NO = SNEQD->G->NumObjects;
-  int NQ = SNEQD->NQ;
+  int NO = BNEQD->G->NumObjects;
+  int NQ = BNEQD->NQ;
   int NONQ = NO*NQ;
   int NO2NQ = NO*NO*NQ;
   return nt*NO2NQ + nos*NONQ + nod*NQ + nq; 
@@ -54,29 +54,34 @@ int GetIndex(SNEQData *SNEQD, int nt, int nos, int nod, int nq)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetTraces(SNEQData *SNEQD, int SourceObject, int DestObject,
+void GetTraces(BNEQData *BNEQD, int SourceObject, int DestObject,
                cdouble Omega, double *Results, bool SelfTerm=false)
 {
-  SWGGeometry *G = SNEQD->G;
+  SWGGeometry *G = BNEQD->G;
+
+  SMatrix *Sigma = BNEQD->Sigma[SourceObject];
+
+  
+
 } 
 
 /***************************************************************/
 /* return false on failure *************************************/
 /***************************************************************/
-bool CacheRead(SNEQData *SNEQD, cdouble Omega, double *Flux)
+bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 {
-  if (SNEQD->UseExistingData==false)
+  if (BNEQD->UseExistingData==false)
    return false;
 
-  FILE *f=vfopen("%s.flux","r",SNEQD->FileBase);
+  FILE *f=vfopen("%s.flux","r",BNEQD->FileBase);
   if (!f) return false;
   Log("Attempting to cache-read flux data for Omega=%e...",real(Omega));
 
-  int NT=SNEQD->NumTransformations;
-  int NO=SNEQD->G->NumObjects;
-  int NQ=SNEQD->NQ;
+  int NT=BNEQD->NumTransformations;
+  int NO=BNEQD->G->NumObjects;
+  int NQ=BNEQD->NQ;
   int nt, nos, nod, nq;
-  GTComplex **GTCList=SNEQD->GTCList;
+  GTComplex **GTCList=BNEQD->GTCList;
   char *FirstTag = GTCList[0]->Tag;
   int ErrorCode, LineNum=0;
   double FileOmega, rOmega=real(Omega);
@@ -118,7 +123,7 @@ bool CacheRead(SNEQData *SNEQD, cdouble Omega, double *Flux)
        if ( NumTokens < 3+NQ ) 
         { ErrorCode=5; goto fail; }
        for(nq=0; nq<NQ; nq++)
-        sscanf(Tokens[3+nq],"%le", Flux+GetIndex(SNEQD, nt, nos, nod, nq) );
+        sscanf(Tokens[3+nq],"%le", Flux+GetIndex(BNEQD, nt, nos, nod, nq) );
      };
 
   // success:
@@ -151,25 +156,27 @@ bool CacheRead(SNEQData *SNEQD, cdouble Omega, double *Flux)
 /*  where  NONQ = number of surface * NQ                       */
 /*  where NO2NQ = (number of surfaces)^2* NQ                   */
 /***************************************************************/
-void GetFlux(SNEQData *SNEQD, cdouble Omega, double *Flux)
+void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
 {
-  if ( CacheRead(SNEQD, Omega, Flux) )
+  if ( CacheRead(BNEQD, Omega, Flux) )
    return;
 
   Log("Computing neq quantities at omega=%s...",z2s(Omega));
 
   /***************************************************************/
-  /* extract fields from SNEQData structure ************************/
+  /* extract fields from BNEQData structure ************************/
   /***************************************************************/
-  SWGGeometry *G      = SNEQD->G;
-  HMatrix *W          = SNEQD->W;
-  HMatrix **T         = SNEQD->T;
-  HMatrix **U         = SNEQD->U;
-  int NQ              = SNEQD->NQ;
+  SWGGeometry *G      = BNEQD->G;
+  HMatrix *W          = BNEQD->W;
+  HMatrix **TInv      = BNEQD->TInv;
+  HMatrix **GBlocks   = BNEQD->GBlocks;
+  SMatrix **Sigma     = BNEQD->Sigma;
+  int NQ              = BNEQD->NQ;
 
   /***************************************************************/
   /* before entering the loop over transformations, we first     */
-  /* assemble the (transformation-independent) TInv matrix blocks.*/
+  /* assemble the (transformation-independent) TInv and Sigma    */
+  /* matrix blocks at this frequency.                            */
   /***************************************************************/
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
@@ -180,7 +187,7 @@ void GetFlux(SNEQData *SNEQD, cdouble Omega, double *Flux)
       }
      else
       Log(" Assembling self contributions to T(%i)...",no);
-     G->AssembleVIEMatrixBlock(ns, ns, Omega, T[no]);
+     G->AssembleVIEMatrixBlock(ns, ns, Omega, T[no], 0, Sigma[no]);
    };
 
   /***************************************************************/
@@ -189,13 +196,13 @@ void GetFlux(SNEQData *SNEQD, cdouble Omega, double *Flux)
   /***************************************************************/
   char *Tag;
   int RowOffset, ColOffset;
-  for(int nt=0; nt<SNEQD->NumTransformations; nt++)
+  for(int nt=0; nt<BNEQD->NumTransformations; nt++)
    { 
      /*--------------------------------------------------------------*/
      /*- transform the geometry -------------------------------------*/
      /*--------------------------------------------------------------*/
-     Tag=SNEQD->GTCList[nt]->Tag;
-     G->Transform(SNEQD->GTCList[nt]);
+     Tag=BNEQD->GTCList[nt]->Tag;
+     G->Transform(BNEQD->GTCList[nt]);
      Log(" Computing quantities at geometrical transform %s",Tag);
 
      /*--------------------------------------------------------------*/
@@ -207,23 +214,23 @@ void GetFlux(SNEQData *SNEQD, cdouble Omega, double *Flux)
      for(int nb=0, no=0; no<NO; no++)
       for(int nop=no+1; nop<NO; nop++, nb++)
        if ( nt==0 || G->ObjectMoved[no] || G->ObjectMoved[nop] )
-        G->AssembleVIEMatrixBlock(no, nop, Omega, U[nb]);
+        G->AssembleGBlock(no, nop, Omega, GBlocks[nb], dGBlocks[nb]);
 
      /*--------------------------------------------------------------*/
      /*- compute the requested quantities for all objects -----------*/
      /*- note: nos = 'num object, source'                           -*/
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
-     FILE *f=vfopen("%s.flux","a",SNEQD->FileBase);
+     FILE *f=vfopen("%s.flux","a",BNEQD->FileBase);
      double Quantities[7];
      for(int nos=0; nos<NO; nos++)
       for(int nod=0; nod<NO; nod++)
        { 
          fprintf(f,"%e %s ",real(Omega),Tag);
          fprintf(f,"%i%i ",nos+1,nod+1);
-         GetTraces(SNEQD, nos, nod, Omega, Quantities, false);
+         GetTraces(BNEQD, nos, nod, Omega, Quantities, false);
          for(int nq=0; nq<NQ; nq++)
-          { int Index=GetIndex(SNEQD, nt, nos, nod, nq);
+          { int Index=GetIndex(BNEQD, nt, nos, nod, nq);
             Flux[Index] = Quantities[nq]; 
             if ( nos==nod )
              Flux[Index] -= SelfContributions[nod][nq]; 
@@ -242,6 +249,6 @@ void GetFlux(SNEQData *SNEQD, cdouble Omega, double *Flux)
      G->UnTransform();
      Log(" ...done!");
 
-   }; // for (nt=0; nt<SNEQD->NumTransformations... )
+   }; // for (nt=0; nt<BNEQD->NumTransformations... )
 
 } 
