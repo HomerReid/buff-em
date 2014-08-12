@@ -40,7 +40,8 @@ using namespace buff;
 namespace buff{
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega, int Order);
+                             cdouble Omega, 
+                             int Order=0, cdouble *dG=0);
 
 cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
@@ -98,6 +99,51 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 }
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetFDDerivatives(SWGVolume *OACopy, int nfa, SWGVolume *OB, int nfb,
+                      cdouble Omega, cdouble G0, cdouble dG[6])
+{
+  
+  for(int Mu=0; Mu<3; Mu++)
+   { 
+     double DX[3] = {0.0, 0.0, 0.0};
+
+     DX[Mu] = 0.001;
+     OACopy->Transform("DISPLACED %e %e %e \n",DX[0],DX[1],DX[2]);
+     cdouble GpdG = GetGMatrixElement_SI(OACopy, nfa, OB, nfb, Omega, 20);
+     OACopy->UnTransform();
+
+     DX[Mu] = -0.001;
+     OACopy->Transform("DISPLACED %e %e %e \n",DX[0],DX[1],DX[2]);
+     cdouble GmdG = GetGMatrixElement_SI(OACopy, nfa, OB, nfb, Omega, 20);
+     OACopy->UnTransform();
+
+     dG[Mu] = (GpdG - GmdG) / (-2.0*DX[Mu]);
+   };
+
+  for(int Mu=0; Mu<3; Mu++)
+   { 
+     double nHat[3] = {0.0, 0.0, 0.0};
+     nHat[Mu] = 1.0;
+
+     double DeltaTheta = 0.01; // radians 
+     OACopy->Transform("ROTATED %e ABOUT %e %e %e ",DeltaTheta*180.0/M_PI,nHat[0],nHat[1],nHat[2]);
+     cdouble GpdG = GetGMatrixElement_SI(OACopy, nfa, OB, nfb, Omega, 20);
+     OACopy->UnTransform();
+
+     DeltaTheta = -0.01;
+     OACopy->Transform("ROTATED %e ABOUT %e %e %e ",DeltaTheta*180.0/M_PI,nHat[0],nHat[1],nHat[2]);
+     cdouble GmdG = GetGMatrixElement_SI(OACopy, nfa, OB, nfb, Omega, 20);
+     OACopy->UnTransform();
+
+     dG[3+Mu] = (GpdG - GmdG) / (-2.0*DeltaTheta);
+   };
+
+}
+
+
+/***************************************************************/
 /* main function   *********************************************/
 /***************************************************************/  
 int main(int argc, char *argv[])
@@ -110,6 +156,7 @@ int main(int argc, char *argv[])
   int nfa=-1;
   int nfb=-1;
   int ncv=-1;
+  bool DoBF=false;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING,  1, 1, (void *)&GeoFile,        0, "mesh file"},
@@ -117,6 +164,7 @@ int main(int argc, char *argv[])
      {"nfa",                PA_INT,     1, 1, (void *)&nfa,            0, "nfa"},
      {"nfb",                PA_INT,     1, 1, (void *)&nfb,            0, "nfb"},
      {"ncv",                PA_INT,     1, 1, (void *)&ncv,            0, "ncv"},
+     {"DoBF",               PA_BOOL,    0, 1, (void *)&DoBF,           0, "do the brute-force calculation"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -149,12 +197,15 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  cdouble GBF[7], Error[7];
-  GVIData MyData, *Data=&MyData;
-  Data->k=Omega;
-  Data->Eta = 0.0;
-  BFBFInt(O, nfa, O, nfb, GVIntegrand, (void *)Data,
-          14, (double *)GBF, (double *)Error, 0, 1000000, 1.0e-6);
+  cdouble GBF[7];
+  if (DoBF)
+   { cdouble Error[7];
+     GVIData MyData, *Data=&MyData;
+     Data->k=Omega;
+     Data->Eta = 0.0;
+     BFBFInt(O, nfa, O, nfb, GVIntegrand, (void *)Data,
+             14, (double *)GBF, (double *)Error, 0, 1000000, 1.0e-6);
+   };
 
   /***************************************************************/
   /***************************************************************/
@@ -167,7 +218,18 @@ int main(int argc, char *argv[])
   /***************************************************************/
   cdouble GSI[7];
   memset(GSI, 0, 7*sizeof(cdouble));
-  GSI[0] = GetGMatrixElement_SI(O, nfa, O, nfb, Omega, 20);
+  GSI[0] = GetGMatrixElement_SI(O, nfa, O, nfb, Omega, 20, GSI+1);
+
+  /***************************************************************/
+  /* If we didn't do the BF calculation then estimate derivatives*/
+  /* by finite-differencing                                      */
+  /***************************************************************/
+  if (!DoBF)
+   { 
+     SWGGeometry *GCopy = new SWGGeometry(GeoFile);
+     SWGVolume *OCopy = GCopy->Objects[0];
+     GetFDDerivatives(OCopy, nfa, O, nfb, Omega, GSI[0], GBF+1);
+   };
 
   /***************************************************************/
   /***************************************************************/

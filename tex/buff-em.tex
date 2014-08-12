@@ -1257,10 +1257,9 @@ Series expansions:
 %=================================================
 \subsection{Derivatives with respect to translations}
 
-For computation of non-equilibrium Casimir forces
-we require derivatives of $\mathbb{G}$-matrix
-elements with respect to the quantity $\vb R_0$ in
-equation (\ref{bGb}). 
+For computation of non-equilibrium Casimir forces and torques,
+we require the matrix elements of derivatives of the
+$\mathbb{G}$ operator with respect to its first argument.
 
 \subsubsection*{Distant case}
 %====================================================================%
@@ -1282,21 +1281,24 @@ $$ \vb r = \vb R_0 - \vb x_\alpha - \vb x_\beta, \qquad
 $$
 %====================================================================%
 For calculations of torques we need also matrix elements
-of the derivative of $\mathbb{G}(\vb r, \vb r^\prime)$ with respect
-to rotation of $\vb r$ about a coordinate axis pointing in the 
-direction $\vbhat{a}$ and centered at an origin $\vb x_0$. 
+of the derivative of $\mathbb{G}(\vb x_\alpha, \vb x_\beta)$ with respect
+to rotation of $\vb x_\alpha$ about a coordinate axis pointing in the
+direction $\vbhat{a}$ and centered at an origin $\vb x_0$.
 Under rotation through an infinitesimal angle $\Delta \theta$
-about this axis, the point $\vb r$ goes to $\vb r + \Delta \vb r$
-with 
+about this axis, the point $\vb x_\alpha$ goes to 
+$\vb x_\alpha + \Delta \vb x_\alpha$ with 
 %====================================================================%
-$$\Delta \vb r = \Big[\vbhat{a}\times (\vb r-\vb x_0)\big] \, \Delta \theta$$
+$$\Delta \vb x_\alpha 
+  = 
+  \Big[\vbhat{a}\times (\vb x_\alpha-\vb x_0)\big] \, \Delta \theta
+$$
 %====================================================================%
 and the angular derivative of $\mathbb{G}$ is thus
 %====================================================================%
 $$
  \partial_\theta\mathbb{G}
  =
- \varepsilon_{ijk} \vbhat{a}_j (\vb r_\alpha - \vb r_0)_k \partial_i \mathbb{G}
+ \varepsilon_{ijk} \vbhat{a}_j (\vb x_\alpha - \vb x_0)_k \partial_i \mathbb{G}
 $$
 %====================================================================%
 with matrix elements
@@ -1308,15 +1310,15 @@ with matrix elements
            \left[ \vb b_\alpha \cdot \vb b_\beta
                  -\frac{9}{k^2}
            \right]
-           \varepsilon_{ijk} \vbhat{a}_j(\vb r - \vb r_0)_k
-           \vb r_i \Psi(|\vb r|)
+           \varepsilon_{ijk} \vbhat{a}_j(\vb x_\alpha - \vb x_0)_k
+           r_i \Psi(|\vb r|)
 \\
 &=\sum \pm \int_{\mc P_\alpha^\pm } d\vb x_\alpha
            \int_{\mc P_\beta^\pm  } d\vb x_\beta
            \left[ \vb b_\alpha \cdot \vb b_\beta
                  -\frac{9}{k^2}
            \right]
-           \left\{ \vb r \cdot \Big[\vbhat{a} \times (\vb r-\vb r_0)\Big]\right\}
+ e         \left\{ \vb r \cdot \Big[\vbhat{a} \times (\vb x_\alpha-\vb x_0)\Big]\right\}
            \Psi(|\vb r|).
 \label{bdtGb}
 \end{align*}
@@ -1330,7 +1332,7 @@ replaced by their derivatives. These are
 \begin{align*}
  \partial_i T_1 
 &= 
- ik \frac{r_i}{R} \vb b_\alpha \cdot \vb b_\beta
+ ik \frac{r_i}{R} \vb b_\alpha \cdot \vb b_\beta h^\prime(ikR)
 \\[5pt]
  \partial_i T_2 
 &= -ik\frac{r_i}{R}\frac{9A_\alpha A_\beta }{V_\alpha V_\beta k^2}

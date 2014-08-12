@@ -80,7 +80,8 @@ void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3])
 }
 
 /***************************************************************/
-/***************************************************************/
+/* user data structure and integrand function for **************/
+/* GetVInvAndImEpsEntries                                      */
 /***************************************************************/
 typedef struct VIIData
  { 
@@ -93,8 +94,8 @@ typedef struct VIIData
 
  } VIIData;
 
-void VInvIntegrand(double *x, double *b, double DivB, 
-                   void *UserData, double *I)
+void VIntegrand(double *x, double *b, double DivB, 
+                void *UserData, double *I)
 {
   VIIData *Data   = (VIIData *)UserData;
   double *QA      = Data->QA;
@@ -106,6 +107,7 @@ void VInvIntegrand(double *x, double *b, double DivB,
 
   cdouble Eps[3][3], Y[3][3];
   MP->GetEps( Omega, x, Eps );
+
   Eps[0][0] -= 1.0;
   Eps[1][1] -= 1.0;
   Eps[2][2] -= 1.0;
@@ -119,22 +121,35 @@ void VInvIntegrand(double *x, double *b, double DivB,
   FB[1] = PreFacB * (x[1] - QB[1]);
   FB[2] = PreFacB * (x[2] - QB[2]);
 
-  cdouble *zI = (cdouble *)I;
-  zI[0] = -( FA[0]*(Y[0][0]*FB[0] + Y[0][1]*FB[1] + Y[0][2]*FB[2])
-            +FA[1]*(Y[1][0]*FB[0] + Y[1][1]*FB[1] + Y[1][2]*FB[2])
-            +FA[2]*(Y[2][0]*FB[0] + Y[2][1]*FB[1] + Y[2][2]*FB[2])
-           ) / (Omega*Omega);
+  cdouble VInvElement=0.0;
+  double ImEpsElement=0.0;
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    { VInvElement  += FA[Mu]*Y[Mu][Nu]*FB[Nu];
+      ImEpsElement += FA[Mu]*imag(Eps[Mu][Nu])*FB[Nu];
+    };
+  VInvElement *= -1.0/ (Omega*Omega);
+ 
+  I[0] = real(VInvElement);
+  I[1] = imag(VInvElement);
+  I[2] = ImEpsElement;
   
 }
 
 /***************************************************************/
+/* For a given SWG basis function f_a, this routine computes   */
+/* the matrix elements of the VInverse and Im Eps operators    */
+/* (where  VInverse=Eps^{-1} / k^2) between f_a and all basis  */
+/* functions f_b that have nonzero overlap with f_a (there are */
+/* a maximum of 7 such BFs.) The indices of the f_b functions  */
+/* are returned in Indices.                                    */
 /***************************************************************/
-/***************************************************************/
-int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
-                        int Indices[7], cdouble Entries[7])
+int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, int Indices[7],
+                           cdouble VInvEntries[7], double ImEpsEntries[7])
 {
   Indices[0]=0.0;
-  Entries[0]=0.0;
+  VInvEntries[0]=0.0;
+  ImEpsEntries[0]=0.0;
   int NNZ=1;
 
   SWGFace *FA = V->Faces[nfA];
@@ -165,17 +180,19 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
         Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
-     cdouble Result, Error;
-     TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
-            2, (double *)&Result, (double *)&Error, 33, 0, 1.0e-4);
+     double I[3], E[3];
+     TetInt(V, nt, 0, 1.0, VIntegrand, (void *)Data,
+            3, I, E, 33, 0, 1.0e-4);
 
      if (nfB==nfA)
       { 
-        Entries[0] += Result;
+        VInvEntries[0]  += cdouble(I[0], I[1]);
+        ImEpsEntries[0] += I[2];
       }
      else
-      { Entries[NNZ] = Result;
-        Indices[NNZ] = nfB;
+      { VInvEntries[NNZ]  = cdouble(I[0], I[1]);
+        ImEpsEntries[NNZ] = I[2];
+        Indices[NNZ]      = nfB;
         NNZ++;
       };
 
@@ -203,16 +220,18 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
         Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
-     cdouble Result, Error;
-     TetInt(V, nt, 0, 1.0, VInvIntegrand, (void *)Data,
-            2, (double *)&Result, (double *)&Error, 33, 0, 0);
+     double I[3], E[3];
+     TetInt(V, nt, 0, 1.0, VIntegrand, (void *)Data,
+            3, I, E, 33, 0, 0);
 
      if (nfB==nfA)
       { 
-        Entries[0] += Result;
+        VInvEntries[0]   += cdouble( I[0], I[1] );
+        ImEpsEntries[0]  += I[2];
       }
      else
-      { Entries[NNZ] = Result;
+      { VInvEntries[NNZ]  = cdouble( I[0], I[1] );
+        ImEpsEntries[NNZ] = I[2];
         Indices[NNZ] = nfB;
         NNZ++;
       };
@@ -221,7 +240,7 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
 
   return NNZ;
 
-} // routine GetVInverse
+} // routine GetVInvAndImEpsEntries
 
 /***************************************************************/
 /***************************************************************/
@@ -229,7 +248,8 @@ int GetVInverseElements(SWGVolume *V, int nfA, cdouble Omega,
 typedef struct GVIData
  {
    cdouble k;
-   bool NeedGradient;
+   double x0[3]; // origin for torque calculations
+   bool NeedDerivatives;
  } GVIData;
  
 void GVIntegrand(double *xA, double *bA, double DivbA,
@@ -247,9 +267,9 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
      return;
    };
 
-  GVIData *Data     = (GVIData *)UserData;
-  cdouble k         = Data->k;
-  bool NeedGradient = Data->NeedGradient;
+  GVIData *Data        = (GVIData *)UserData;
+  cdouble k            = Data->k;
+  bool NeedDerivatives = Data->NeedDerivatives;
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
@@ -260,12 +280,29 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
   cdouble *zI = (cdouble *)I;
   zI[0] = PolyFac*Phi;
 
-  if (NeedGradient)
+  if (NeedDerivatives)
    { 
      cdouble Psi = (IKR-1.0) * Phi / (r*r);
      zI[1] = R[0]*PolyFac*Psi;
      zI[2] = R[1]*PolyFac*Psi;
      zI[3] = R[2]*PolyFac*Psi;
+
+     // TVP is the triple vector product in the torque calculation,
+     //  TVP_i = [(x_\alpha x_0) \cross r_i
+     // VecSub(xA, x0, xAmx0);
+     // VecCross(xAmx0, R, TVP);
+     double xAmx0[3], TVP[3];
+     double *x0 = Data->x0;
+     xAmx0[0] = xA[0] - x0[0];
+     xAmx0[1] = xA[1] - x0[1];
+     xAmx0[2] = xA[2] - x0[2];
+     TVP[0] = xAmx0[1]*R[2] - xAmx0[2]*R[1];
+     TVP[1] = xAmx0[2]*R[0] - xAmx0[0]*R[2];
+     TVP[2] = xAmx0[0]*R[1] - xAmx0[1]*R[0];
+
+     zI[4] = TVP[0]*PolyFac*Psi;
+     zI[5] = TVP[1]*PolyFac*Psi;
+     zI[6] = TVP[2]*PolyFac*Psi;
    };
 
 }
@@ -273,28 +310,38 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /* Compute the G-matrix element between two tetrahedral basis  */
 /* functions using a volume cubature method.                   */
-/* If GradG is non-null, then GradG[0..2] get dG/dR_i, i=x,y,z */
+/* If dG is non-null, then on return we have                   */
+/*  dG[0..2] = dG/dR_i,    i=x,y,z,                            */
+/*  dG[3..5] = dG/dTheta_i                                     */
+/* where dG/dTheta_i is the angular derivative with respect to */
+/* rotations about the ith axis                                */
 /***************************************************************/
 cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
                              cdouble Omega, int Order=0,
-                             cdouble *GradG=0)
+                             cdouble *dG=0)
 {
   GVIData MyData, *Data = &MyData;
   Data->k               = Omega;
-  Data->NeedGradient    = (GradG!=0);
+  int nFun;
 
-  int nFun = GradG ? 8 : 2;
+  if (dG==0)
+   { Data->NeedDerivatives = false;
+     nFun = 2;
+   }
+  else
+   { Data->NeedDerivatives = true;
+     nFun = 14;
+     Data->x0[0] = Data->x0[1] = Data->x0[2] = 0.0;
+     if (VA->OTGT) VA->OTGT->Apply( Data->x0 );
+     if (VA->GT) VA->GT->Apply( Data->x0 );
+   };
 
-  cdouble Result[4], Error[4];
+  cdouble Result[7], Error[7];
   BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun, 
           (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
 
-  if (GradG)
-   { GradG[0] = Result[1];
-     GradG[1] = Result[2];
-     GradG[2] = Result[3];
-   };
+  if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
 
   return Result[0];
 }
@@ -303,27 +350,24 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
 /* routine to compute the h, w, p functions described in the   */
 /* memo                                                        */
 /***************************************************************/
-// h/=Xi;
-// cdouble p = h/Xi - w/Xi3 - 1.0/3.0;
 #define EXPRELTOL  1.0e-8
-#define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
-void hwp(cdouble x, cdouble hwp[3], cdouble *hwpPrime)
+void Gethwp(cdouble x, cdouble hwp[3], cdouble *hwpPrime)
 {
   if ( abs(x) >= 0.1 )
    { 
-     cdouble x2=x*x, x3=x2*x, x4=x3*x;
-     cdouble ExpRel1, ExpRel2, ExpRel3;
-
-     ExpRel1 = exp(x) - 1.0;
-     ExpRel2 = ExpRel1 - x;
-     ExpRel3 = ExpRel2 - 0.5*x2;
+     cdouble x2=x*x;
+     cdouble x3=x2*x;
+     cdouble ExpRel1 = exp(x) - 1.0;
+     cdouble ExpRel2 = ExpRel1 - x;
+     cdouble ExpRel3 = ExpRel2 - 0.5*x2;
 
      hwp[0] = ExpRel2 / x;
      hwp[1] = ExpRel3;
      hwp[2] = hwp[0]/x  - hwp[1]/x3 - 1.0/3.0;
 
      if (hwpPrime)
-      { hwpPrime[0] = ExpRel1/x - ExpRel2/x2;
+      { cdouble x4=x3*x;
+        hwpPrime[0] = ExpRel1/x - ExpRel2/x2;
         hwpPrime[1] = ExpRel2;
         hwpPrime[2] = hwpPrime[0]/x - hwp[0]/x2 + 3.0*hwp[1]/x4 - hwpPrime[1]/x3;
       };
@@ -341,26 +385,24 @@ void hwp(cdouble x, cdouble hwp[3], cdouble *hwpPrime)
         hwpPrime[2] = 1.0/8.0 + x/15.0 + x2/48.0;
       };
 
-     cdouble Term2=x*x/2.0, Term=Term2, Sum=0.0;
-     double nFact = 2.0;
-     for(int n=3; n<100; n++)
+     // in this loop, Term = x^n / n!
+     cdouble Term = x2 / 2.0;
+     for(double n=3.0; n<100.1; n+=1.0)
       { 
-        nFact *= n;
-        double dn = n;
+        Term *= x / n;
 
-        hwp[0] += xn  / ( (dn+1.0) * nFact );
-        hwp[1] += xn  / nFact;
-        hwp[2] += xn / ( nFact*(dn+1.0)*(dn+3.0) );
+        hwp[0] += Term / (n+1.0);
+        hwp[1] += Term;
+        hwp[2] += Term / ( (n+3.0)*(n+1.0) );
 
         if (hwpPrime)
-         { hwpPrime[0] += xn / ( (dn+2.0) * nFact);
-           hwpPrime[2] += xn / ( (dn+2.0)*(dn+4.0)*nFact);
+         { hwpPrime[0] += Term / (n+2.0);
+           hwpPrime[2] += Term / ( (n+4.0)*(n+2.0) );
          };
 
-        Term*=x/((double)m);
-        Sum+=Term;
-        if ( norm(Term) < EXPRELTOL2*norm(Sum) )
+        if ( abs(Term) < EXPRELTOL*abs(hwp[1]) )
          break;
+
       };
 
      if (hwpPrime)
@@ -424,18 +466,18 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
+  cdouble k2  = k*k;
+  cdouble Xi  = II*k*r;
+
   cdouble hwp[3], hwpPrime[3];
-  hwp(Xi, hwp, NeedDerivatives ? hwpPrime : 0 );
+  Gethwp(Xi, hwp, NeedDerivatives ? hwpPrime : 0 );
 
   cdouble h=hwp[0];
   cdouble w=hwp[1];
   cdouble p=hwp[2];
 
-  cdouble k2  = k*k;
-  cdouble Xi  = II*k*r;
-
   double DotProd = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]);
-  double PreFac  = -DivbA*DivbB / (9.0*k2);
+  cdouble PreFac  = -DivbA*DivbB / (9.0*k2);
   cdouble T1 = DotProd * h;
   cdouble T2 = PreFac * (9.0*h + w + k2*DQdotR*p);
 
@@ -450,13 +492,14 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 
      for(int Mu=0; Mu<3; Mu++)
       { 
-        T1 = II*k*R[Mu]*DotProd / r; 
-        T2 = II*k*R[Mu]*PreFac*(9.0*hP + wP + k2*DQdotR*pP)
-              +k2*PreFac*(QA[Mu]-QB[Mu])*p;
+        cdouble Factor = II*k*R[Mu]/r;
 
+        T1 = Factor*DotProd*hP;
+        T2 = Factor*PreFac*(9.0*hP + wP + k2*DQdotR*pP)
+              +k2*PreFac*(QA[Mu]-QB[Mu])*p;
         zI[1+Mu] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
 
-        zI[3+Mu] = 0.0;
+        zI[4+Mu] = 0.0;
       };
    };
 
@@ -508,42 +551,12 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                       GSurfaceIntegrand, (void *)Data, fDim,
                       (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
           RetVal += Result[0];
-          if (dG)
-           for(int n=0; n<6; n++) dG[n]+=Result[n+1];
+
+          if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };
     };
 
   return RetVal;
-}
-
-/***************************************************************/
-/* get the dipole and quadupole moments of the current         */
-/* distribution described by a single SWG basis function.      */
-/***************************************************************/
-void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
-                  bool NeedQ)
-{
-  SWGFace *F = O->Faces[nf];
-  double A= F->Area;
-
-  double *QP = O->Vertices + 3*F->iQP;
-  double *QM = O->Vertices + 3*F->iQM;
-
-  J[0] = 0.25*A*(QM[0] - QP[0]);
-  J[1] = 0.25*A*(QM[1] - QP[1]);
-  J[2] = 0.25*A*(QM[2] - QP[2]);
-
-  if (!NeedQ) return;
-
-  double PreFac = A/20.0;
-  double *x0 = F->Centroid;
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    Q[Mu][Nu] = PreFac * (   QM[Mu]*(QM[Nu]-x0[Nu])
-                            -QP[Mu]*(QP[Nu]-x0[Nu])
-                            +x0[Mu]*(QP[Nu]-QM[Nu])
-                         );
-
 }
 
 /***************************************************************/
@@ -605,9 +618,10 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
       G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
 
       if (dG)
-       for(int Mu=0; Mu<6; Mu++)
-        if (dGMatrix[Mu]) 
-         dGMatrix[Mu]->SetEntry(Row, Col, dG[Mu]);
+       { for(int Mu=0; Mu<6; Mu++)
+          if (dGMatrix[Mu]) 
+           dGMatrix[Mu]->SetEntry(Row, Col, dG[Mu]);
+       };
     };
 
 }
@@ -616,50 +630,33 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleVInvBlock(int no, cdouble Omega,
-                                    SMatrix *VInv, SMatrix *ImV,
-                                    HMatrix *TInv=0, int Offset=0)
+                                    SMatrix *VInv, SMatrix *ImEps,
+                                    HMatrix *TInv, int Offset)
 {
-   Log("Adding TInv(%i)",no);
-   SWGObject *O = Objects[no];
-   int Offset = BFIndexOffset[no];
-
-//BeginAssembly(int est_nnz = 0 /* default: allocate on fly */);
+   Log("Adding VInv(%i)",no);
+   SWGVolume *O = Objects[no];
 
 #ifdef USE_OPENMP
    int NumThreads=GetNumThreads();
 #pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
 #endif
-   for(int nr=0; nf<O->NumInteriorFaces; nr++)
+   for(int nr=0; nr<O->NumInteriorFaces; nr++)
     { int nc[7];
       cdouble VInvEntries[7];
-      double ImvVntries[7];
-      int NNZ = GetVInvElements(O, nr, Omega, nc,
-                                VInvEntries, ImVEntries);
+      double ImEpsEntries[7];
+      int NNZ = GetVInvAndImEpsEntries(O, nr, Omega, nc, VInvEntries, ImEpsEntries);
       for(int nnz=0; nnz<NNZ; nnz++)
         { 
           if (VInv) 
            VInv->SetEntry(nr, nc[nnz], VInvEntries[nnz]);
-          if (ImV) 
-           ImV->SetEntry(nr, nc[nnz], ImVEntries[nnz]);
+          if (ImEps) 
+           ImEps->SetEntry(nr, nc[nnz], ImEpsEntries[nnz]);
           if (TInv)
            TInv->AddEntry(Offset + nr, Offset + nc[nnz], VInvEntries[nnz]);
         };
    };
 
-//if (VInv)
-// VInv->EndAssembly
-
 }
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void SWGGeometry::AssembleVBlock(int noa, int nob, cdouble Omega, 
-                                 HMatrix *U, HMatrix **GradU)
-{ AssembleVIEMatrixBlock(noa, nob, Omega, U, GradU); }
-
-void SWGGeometry::AssembleTInvBlock(int no, cdouble Omega, HMatrix *TInv)
-{ AssembleVIEMatrixBlock(no, no, Omega, TInv); }
 
 /***************************************************************/
 /***************************************************************/
@@ -681,8 +678,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)
-       AssembleVInvBlock(noa, Omega, 0, 0, M, 
-                         BFIndexOffset[noa], BFIndexOffset[noa]);
+       AssembleVInvBlock(noa, Omega, 0, 0, M, BFIndexOffset[noa]);
     };
 
   for(int nr=1; nr<TotalBFs; nr++)

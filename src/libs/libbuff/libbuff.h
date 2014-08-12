@@ -206,17 +206,12 @@ class SWGGeometry
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
 
    // compute individual matrix blocks
-   void AssembleVIEMatrixBlock(int noa, int nob, cdouble Omega,
-                               HMatrix *M, HMatrix **GradM=0,
-                               SMatrix *Sigma,
-                               int RowOffset=0, int ColOffset=0);
    void AssembleGBlock(int noa, int nob, cdouble Omega,
                        HMatrix *G, HMatrix **GradG,
                        int RowOffset=0, int ColOffset=0);
    void AssembleVInvBlock(int no, cdouble Omega,
-                          SMatrix *VInv, SMatrix *Sigma,
-                          HMatrix *TInv=0, 
-                          int RowOffset=0, int ColOffset=0);
+                          SMatrix *VInv, SMatrix *ImEps,
+                          HMatrix *TInv=0, int Offset=0);
 
    // miscellaneous routines
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);
