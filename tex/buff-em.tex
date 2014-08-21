@@ -829,13 +829,55 @@ torque expressions do contain equilibrium contributions.)
    \right\}
 \end{align*}
 %====================================================================%
-The matrix whose trace we compute in these expressions has the form
+The trace we compute in these expressions has the form
+%====================================================================%
 \begin{align*}
- \vbSigma_s 
- \Big[ \left(\vb A^\dagger\right)_{sd}
-       \sum_i \left(\vb X_{di} \vb A_{is}\right) 
- \Big]
+\text{Tr }\Big[ \left(\vb X \vb A\right)_{ds}
+                \vbSigma_s
+                \big(\vb A^\dagger\big)_{sd} 
+          \Big]
+&= \sum_{ijk} \left(\vb X \vb A\right)_{ds, ij}
+              \Sigma_{s,jk}
+              \Big[\vb A^\dagger_{sd}\Big]_{ki}
+\\
+&= \sum_{ijk} \big(\vb X \vb A\big)_{di; sj}
+              \Sigma_{s,jk}
+              A^*_{di;sk}
 \end{align*}
+%====================================================================%
+where 
+%====================================================================%
+$$\vb A = \Big( \vb 1 - \vb W \vb G\Big)$$
+%====================================================================%
+and
+%====================================================================%
+$$ \vb X=\{\vb G, \partial_i \vb G, \partial_\theta \vb G\}.$$
+%====================================================================%
+For example, suppose in a four-object geometry we want the 
+force on object 2 due to sources in object 3.
+%====================================================================%
+$$ \left(\begin{array}{cccc}
+   \vb A^\dagger_{11} & \vb A^\dagger_{12} & \vb A^\dagger_{13} & \vb A^\dagger_{14} \\
+   \vb A^\dagger_{21} & \vb A^\dagger_{22} & \vb A^\dagger_{23} & \vb A^\dagger_{24} \\
+   \vb A^\dagger_{31} & \vb A^\dagger_{32} & \vb A^\dagger_{33} & \vb A^\dagger_{34} \\
+   \vb A^\dagger_{41} & \vb A^\dagger_{42} & \vb A^\dagger_{43} & \vb A^\dagger_{44}
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   \left(\begin{array}{cccc}
+   \vb X_{11} & \vb X_{12} & \vb X_{13} & \vb X_{14} \\
+   \red{\vb X_{21}} & \red{\vb X_{22}} & \red{\vb X_{23}} & \red{\vb X_{24}} \\
+   \vb X_{31} & \vb X_{32} & \vb X_{33} & \vb X_{34} \\
+   \vb X_{41} & \vb X_{42} & \vb X_{43} & \vb X_{44}
+   \end{array}\right)
+%--------------------------------------------------------------------%
+   \left(\begin{array}{cccc}
+   \vb A_{11} & \vb A_{12} & \red{\vb A_{13}} & \vb A_{14} \\
+   \vb A_{21} & \vb A_{22} & \red{\vb A_{23}} & \vb A_{24} \\
+   \vb A_{31} & \vb A_{32} & \red{\vb A_{33}} & \vb A_{34} \\
+   \vb A_{41} & \vb A_{42} & \red{\vb A_{43}} & \vb A_{44}
+   \end{array}\right)
+$$
+%====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1792,6 +1834,121 @@ argument similar to (\ref{Argument}), and we find
 where the symbol $\partial_\theta \vb E$ denotes the derivative
 of $\vb E(\vb r)$ with respect to an infinitesimal rotation of the
 point $\vb r$ about the $i$th coordinate axis with origin $\vb r_0.$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{From Rytov to Johnson-Nyquist}
+\label{RytovToJohnson}
+
+For those of us who learned about noise in resistors
+before learning about Casimir forces and radiative heat transfer
+in nanoparticles,
+it's useful to relate the abstract and possibly mysterious 
+notion of the Rytov correlation function to the concrete and 
+familiar concept of Johnson-Nyquist noise.
+(Even for those who need no help with fluctuation-dissipation 
+ideas, this exercise is useful for pinning down factors of $2\pi$ and
+other normalization effluvia.)
+
+\subsection*{Johnson-Nyquist Noise}
+
+In elementary circuit theory we are taught that, at temperature
+$T$, a resistor exhibits a mean-square power of 
+%====================================================================%
+$$ \big\langle P \big\rangle = 4 kT \Delta\Omega $$
+%====================================================================%
+(where $\Delta\Omega$ is the effective measurement bandwidth,
+usually determined by low-pass and high-pass filters in the circuit).
+If the resistance of the resistor is $R$, then the mean-square voltage 
+across its terminals and the mean-square current flowing through it are
+%====================================================================%
+\begin{align}
+ \big \langle V^2 \big\rangle 
+ &= \big\langle P \big \rangle R = 4k T R\, \Delta\Omega, \qquad 
+\nn
+ \big \langle I^2 \big\rangle 
+ &= \frac{1}{R} \big\langle P \big \rangle 
+  = \frac{4k T}{R} \Delta\Omega
+\label{MeanSquareCurrent}
+\end{align}
+%====================================================================%
+We would now like to understand equation (\ref{MeanSquareCurrent})
+on the basis of the Rytov correlation function.
+
+\subsection*{Macroscopic noise from microscopic fluctuations}
+
+Thus, consider a resistor consisting of a homogeneous cylinder of
+length $L$ and cross-sectional area $A$ with relative dielectric
+function
+%====================================================================%
+\numeq{EpsilonSigma}
+{
+ \epsilon(\omega)
+ \quad=\quad
+ \epsilon^\prime(\omega) + i\epsilon^{\prime\prime}(\omega)
+ \quad=\quad
+ \epsilon^\prime(\omega) + i\frac{\sigma}{\epsilon_0 \omega}
+}
+%====================================================================%
+where $\sigma$ is the microscopic conductivity in units of
+mho$\cdot$meters [one mho = 1 inverse ohm  (1 $\Omega^{-1}$) = 
+1 siemen].\footnote{The \textit{absolute} permittivity
+of the object is $\epsilon_0\epsilon^\prime + i\frac{\sigma}{\omega}$. 
+To check that the imaginary part of (\ref{EpsilonSigma}) is indeed
+dimensionless, note that $\epsilon_0=\frac{1}{Z_0 c}$ where
+$Z_0\approx 377\, \Omega$ is the impedance of free space
+and $c$ is the speed of light; thus the units of the imaginary
+part of (\ref{EpsilonSigma}) are 
+$$ \Big[\frac{\sigma}{\epsilon_0 \omega}\Big] 
+   =\frac{[\text{mhos$\cdot$meters}]}
+         {[\text{mhos$\cdot$seconds$\cdot$meters}][\text{seconds}^{-1}]}
+   =\text{dimensionless.}
+$$}
+The microscopic resistivity, with units of ohms/meter, is
+$\rho=1/\sigma$. The total resistance of the resistor is
+%====================================================================%
+$$ R=\frac{L}{A}\rho = \frac{L}{A\sigma}.$$
+%====================================================================%
+We align the cylinder axis with the $z$-axis and break up 
+coordinates into transverse and longitudinal components according to
+$\vb x=(\vbrho, z)$.
+
+The instantaneous current density at a point in the cylinder
+may be expressed as a Fourier synthesis:
+%====================================================================%
+$$ \vb J(\vb x, t) = \int \vb J(\vb x,\omega) e^{-i\omega t} \, d\omega. $$
+%====================================================================%
+The instantaneous \textit{current} passing through a cross-sectional
+plane at height $z$ is 
+%====================================================================%
+$$ I(z,t)=\int I(z,\omega) e^{-i\omega t} \, d\omega$$
+%====================================================================%
+where $I(z,\omega)$ is given by integrating $\vb J$ over the cross-sectional
+plane:
+%====================================================================%
+\begin{align*}
+ I(z,\omega)&=\int_A \vb J(\vbrho, z)\cdot \vbhat{n} \, d\vbrho
+\intertext{or, in our specific geometry in which the cross section is
+everywhere normal to the $z$ direction,}
+ I(z,\omega)&=\int_A J_z(\vbrho, z) \, d\vbrho.
+\end{align*}
+%====================================================================%
+Over a time interval of length $\tau$, the mean-square current passing 
+through the plane at $z$ is 
+%====================================================================%
+\begin{align*} 
+\big\langle I^2(z)\big\rangle
+&=\frac{1}{\tau}\int_0^\tau I^2(z,t) \, dt
+\\
+&=\frac{1}{\tau}\int_0^\tau \, dt \,
+  \int \, d\omega \, 
+  \int \, d\omega^\prime \, 
+  I(z,\omega) I(z,\omega^\prime)
+  e^{-i(\omega + \omega^\prime)t}
+\end{align*}
+%====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

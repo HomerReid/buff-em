@@ -79,8 +79,16 @@ typedef struct BNEQData
    int NTNSNQ;
 
    // HMatrix structures for the BEM matrix and its subblocks
-   HMatrix **T;       // T[ns] = T-matrix block for surface #ns
-   HMatrix **U;       // U[ns*NS + nsp] = // U-matrix block for surfaces #ns, #nsp
+   HMatrix ***GBlocks;     // G[ns] = G-matrix block for surface #ns
+   HMatrix ***GradGBlocks; // T[ns] = G-matrix block for surface #ns
+
+   // SMatrix structures for sparse matrix subblocks
+   SMatrix **ImEps;
+   SMatrix **VInv;
+
+   // internally-stored buffers for linear algebra operations
+   HMatrix **X;
+   HMatrix *A, *XA;
 
    // Buffer[0..N] are pointers into an internally-allocated
    // chunk of memory used as workspace for computing trace formulas.
