@@ -616,7 +616,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
       if (dGMatrix==0)
        {
          G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, 0) );
-       {
+       }
       else 
        { cdouble dG[6];
          G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
