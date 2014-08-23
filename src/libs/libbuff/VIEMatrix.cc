@@ -596,8 +596,6 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   int NFA = OA->NumInteriorFaces;
   int NFB = OB->NumInteriorFaces;
   int SameObject = (noa==nob) ? 1 : 0;
-  cdouble dGBuffer[6];
-  cdouble *dG = dGMatrix==0 ? 0 : dGBuffer;
 
   Log("Assembling G(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
@@ -615,10 +613,14 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 
       int Row=RowOffset + nfa;
       int Col=ColOffset + nfb;
-      G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
-
-      if (dG)
-       { for(int Mu=0; Mu<6; Mu++)
+      if (dGMatrix==0)
+       {
+         G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, 0) );
+       {
+      else 
+       { cdouble dG[6];
+         G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
+         for(int Mu=0; Mu<6; Mu++)
           if (dGMatrix[Mu]) 
            dGMatrix[Mu]->SetEntry(Row, Col, dG[Mu]);
        };

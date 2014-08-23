@@ -57,8 +57,6 @@ using namespace buff;
 
 #define MAXQUANTITIES 7
 
-#define NUMSIPFT MAXQUANTITIES
-
 /****************************************************************/
 /* BNEQData ('buff-neq data') is a structure that contains all */
 /* information needed to run computations a given frequency.    */
@@ -66,59 +64,29 @@ using namespace buff;
 typedef struct BNEQData
  {
    SWGGeometry *G;
-   char *WriteCache;
-
-   int PlotFlux;
 
    GTComplex **GTCList;
    int NumTransformations;
 
    int QuantityFlags;
    int NQ;
-   int NSNQ;
-   int NTNSNQ;
+   int NONQ;
+   int NTNONQ;
 
    // HMatrix structures for the BEM matrix and its subblocks
-   HMatrix ***GBlocks;     // G[ns] = G-matrix block for surface #ns
-   HMatrix ***GradGBlocks; // T[ns] = G-matrix block for surface #ns
+   HMatrix **GBlocks;   // G[nb]     = nbth block of G-matrix
+   HMatrix ***dGBlocks; // dG[nb][i] = nbth block \partial_i G-matrix
 
    // SMatrix structures for sparse matrix subblocks
-   SMatrix **ImEps;
    SMatrix **VInv;
+   SMatrix **ImEps;
+   bool FirstTime;
 
    // internally-stored buffers for linear algebra operations
-   HMatrix **X;
-   HMatrix *A, *XA;
-
-   // Buffer[0..N] are pointers into an internally-allocated
-   // chunk of memory used as workspace for computing trace formulas.
-   void *Buffer[MAXQUANTITIES+1];
+   HMatrix *A, *Buf1, *Buf2;
 
    char *FileBase;
 
  } BNEQData;
-
-BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
-                         int WhichQuantities, int PlotFlux,
-                         char *FileBase, bool SymGDest);
-
-int GetIndex(BNEQData *BNEQD, int nt, int nss, int nsd, int nq);
-void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
-
-void EvaluateFrequencyIntegral(BNEQData *BNEQD,
-                               double OmegaMin, double OmegaMax,
-                               double *TObjects, double TEnvironment,
-                               double AbsTol, double RelTol,
-                               double *I, double *E);
-
-void EvaluateFrequencyIntegral2(BNEQData *BNEQD,
-                                double OmegaMin, double OmegaMax,
-                                double *TObjects, double TEnvironment,
-                                int Intervals, double *I, double *E);
-
-void GetSIPFTMatrices(SWGGeometry *G, int WhichObject,
-                      SWGVolume *BS, double R, int NumPoints,
-                      cdouble Omega, bool NeedMatrix[NUMSIPFT],
-                      HMatrix *MSIPFT[NUMSIPFT]);
 
 #endif

@@ -709,7 +709,7 @@ like $\delta(\omega-\omega^\prime)$ that is implicit somewhere.}
 \numeq{Rytov}
 { \big\langle J\supt{F}_i(\vb r) J^{\text{\tiny{F}}*}_j(\vb r^\prime)
   \big\rangle
-  = \frac{k}{\pi Z_0} \Theta(T) \delta(\vb r-\vb r^\prime) 
+  = \frac{2k}{\pi Z_0} \Theta(T) \delta(\vb r-\vb r^\prime) 
     \text{Im }\epsilon_{ij}(\vb r).
 }
 %====================================================================%
@@ -717,7 +717,7 @@ Inserting this into (\ref{jjd1}), we find
 %====================================================================%
 $$
  \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle_{\alpha\beta}
- = \frac{k}{\pi Z_0}
+ = \frac{2k}{\pi Z_0}
      \int \Theta\big[T(\vb r)\big]
           b_{\alpha i}(\vb r) 
           \Big[\text{Im }\epsilon_{ij}(\vb r) \Big]
@@ -732,7 +732,7 @@ full matrix takes the form
 \numeq{jjdMatrix}
 {
  \Big\langle \vb j\supt{F} \vb j\fd \Big\rangle
- =\frac{k}{\pi Z_0}
+ =\frac{2k}{\pi Z_0}
   \left(\begin{array}{cccc}
   \Theta(T_1) \vbIEM_1 & 0 & \cdots & 0 \\ 
   0 & \Theta(T_2) \vbIEM_2 & \cdots & 0 \\ 
@@ -805,7 +805,7 @@ torque expressions do contain equilibrium contributions.)
 %====================================================================%
 \begin{align*}
  \Phi\sups{energy}_{s\to d}(\omega)
-&=-\frac{k^2}{2\pi}\text{Im Tr }
+&=-\frac{k^2}{\pi}\text{Im Tr }
    \left\{ 
            \Big[ \vb G (\vb 1 - \vb W \vb G)\Big]_{ds}
            \vbSigma_s
@@ -813,7 +813,7 @@ torque expressions do contain equilibrium contributions.)
    \right\}
 \\
  \Phi\sups{lin mom}_{s\to d}(\omega)
-&= \frac{k^2}{2\pi \omega}\text{Re Tr }
+&= \frac{k^2}{\pi \omega}\text{Re Tr }
    \left\{ 
            \Big[ \big(\partial_i \vb G\big) (\vb 1 - \vb W \vb G)\Big]_{ds}
            \vbSigma_s
@@ -821,7 +821,7 @@ torque expressions do contain equilibrium contributions.)
    \right\}
 \\
  \Phi\sups{ang mom}_{s\to d}(\omega)
-&= \frac{k^2}{2\pi \omega}\text{Re Tr }
+&= \frac{k^2}{\pi \omega}\text{Re Tr }
    \left\{ 
            \Big[ \big(\partial_\theta \vb G\big) (\vb 1 - \vb W \vb G)\Big]_{ds}
            \vbSigma_s
@@ -853,31 +853,31 @@ and
 %====================================================================%
 $$ \vb X=\{\vb G, \partial_i \vb G, \partial_\theta \vb G\}.$$
 %====================================================================%
-For example, suppose in a four-object geometry we want the 
-force on object 2 due to sources in object 3.
-%====================================================================%
-$$ \left(\begin{array}{cccc}
-   \vb A^\dagger_{11} & \vb A^\dagger_{12} & \vb A^\dagger_{13} & \vb A^\dagger_{14} \\
-   \vb A^\dagger_{21} & \vb A^\dagger_{22} & \vb A^\dagger_{23} & \vb A^\dagger_{24} \\
-   \vb A^\dagger_{31} & \vb A^\dagger_{32} & \vb A^\dagger_{33} & \vb A^\dagger_{34} \\
-   \vb A^\dagger_{41} & \vb A^\dagger_{42} & \vb A^\dagger_{43} & \vb A^\dagger_{44}
-   \end{array}\right)
-%--------------------------------------------------------------------%
-   \left(\begin{array}{cccc}
-   \vb X_{11} & \vb X_{12} & \vb X_{13} & \vb X_{14} \\
-   \red{\vb X_{21}} & \red{\vb X_{22}} & \red{\vb X_{23}} & \red{\vb X_{24}} \\
-   \vb X_{31} & \vb X_{32} & \vb X_{33} & \vb X_{34} \\
-   \vb X_{41} & \vb X_{42} & \vb X_{43} & \vb X_{44}
-   \end{array}\right)
-%--------------------------------------------------------------------%
-   \left(\begin{array}{cccc}
-   \vb A_{11} & \vb A_{12} & \red{\vb A_{13}} & \vb A_{14} \\
-   \vb A_{21} & \vb A_{22} & \red{\vb A_{23}} & \vb A_{24} \\
-   \vb A_{31} & \vb A_{32} & \red{\vb A_{33}} & \vb A_{34} \\
-   \vb A_{41} & \vb A_{42} & \red{\vb A_{43}} & \vb A_{44}
-   \end{array}\right)
-$$
-%====================================================================%
+%For example, suppose in a four-object geometry we want the 
+%force on object 2 due to sources in object 3.
+%%====================================================================%
+%$$ \left(\begin{array}{cccc}
+%   \vb A^\dagger_{11} & \vb A^\dagger_{12} & \vb A^\dagger_{13} & \vb A^\dagger_{14} \\
+%   \vb A^\dagger_{21} & \vb A^\dagger_{22} & \vb A^\dagger_{23} & \vb A^\dagger_{24} \\
+%   \vb A^\dagger_{31} & \vb A^\dagger_{32} & \vb A^\dagger_{33} & \vb A^\dagger_{34} \\
+%   \vb A^\dagger_{41} & \vb A^\dagger_{42} & \vb A^\dagger_{43} & \vb A^\dagger_{44}
+%   \end{array}\right)
+%%--------------------------------------------------------------------%
+%   \left(\begin{array}{cccc}
+%   \vb X_{11} & \vb X_{12} & \vb X_{13} & \vb X_{14} \\
+%   \red{\vb X_{21}} & \red{\vb X_{22}} & \red{\vb X_{23}} & \red{\vb X_{24}} \\
+%   \vb X_{31} & \vb X_{32} & \vb X_{33} & \vb X_{34} \\
+%   \vb X_{41} & \vb X_{42} & \vb X_{43} & \vb X_{44}
+%   \end{array}\right)
+%%--------------------------------------------------------------------%
+%   \left(\begin{array}{cccc}
+%   \vb A_{11} & \vb A_{12} & \red{\vb A_{13}} & \vb A_{14} \\
+%   \vb A_{21} & \vb A_{22} & \red{\vb A_{23}} & \vb A_{24} \\
+%   \vb A_{31} & \vb A_{32} & \red{\vb A_{33}} & \vb A_{34} \\
+%   \vb A_{41} & \vb A_{42} & \red{\vb A_{43}} & \vb A_{44}
+%   \end{array}\right)
+%$$
+%%====================================================================%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1835,7 +1835,7 @@ where the symbol $\partial_\theta \vb E$ denotes the derivative
 of $\vb E(\vb r)$ with respect to an infinitesimal rotation of the
 point $\vb r$ about the $i$th coordinate axis with origin $\vb r_0.$
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
@@ -1857,29 +1857,33 @@ other normalization effluvia.)
 In elementary circuit theory we are taught that, at temperature
 $T$, a resistor exhibits a mean-square power of 
 %====================================================================%
-$$ \big\langle P \big\rangle = 4 kT \Delta\Omega $$
+$$ \big\langle P \big\rangle = 4 kT \Delta f$$
 %====================================================================%
-(where $\Delta\Omega$ is the effective measurement bandwidth,
+(where $\Delta f$ is the effective measurement bandwidth in Hertz,
 usually determined by low-pass and high-pass filters in the circuit).
 If the resistance of the resistor is $R$, then the mean-square voltage 
 across its terminals and the mean-square current flowing through it are
 %====================================================================%
 \begin{align}
  \big \langle V^2 \big\rangle 
- &= \big\langle P \big \rangle R = 4k T R\, \Delta\Omega, \qquad 
+ &= \big\langle P \big \rangle R = 4k T R\, \Delta f, \qquad 
 \nn
  \big \langle I^2 \big\rangle 
  &= \frac{1}{R} \big\langle P \big \rangle 
-  = \frac{4k T}{R} \Delta\Omega
+  = \frac{4k T}{R} \Delta f
 \label{MeanSquareCurrent}
 \end{align}
 %====================================================================%
 We would now like to understand equation (\ref{MeanSquareCurrent})
 on the basis of the Rytov correlation function.
 
-\subsection*{Macroscopic noise from microscopic fluctuations}
+%=================================================
+%=================================================
+%=================================================
+\subsection*{Macroscopic current noise from microscopic current-density 
+             fluctuations}
 
-Thus, consider a resistor consisting of a homogeneous cylinder of
+To this end, consider a resistor consisting of a homogeneous cylinder of
 length $L$ and cross-sectional area $A$ with relative dielectric
 function
 %====================================================================%
@@ -1918,7 +1922,16 @@ $\vb x=(\vbrho, z)$.
 The instantaneous current density at a point in the cylinder
 may be expressed as a Fourier synthesis:
 %====================================================================%
-$$ \vb J(\vb x, t) = \int \vb J(\vb x,\omega) e^{-i\omega t} \, d\omega. $$
+\begin{align}
+ \vb J(\vb x, t) 
+&= \int \vb J(\vb x,\omega) e^{-i\omega t} \, d\omega
+\label{FourierSynthesis}
+\intertext{where $\vb J(\vb x,\omega)$ is the Fourier transform of 
+           the instantaneous current density $\vb J(\vb x,t)$:}
+ \vb J(\vb x, \omega) 
+&= \frac{1}{2\pi} \int \vb J(\vb x,t) e^{+i\omega t} \, dt.
+\label{FourierAnalysis}
+\end{align}
 %====================================================================%
 The instantaneous \textit{current} passing through a cross-sectional
 plane at height $z$ is 
@@ -1929,26 +1942,189 @@ where $I(z,\omega)$ is given by integrating $\vb J$ over the cross-sectional
 plane:
 %====================================================================%
 \begin{align*}
- I(z,\omega)&=\int_A \vb J(\vbrho, z)\cdot \vbhat{n} \, d\vbrho
+ I(z,\omega)&=\int_A \vb J(\vbrho, z,\omega)\cdot \vbhat{n} \, d\vbrho
 \intertext{or, in our specific geometry in which the cross section is
 everywhere normal to the $z$ direction,}
- I(z,\omega)&=\int_A J_z(\vbrho, z) \, d\vbrho.
+ I(z,\omega)&=\int_A J_z(\vbrho, z,\omega) \, d\vbrho.
 \end{align*}
 %====================================================================%
-Over a time interval of length $\tau$, the mean-square current passing 
-through the plane at $z$ is 
+Over a time interval of length $\tau$, the average of the product
+of $I(t,z)$ and $I(t,z^\prime)$ is
 %====================================================================%
-\begin{align*} 
-\big\langle I^2(z)\big\rangle
-&=\frac{1}{\tau}\int_0^\tau I^2(z,t) \, dt
-\\
+\begin{align} 
+\big\langle I(z)I(z^\prime)\big\rangle
+&=\frac{1}{\tau}\int_0^\tau I(z,t) I(z^\prime, t) \, dt
+\nn
 &=\frac{1}{\tau}\int_0^\tau \, dt \,
   \int \, d\omega \, 
   \int \, d\omega^\prime \, 
   I(z,\omega) I(z,\omega^\prime)
   e^{-i(\omega + \omega^\prime)t}
-\end{align*}
+\nn
+&=\frac{1}{\tau}\int_0^\tau \, dt \,
+  \int \, d\omega \,
+  \int \, d\omega^\prime \,
+  \int_A \, d\vbrho \,
+  \int_A \, d\vbrho^\prime \,
+  J_z(\vbrho,z,\omega) J_z(\vbrho^\prime,z^\prime, \omega^\prime)
+  e^{-i(\omega + \omega^\prime)t}.
+\label{IZZP}
+\end{align}
 %====================================================================%
+To proceed we need to address a question about which we haven't said
+anything thus far---namely, where the current \textit{comes from}. 
+In a deterministic circuit problem
+we would have some fixed, known, externally applied voltage $V$
+across the resistor, which would induce a current equal to $I=V/R$.
+Here, on the other hand, there is no external voltage, and instead
+the current arises from thermal and quantum-mechanical 
+\textit{fluctuations} in the microscopic current density.
+Although we can't track the instantaneous progress of these
+fluctuations in time---and thus, for example, we can't write
+down an expression for the instantaneous current density 
+$\vb J(\vb x, t)$---we can make precise statements about
+certain statistical \textit{averages} over these fluctuating
+quantities. One particularly obvious statement is that the 
+time-average value of any Cartesian component of $\vb J$ vanishes, 
+%====================================================================%
+$$\Big\langle J_i(\vb x,t)\Big\rangle=0 \qquad \text{for any } i.$$
+%====================================================================%
+A less obvious but even more important statement is that
+the fluctuation-dissipation theorem allows us to make a
+very definite prediction about the time-average value of the
+\textit{product} of two cartesian components of $\vb J$. 
+This equation---sometimes known as the \textit{Rytov correlation
+function}---is easiest to write in the frequency domain, where
+it takes the form
+%====================================================================%
+\begin{align}
+ \Big\langle  J_i(\vb x, \omega) J_j(\vb x^\prime, \omega^\prime) \Big\rangle
+&= \delta(\omega+\omega^\prime)
+   \Big\langle J_i(\vb x), J_j(\vb x^\prime) \Big\rangle_\omega
+\label{Rytov1}
+\\[5pt]
+ \Big\langle  J_i(\vb x) J_k(\vb x^\prime) \Big\rangle_{\omega}
+&= \frac{2 \omega \epsilon_0}{\pi} \Theta(\omega, T) \delta(\vb r-\vb r^\prime)
+   \text{Im }\epsilon_{ij}(\vb r, \omega)
+\label{Rytov2}
+\end{align}
+%====================================================================%
+Equation (\ref{Rytov1}) here is essentially the same\footnote{
+My formula differs from that of Landau and Lifshitz (LL) by a 
+factor of $2\pi$, which arises because of our different conventions
+for the Fourier analysis and synthesis of time-domain functions:
+I like to put a factor of $\frac{1}{2\pi}$ in Fourier-analysis 
+equations like (\ref{FourierAnalysis}), and to omit this factor 
+in Fourier-synthesis equations like (\ref{FourierSynthesis}), while
+LL make the opposite choice.} as equation 
+(122.4) in Landau and Lifshitz (LL), \textit{Statistical Physics Volume 1}.
+In equation (\ref{Rytov2}), $\Theta(\omega, T)$ is the Bose-Einstein 
+statistical factor at the local temperature near $\vb r$ 
+(about which we will have more to say shortly)
+and $\epsilon_{ij}(\vb r, \omega)$ is the
+$(i,j)$ component of the relative permittivity tensor of the material
+at point $\vb r$ and frequency $\omega$.
+Inserting (\ref{Rytov1}) into (\ref{IZZP}) and using
+the $\delta$ functions to perform the $\vbrho^\prime$ and $\omega^\prime$
+integrations, we have 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{align*}
+&\hspace{-0.1in}
+\big\langle I(z)I(z^\prime)\big\rangle\\
+&=\frac{1}{\tau}\int_0^\tau \, dt \,
+  \int \, d\omega \,
+  \int \, d\omega^\prime \,
+  \int_A \, d\vbrho \,
+  \int_A \, d\vbrho^\prime \,
+  \Big\langle
+  J_z(\vbrho,z,\omega) J_z(\vbrho^\prime,z^\prime, \omega^\prime)
+  \Big\rangle
+  e^{-i(\omega + \omega^\prime)t}
+\\
+&=\frac{2\epsilon_0 }{\pi \tau}\delta(z-z^\prime)
+  \int_0^\tau \, dt \,
+  \int \, d\omega \, \omega \, \Theta(\omega, T)
+  \int_A \, d\vbrho \,
+  \text{Im }\epsilon_{zz}(\vbrho, z, \omega)
+\intertext{
+In the present case [cf. equation (\ref{EpsilonSigma})] we have
+$\text{Im }\epsilon_{ij}(\vb r,\omega)=\delta_{ij} \frac{\sigma}{\epsilon_0 \omega}$
+(independent of $\vb r$), whereupon we find}
+&=\frac{2\sigma }{\pi}\cdot \delta(z-z^\prime) 
+  \cdot \underbrace{\frac{1}{\tau} \int_0^\tau \, dt \, \int\, d\omega \,
+                    \Theta(\omega, T) 
+                   }_{kT \Delta \omega}
+  \underbrace{\int_A \, d\vbrho \,}_{A}
+\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Here I used the high-temperature limit $\Theta(\omega, T)\approx kT$ 
+(see below), Finally, averaging over the length of the resistor yields
+\begin{align*}
+ \big\langle I^2(z) \big\rangle
+&= \frac{1}{L} \int_0^L \big\langle I(z)I(z^\prime)\big\rangle \, dz^\prime 
+\\
+&=\frac{2kT\Delta \omega}{\pi} \cdot \underbrace{\frac{A\sigma}{L}}_{1/R}
+\\
+&= \frac{4kT}{R}\Delta f
+\end{align*}
+where I used $\Delta \omega=2\pi\Delta f.$ This is equation 
+(\ref{MeanSquareCurrent}).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%=================================================
+%=================================================
+%=================================================
+\subsection*{Limiting behavior of $\Theta(\omega, T)$}
+
+The Bose-Einstein statistical factor $\Theta(\omega , T)$, 
+which describes the average energy contained in an 
+electromagnetic\footnote{Or otherwise bosonic.} 
+mode of frequency $\omega$, is 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{ThetaDef}
+{
+ \Theta(\omega, t)
+ =\hbar \omega
+        \left[ \frac{1}{e^{\frac{\hbar\omega}{kT}} - 1} + \frac{1}{2}\right]
+=\frac{\hbar \omega}{2} \coth\pf{\hbar \omega}{2k T}
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+In the high- and low-temperature limits (equivalently, the low- and 
+high-frequency) limits, the statistical factor of equation (\ref{ThetaDef}) 
+becomes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{ThetaLimits}
+{
+  \Theta(\omega, t)\xrightarrow{\frac{\hbar\omega}{kT}\to 0} kT, 
+  \qquad
+  \Theta(\omega, t)\xrightarrow{\frac{\hbar\omega}{kT}\to \infty} \frac{\hbar \omega}{2}.
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The first case here corresponds to classical equipartition of energy: 
+we have roughly $kT$ worth of energy in each mode, independent of 
+frequency. The second case corresponds to quantum-mechanical zero-point
+energy; we have some energy in each mode even at zero temperature.
+
+To estimate the crossover between the high- and low-temperature
+regimes, recall that room temperature ($T$=300 K) corresponds to 
+an energy of $kT \approx $ 26 meV (milli-electron-volts), while 
+$\hbar$ has the numerical value
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$ \hbar 
+   \approx 7\cdot 10^{-16} \text{eV}\cdot \text{s}
+  = 7\cdot{10^{-16}} \frac{\text{eV}}{\text{rad/s}}.
+$$
+Thus, for a circuit at frequency $f=1$ GHz at a temperature of $T$=300 K,
+we have 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$ kT = 0.026 \text{ eV } \quad \ll \quad \hbar\omega 
+      = \left( 7\cdot 10^{-16} \frac{\text{eV}}{\text{rad/s}} \right)
+        \left( 2\pi \cdot 10^9 \text{rad/s} \right)
+      = 4 \cdot 10^{-6}\text{ eV}
+$$
+and thus, for ordinary circuits at ordinary temperatures, we are 
+well in the high-temperature (low-frequency) regime in which
+$\Theta(\omega,T)\approx kT$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
