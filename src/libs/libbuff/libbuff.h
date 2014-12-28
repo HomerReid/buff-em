@@ -118,6 +118,7 @@ class SWGVolume
    /*-------------------------------------------------------------------*/
    void DrawBF(int nf, FILE *f);
    void DrawFace(int nf, FILE *f);
+   void DrawTet(int nt, FILE *f);
 
    /*-------------------------------------------------------------------*/
    /*- apply geometrical transformations -------------------------------*/

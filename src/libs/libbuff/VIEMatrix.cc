@@ -256,6 +256,10 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
                  double *xB, double *bB, double DivbB,
                  void *UserData, double *I)
 {
+  GVIData *Data        = (GVIData *)UserData;
+  bool NeedDerivatives = Data->NeedDerivatives;
+  cdouble k            = Data->k;
+
   double R[3]; 
   R[0] = (xA[0] - xB[0]);
   R[1] = (xA[1] - xB[1]);
@@ -263,13 +267,12 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 
   double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2]);
   if ( fabs(r) < 1.0e-12 ) 
-   { I[0]=I[1]=0.0;
+   { if (Data->NeedDerivatives)
+      memset(I,0,14*sizeof(double)); 
+     else
+      I[0]=I[1]=0.0;
      return;
    };
-
-  GVIData *Data        = (GVIData *)UserData;
-  cdouble k            = Data->k;
-  bool NeedDerivatives = Data->NeedDerivatives;
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
@@ -287,22 +290,18 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
      zI[2] = R[1]*PolyFac*Psi;
      zI[3] = R[2]*PolyFac*Psi;
 
-     // TVP is the triple vector product in the torque calculation,
-     //  TVP_i = [(x_\alpha x_0) \cross r_i
-     // VecSub(xA, x0, xAmx0);
-     // VecCross(xAmx0, R, TVP);
-     double xAmx0[3], TVP[3];
+     double xAmx0[3];
      double *x0 = Data->x0;
      xAmx0[0] = xA[0] - x0[0];
      xAmx0[1] = xA[1] - x0[1];
      xAmx0[2] = xA[2] - x0[2];
-     TVP[0] = xAmx0[1]*R[2] - xAmx0[2]*R[1];
-     TVP[1] = xAmx0[2]*R[0] - xAmx0[0]*R[2];
-     TVP[2] = xAmx0[0]*R[1] - xAmx0[1]*R[0];
+     for(int Mu=0; Mu<3; Mu++)
+      { int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
+        zI[4 + Mu] 
+         = (xAmx0[MP1]*bB[MP2]-xAmx0[MP2]*bB[MP1])*Phi*DivbA/3.0
+          +(xAmx0[MP1]* R[MP2]-xAmx0[MP2]* R[MP1])*PolyFac*Psi;
+      };
 
-     zI[4] = TVP[0]*PolyFac*Psi;
-     zI[5] = TVP[1]*PolyFac*Psi;
-     zI[6] = TVP[2]*PolyFac*Psi;
    };
 
 }
@@ -338,7 +337,7 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
    };
 
   cdouble Result[7], Error[7];
-  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun, 
+  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun,
           (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
 
   if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));

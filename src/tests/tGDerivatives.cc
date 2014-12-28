@@ -72,28 +72,43 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 {
   GVIData *Data = (GVIData *)UserData;
 
-  cdouble k   = Data->k;
+  cdouble k  = Data->k;
   double Eta = Data->Eta;
 
-  double R[3]; 
+  double R[3];
   R[0] = (xA[0] - xB[0]);
   R[1] = (xA[1] - xB[1]);
   R[2] = (xA[2] - xB[2]);
 
+  double XmX0[3];
+  XmX0[0] = xA[0] - 0.0;
+  XmX0[1] = xA[1] - 0.0;
+  XmX0[2] = xA[2] - 0.0;
+
   cdouble GMuNu[3][3], GMuNuRho[3][3][3];
   CalcGC(R, k, 1.0, 1.0, GMuNu, 0, GMuNuRho, 0);
+
+  cdouble GMuNuTheta[3][3][3];
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    for(int Rho=0; Rho<3; Rho++)
+     {
+       int RP1=(Rho+1)%3, RP2=(Rho+2)%3;
+       GMuNuTheta[Mu][Nu][Rho]
+        = (XmX0[RP1]*GMuNuTheta[Mu][Nu][RP2] - XmX0[RP2]*GMuNuTheta[Mu][Nu][RP1]);
+     };
 
   cdouble *zF=(cdouble *)I;
   memset(zF, 0, 7*sizeof(cdouble));
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    { zF[0] += bA[Mu] * GMuNu[Mu][Nu]       * bB[Nu];
-      zF[1] += bA[Mu] * GMuNuRho[Mu][Nu][0] * bB[Nu];
-      zF[2] += bA[Mu] * GMuNuRho[Mu][Nu][1] * bB[Nu];
-      zF[3] += bA[Mu] * GMuNuRho[Mu][Nu][2] * bB[Nu];
-      zF[4] += 0.0;
-      zF[5] += 0.0;
-      zF[6] += 0.0;
+    { zF[0] += bA[Mu] * GMuNu[Mu][Nu]         * bB[Nu];
+      zF[1] += bA[Mu] * GMuNuRho[Mu][Nu][0]   * bB[Nu];
+      zF[2] += bA[Mu] * GMuNuRho[Mu][Nu][1]   * bB[Nu];
+      zF[3] += bA[Mu] * GMuNuRho[Mu][Nu][2]   * bB[Nu];
+      zF[4] += bA[Mu] * GMuNuTheta[Mu][Nu][0] * bB[Nu];
+      zF[5] += bA[Mu] * GMuNuTheta[Mu][Nu][1] * bB[Nu];
+      zF[6] += bA[Mu] * GMuNuTheta[Mu][Nu][2] * bB[Nu];
     };
 
 }
@@ -145,7 +160,7 @@ void GetFDDerivatives(SWGVolume *OACopy, int nfa, SWGVolume *OB, int nfb,
 
 /***************************************************************/
 /* main function   *********************************************/
-/***************************************************************/  
+/***************************************************************/
 int main(int argc, char *argv[])
 {
   /***************************************************************/

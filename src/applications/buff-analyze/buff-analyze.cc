@@ -37,6 +37,36 @@ using namespace buff;
 #define MAXSTR 1000
 
 /***************************************************************/
+/* quality factor for tetrahedron, defined as                  */
+/*  volume / ( (avg edge length) * (total surface area) )      */
+/* normalized by the quality factor for an ideal tetrahedron   */
+/***************************************************************/
+double GetTetrahedronQualityFactor(SWGVolume *O, int nt)
+{
+  SWGTet *T = O->Tets[nt];
+  
+  double TotalArea =  O->Faces[T->FI[0]]->Area
+                     +O->Faces[T->FI[1]]->Area
+                     +O->Faces[T->FI[2]]->Area
+                     +O->Faces[T->FI[3]]->Area;
+
+  double *V1 = O->Vertices + 3*T->VI[0];
+  double *V2 = O->Vertices + 3*T->VI[1];
+  double *V3 = O->Vertices + 3*T->VI[2];
+  double *V4 = O->Vertices + 3*T->VI[3];
+  double AvgLength =
+   ( VecDistance(V2,V1) + VecDistance(V3,V1) + VecDistance(V4,V1)
+    +VecDistance(V3,V2) + VecDistance(V4,V2) + VecDistance(V4,V3)
+   ) / 6.0;
+
+  // quality factor for equilateral tetrahedron
+  #define IDEAL_QUALITY_FACTOR 1.0/(6.0*sqrt(6.0))
+
+  return T->Volume / (TotalArea*AvgLength*IDEAL_QUALITY_FACTOR);
+
+}
+
+/***************************************************************/
 /***************************************************************/
 /***************************************************************/
 void AnalyzeVolume(SWGVolume *V)
@@ -60,8 +90,24 @@ void AnalyzeVolume(SWGVolume *V)
   for(int nf=V->NumInteriorFaces; nf<V->NumTotalFaces; nf++)
    SurfaceArea+=V->Faces[nf]->Area;
 
-  printf(" Volume:       %e \n",Volume);
-  printf(" Surface area: %e \n",SurfaceArea);
+  printf(" Volume:        %e \n",Volume);
+  printf(" Surface area:  %e \n",SurfaceArea);
+  printf(" \n");
+
+  double MinQF=1.0e9, MaxQF=-1.0e9, AvgQF=0.0;
+  FILE *f=vfopen("/tmp/%s.TQFs","w",GetFileBase(V->MeshFileName));
+  for(int nt=0; nt<V->NumTets; nt++)
+   { double QF = GetTetrahedronQualityFactor(V,nt);
+     fprintf(f,"Tet %5i: QF = %e \n",nt,QF);
+     MinQF=fmin(MinQF, QF);
+     MaxQF=fmax(MaxQF, QF);
+     AvgQF+=QF;
+   };
+  fclose(f);
+  AvgQF/=((double)(V->NumTets));
+
+  printf(" Min/Max/Avg Quality factor: %e / %e / %e \n",
+          MinQF, MaxQF, AvgQF);
   printf("\n");
 }
 
@@ -79,6 +125,7 @@ int main(int argc, char *argv[])
   bool WriteGMSHFiles=false;
   bool PlotPermittivity=false;
   int PlotBF[10], nPlotBF;
+  int PlotTet[10], nPlotTet;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,          0, ".buffgeo file"},
@@ -88,6 +135,7 @@ int main(int argc, char *argv[])
      {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
      {"PlotPermittivity",   PA_BOOL,   0, 1, (void *)&PlotPermittivity, 0, "color tetrahedra by average local permittivity"},
      {"PlotBF",             PA_INT,    1, 10, (void *)PlotBF,    &nPlotBF, "draw an individual basis function"},
+     {"PlotTet",            PA_INT,    1, 10, (void *)PlotTet,   &nPlotTet, "draw an individual tetrahedron"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -127,6 +175,18 @@ int main(int argc, char *argv[])
       G->Objects[0]->DrawBF(PlotBF[n], f);
      fclose(f);
      printf("Individual BF visualizations written to file %s.BFs.pp",
+             GetFileBase(GeoFile));
+   };
+
+  /***************************************************************/
+  /* plot individual tetrahedra if that was requested            */
+  /***************************************************************/
+  if (nPlotTet)
+   { FILE *f=vfopen("%s.Tets.pp","w",GetFileBase(GeoFile));
+     for(int n=0; n<nPlotTet; n++)
+      G->Objects[0]->DrawTet(PlotTet[n], f);
+     fclose(f);
+     printf("Individual tetrahedron visualizations written to file %s.BFs.pp",
              GetFileBase(GeoFile));
    };
 
