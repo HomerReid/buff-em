@@ -317,8 +317,8 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 /***************************************************************/
 cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega, int Order=0,
-                             cdouble *dG=0)
+                             cdouble Omega, cdouble *dG=0,
+                             int Order=0, int MaxEvals=10000)
 {
   GVIData MyData, *Data = &MyData;
   Data->k               = Omega;
@@ -338,7 +338,7 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
 
   cdouble Result[7], Error[7];
   BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun,
-          (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
+          (double *)Result, (double *)Error, Order, MaxEvals, 1.0e-8);
 
   if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
 
@@ -511,8 +511,8 @@ void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
 /***************************************************************/
 cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
-                             cdouble Omega, int Order=0,
-                             cdouble *dG=0)
+                             cdouble Omega, cdouble *dG=0,
+                             int Order=0, int MaxEvals=10000)
 {
 
   GSIData MyData, *Data = &MyData;
@@ -548,7 +548,8 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
-                      (double *)Result, (double *)Error, Order, 10000, 1.0e-8);
+                      (double *)Result, (double *)Error, 
+                      Order, MaxEvals, 1.0e-8);
           RetVal += Result[0];
 
           if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
@@ -572,11 +573,11 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
   if ( ncv>=2 )
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 20, dG);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, dG, 20);
   else if (ncv==1)
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 9,  dG);
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, dG, 9);
   else
-   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 16, dG);
+   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, dG, 16);
   
 }
 

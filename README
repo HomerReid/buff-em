@@ -1,0 +1,15 @@
+BUFF-EM is a free open-source software suite that implements
+the volume-integral-equation (VIE) formulation of computational
+electromagnetism using SWG basis functions.
+
+BUFF-EM is closely related to SCUFF-EM, and it depends on many
+of the support libraries distributed with that package.
+
+BUFF-EM stands for 
+
+ BUlk Field Formulation of ElectroMagnetism
+
+For documentation and further information on BUFF-EM, and to 
+download binary and source packages, visit the BUFF-EM homepage:
+
+http://www.homerreid.com/buff-em
