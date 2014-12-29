@@ -32,6 +32,13 @@
 #include "libscuff.h"
 #include "libbuff.h"
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+#ifdef USE_OPENMP
+#  include <omp.h>
+#endif
+
 namespace scuff{
 
 void CalcGC(double R[3], cdouble Omega,
@@ -551,6 +558,14 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                       (double *)Result, (double *)Error, 
                       Order, MaxEvals, 1.0e-8);
           RetVal += Result[0];
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+FILE *f=fopen("/tmp/LogFile.dat","a");
+fprintf(f,"%4i %i %i %+i %4i %i %i %+i %+.8e %+.8e\n",
+ntA,nfP,nfBFA,ASign,
+ntB,nfQ,nfBFB,BSign,real(Result[0]),imag(Result[0]));
+fclose(f);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
           if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };

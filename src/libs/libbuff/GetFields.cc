@@ -18,7 +18,7 @@
  */
 
 /*
- * GetFields.cc  -- libscuff class methods for computing scattered
+ * GetFields.cc  -- libbuff class methods for computing scattered
  *               -- electric and magnetic fields 
  *
  * homer reid    -- 3/2007  -- 11/2009
@@ -37,11 +37,15 @@
 #include "libscuff.h"
 #include "libbuff.h"
 
-#ifdef USE_PTHREAD
-#  include <pthread.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+#ifdef USE_OPENMP
+#  include <omp.h>
 #endif
 
 #define MAXFUNC 50
+#define II cdouble(0,1)
 
 using namespace scuff;
 
@@ -56,13 +60,13 @@ void CalcGC(double R1[3], double R2[3],
 
 namespace buff {
 
-void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3);
-
-#define II cdouble(0,1)
-
 /***************************************************************/
 /* get 1BF fields using surface-integral method ****************/
 /***************************************************************/
+#if 0
+
+void ExpRel23(cdouble x, cdouble *ExpRel2, cdouble *ExpRel3);
+
 typedef struct G1BFData
  {
    cdouble k;
@@ -72,7 +76,7 @@ typedef struct G1BFData
 void G1BFSIIntegrand(double *XSource, double *b, double Divb, double *nHat,
                      void *UserData, double *I)
 { 
-  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   G1BFData *Data = (G1BFData *)UserData;
@@ -157,6 +161,7 @@ void Get1BFFields_SI(SWGVolume *O, int nf, cdouble k, double X[3],
     };
 
 }
+#endif
 
 /***************************************************************/
 /* get 1BF fields using volume-integral method *****************/
@@ -208,6 +213,7 @@ void Get1BFFields_VI(SWGVolume *O, int nf, cdouble Omega, double X[3],
 /***************************************************************/
 /* get 1BF fields using dipole / quadrupole approximation      */
 /***************************************************************/
+#if 0
 void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],
                      cdouble EH[6], int NumTerms=1)
 {
@@ -253,6 +259,7 @@ void Get1BFFields_DA(SWGVolume *O, int nf, cdouble Omega, double X[3],
   EH[5] *= HPreFac;
 
 }
+#endif
 
 /***************************************************************/
 /* get the E and H fields due to a single SWG basis function   */
@@ -265,10 +272,12 @@ void Get1BFFields(SWGVolume *O, int nf, cdouble Omega, double X[3],
   double rRel = VecDistance(X, F->Centroid) / F->Radius;
   if (rRel>10.0)
    Get1BFFields_VI(O, nf, Omega, X, EH, 4);
-  else if (rRel>1.0)
+  else //if (rRel>1.0)
    Get1BFFields_VI(O, nf, Omega, X, EH, 16);
+#if 0
   else
    Get1BFFields_SI(O, nf, Omega, X, EH, 20);
+#endif
 }
 
 /***************************************************************/

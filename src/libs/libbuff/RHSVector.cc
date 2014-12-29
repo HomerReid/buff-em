@@ -30,6 +30,13 @@
 
 #include "libbuff.h"
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+#ifdef USE_OPENMP
+#  include <omp.h>
+#endif
+
 using namespace scuff;
 
 namespace buff {
