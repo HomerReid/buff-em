@@ -1,0 +1,59 @@
+P[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_]:=1;
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+InnerIntegral[u1_, u2_, u3_]:=Module[
+(**)
+ {Xi1Min, Xi1Max, Xi2Min, Xi2Max, Xi3Min, Xi3Max},
+(**)
+ If[ u1>=0.0, {Xi1Min=0; Xi1Max=1-u1}, {Xi1Min=-u1; Xi1Max=1}];
+ If[ u2>=0.0, {Xi2Min=0; Xi2Max=1-u2}, {Xi2Min=-u2; Xi2Max=1}];
+ If[ u3>=0.0, {Xi3Min=0; Xi3Max=1-u3}, {Xi3Min=-u3; Xi3Max=1}];
+
+ Integrate[ Integrate[ Integrate[ P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi
+3], { Xi1, Xi1Min, Xi1Max}], {Xi12, Xi2Min, Xi2Max}], {Xi3, Xi3Min, Xi3Max}] 
+
+];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+OuterIntegrand[u1_, u2_, u3_]:=			\
+    InnerIntegral[  u1,  u2,  u3]		\
+  + InnerIntegral[  u1,  u2, -u3]		\
+  + InnerIntegral[  u1, -u2,  u3]		\
+  + InnerIntegral[  u1, -u2, -u3]		\
+  + InnerIntegral[ -u1,  u2,  u3]		\
+  + InnerIntegral[ -u1,  u2, -u3]		\
+  + InnerIntegral[ -u1, -u2,  u3]		\
+  + InnerIntegral[ -u1, -u2, -u3];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+TDIntegral:= 				\
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u3, 0, u2}], {u2, 0, u1}], {u1, 0, 1}]	\
++
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u3, 0, u1}], {u1, 0, u2}], {u2, 0, 1}]	\
++
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u2, 0, u1}], {u1, 0, u3}], {u3, 0, 1}]	\
++
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u2, 0, u3}], {u3, 0, u1}], {u1, 0, 1}]	\
++
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u1, 0, u2}], {u2, 0, u3}], {u3, 0, 1}]	\
++
+ Integrate[Integrate[Integrate[		\
+  OuterIntegrand[u1, u2, u3], {u1, 0, u3}], {u3, 0, u2}], {u2, 0, 1}];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+BFIntegral=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_],
+ {Xi3,0,Xi2}],{Xi2,0,Xi1}],{Xi1,0,1}],{Eta3,0,Eta2}],{Eta2,0,Eta1}],{Eta1,0,1}];

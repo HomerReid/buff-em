@@ -1,0 +1,140 @@
+\documentclass[letterpaper]{article}
+
+\input{physcmds}
+\usepackage{cite}
+
+\graphicspath{{figures/}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Special commands for this document -----------------------
+%------------------------------------------------------------
+%------------------------------------------------------------
+\newcommand{\vbXi}{\boldsymbol{\xi}}
+\newcommand{\vbEta}{\boldsymbol{\eta}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Document header  -----------------------------------------
+%------------------------------------------------------------
+%------------------------------------------------------------
+\title{Taylor-Duffy Method for Tetrahedra}
+\author {Homer Reid}
+\date {December 29, 2014}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Start of actual document
+%------------------------------------------------------------
+%------------------------------------------------------------
+
+\begin{document}
+\pagestyle{myheadings}
+\markright{Homer Reid: Taylor-Duffy Method for Tetrahedra}
+\maketitle
+
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Let $\mc P, \mc P^\prime$ be tetrahedra with vertices
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$ \mc P=\{\vb V_1, \vb V_2, \vb V_3, \vb V_4\}, \qquad 
+   \mc P^\prime=\{\vb V_1, \vb V_2^\prime, \vb V_3^\prime, \vb V_4^\prime\}.
+$$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+(Note that $\mc P, \mc P^\prime$ have at least one common vertex.)
+I consider six-dimensional integrals over the product 
+domain $\mc P\times \mc P^\prime$ of the form
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{OriginalIntegral}
+{
+ \mathcal{I}
+=\int_{\mc P} d\vb x \, \int_{\mc P^\prime} d\vb x^\prime \, 
+  P(\vb x, \vb x^\prime) K(|\vb x-\vb x^\prime|)
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+where $P$ is a polynomial in the cartesian components of 
+$\vb x, \vb x^\prime$ and $K(r)$ is a scalar kernel function that
+may be singular at $r=0$. A convenient parameterization of the 
+domain of integration is 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{align*}
+ \vb x &= V_1 + \xi_1 \vb A
+              + \xi_2 \vb B
+              + \xi_3 \vb C
+\\
+ \vb x^\prime &= V_1 + \eta_1 \vb A^\prime
+                     + \eta_2 \vb B^\prime
+                     + \eta_3 \vb C^\prime
+\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{align*}
+ \vb A&=(\vb V_2-\vb V_1), \qquad 
+ \vb B=(\vb V_3-\vb V_2),  \qquad
+ \vb C=(\vb V_4-\vb V_3)
+\\
+ \vb A^\prime&=(\vb V_2^\prime-\vb V_1),       \qquad 
+ \vb B^\prime=(\vb V_3^\prime-\vb V_2^\prime), \qquad
+ \vb C^\prime=(\vb V_4^\prime-\vb V_3^\prime)
+\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$
+       0 \le \xi_1, \eta_1 \le 1,
+\quad 0 \le \xi_2 \le \xi_1, 
+\quad 0 \le \xi_3 \le \xi_2, 
+\quad 0 \le \eta_2 \le \eta_1, 
+\quad 0 \le \eta_3 \le \eta_2.
+$$
+The integral (\ref{OriginalIntegral}) becomes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{OriginalIntegral2}
+{
+ \mathcal{I} =
+\int_0^1 d\xi_1 \, \int_0^{\xi_1} d\xi_2 \, \int_0^{\xi_2} d\xi_3 \,
+\int_0^1 d\eta_1 \, \int_0^{\eta_1} d\eta_2 \, \int_0^{\eta_2} d\eta_3 \,
+P(\vbXi, \vbEta) K(\vbXi, \vbEta)
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Following~\cite{TaylorDuffy}, we now change variables from 
+$\{\vbXi, \vbEta\}$ to $\{\vbXi, \vb u\}$, where $\vb u$ are 
+the relative coordinates
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+$$ u_i=\eta_i - \xi_i, $$
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+and decompose the domain of integration in (\ref{OriginalIntegral2})
+into multiple subdomains $\{\Omega_d\}$, each of which correspond to
+tetrahedra in the $\{\vb u\}$ coordinates with one vertex at the origin:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\numeq{OriginalIntegral3}
+{
+ \mathcal{I}
+= \sum_{d=1}^{N_d}
+   \int_{\Omega_d} P(\vbXi, \vb u + \vbXi) K(\vbXi, \vb u + \vbXi) \, d\vbXi \,  d\vb u.
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+For the case of triangle-product domains considered in~\cite{TaylorDuffy},
+there were $N_d=6$ subdomains; for the tetrahedon-product domains considered
+here we have $N_d=16$ subdomains, over which the integration limits 
+take the form presented in Table 1.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}
+$$\begin{array}{ll}
+\displaystyle{
+\int_{\Omega_1} \, d\vbXi \,  d\vb u
+             }
+&=
+\displaystyle{
+   \int du_1   \, \int du_2   \, \int du_3 \,
+   \int d\xi_1 \, \int d\xi_2 \, \int d\xi_3
+             }
+\\
+\end{array}
+$$
+\caption{Integration limits for the subdomains $\{\Omega_d\}$ in 
+         equation (\ref{OriginalIntegral3}).}
+\end{table}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
