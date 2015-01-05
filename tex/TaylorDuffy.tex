@@ -77,7 +77,7 @@ domain of integration is
 \\
  \vb A^\prime&=(\vb V_2^\prime-\vb V_1),       \qquad 
  \vb B^\prime=(\vb V_3^\prime-\vb V_2^\prime), \qquad
- \vb C^\prime=(\vb V_4^\prime-\vb V_3^\prime)
+ vb C^\prime=(\vb V_4^\prime-\vb V_3^\prime)
 \end{align*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$
@@ -104,37 +104,37 @@ the relative coordinates
 $$ u_i=\eta_i - \xi_i, $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 and decompose the domain of integration in (\ref{OriginalIntegral2})
-into multiple subdomains $\{\Omega_d\}$, each of which correspond to
-tetrahedra in the $\{\vb u\}$ coordinates with one vertex at the origin:
+into subdomains with the property that, in each subdomain, the
+range of the $\{\vb u\}$ coordinates is a tetrahedron in the 
+$(u_1, u_2, u_3)$ space with one vertex at the origin.
+In total there are 48 such tetrahedra; for example, 
+the integral over one of them reads
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\numeq{OriginalIntegral3}
+\numeq{SingleTetIntegral}
 {
- \mathcal{I}
-= \sum_{d=1}^{N_d}
-   \int_{\Omega_d} P(\vbXi, \vb u + \vbXi) K(\vbXi, \vb u + \vbXi) \, d\vbXi \,  d\vb u.
+ \Delta \mathcal{I}
+= \int_0^1    \, du_1 \,
+  \int_0^{u_1} \, du_2 \,
+  \int_0^{u_2} \, du_3 \,
+  I(u_1, u_2, u_3),
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-For the case of triangle-product domains considered in~\cite{TaylorDuffy},
-there were $N_d=6$ subdomains; for the tetrahedon-product domains considered
-here we have $N_d=16$ subdomains, over which the integration limits 
-take the form presented in Table 1.
+\begin{align*}
+  I(u_1, u_2, u_3)
+&=\int_{\xi_L(u_1)}^{\xi_U(u_1)} \, d\xi_1
+  \int_{\xi_L(u_2)}^{\xi_U(u_2)} \, d\xi_2
+  \int_{\xi_L(u_3)}^{\xi_U(u_3)} \, d\xi_3
+  P(\vbXi, \vb u + \vbXi)
+  K(\vbXi, \vb u + \vbXi)
+\end{align*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{table}
-$$\begin{array}{ll}
-\displaystyle{
-\int_{\Omega_1} \, d\vbXi \,  d\vb u
-             }
-&=
-\displaystyle{
-   \int du_1   \, \int du_2   \, \int du_3 \,
-   \int d\xi_1 \, \int d\xi_2 \, \int d\xi_3
-             }
-\\
-\end{array}
+where the upper- and lower-bound functions for the $\xi$ variables
+read
+$$ \xi_L(u) = \texttt{MAX}(-u, 0), \qquad 
+   \xi_U(u) = \texttt{MIN}(1, 1-u).
 $$
-\caption{Integration limits for the subdomains $\{\Omega_d\}$ in 
-         equation (\ref{OriginalIntegral3}).}
-\end{table}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Integrals over the remaining 47 tetrahedra may be obtained
+from (\ref{SingleTetIntegral}) by permuting
+the $\vb u$ variables
 
 \end{document}
