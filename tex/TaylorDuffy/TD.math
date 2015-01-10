@@ -1,0 +1,88 @@
+(***************************************************)
+(***************************************************)
+(***************************************************)
+P[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_]:=1.0;
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+F1[AA_,BB_,CC_,DD_,EE_,FF_]:=
+-AA^3/6 + BB^3/6 + (AA*CC^2)/2 - (BB*CC^2)/2 + (AA^2*DD)/2 - (BB^2*DD)/2 
+-(AA*DD^2)/2 + (BB*DD^2)/2 + (AA^2*EE)/2 - (BB^2*EE)/2 - AA*CC*EE + BB*CC*EE  
+-AA*DD*EE + BB*DD*EE + (AA^2*FF)/2 - (BB^2*FF)/2 - AA*CC*FF + BB*CC*FF - AA*DD*FF 
++BB*DD*FF;
+
+
+Xi1Upper[u1_,u2_,u3_]:=1 - Max[ {0,u1} ];
+Xi1Lower[u1_,u2_,u3_]:=Max[ {0,-u1,-u2,-u3,u2-u1,u3-u1,u3-u2,u2-u3-u1} ];
+DXi2Upper[u1_,u2_,u3_]:=Max[{0,-u1,u2-u1}];
+Xi2Lower[u1_,u2_,u3_]:=Max[{0,-u2,-u3,u3-u2}];
+DXi3Upper[u1_,u2_,u3_]:=Max[{0,-u2,u3-u2}];
+Xi3Lower[u1_,u2_,u3_]:=Max[{0,-u3}];
+
+(*
+Xi1Upper[u1_,u2_,u3_]:=1 - u1;
+Xi1Lower[u1_,u2_,u3_]:=0;
+DXi2Upper[u1_,u2_,u3_]:=0;
+Xi2Lower[u1_,u2_,u3_]:=0;
+DXi3Upper[u1_,u2_,u3_]:=0;
+Xi3Lower[u1_,u2_,u3_]:=0;
+*)
+
+P[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] 		\
+ := 1.0 + 2.1*Xi1 + 3.2*Xi2 + 0.9*Xi3 + 4.3*Eta1 + 5.4*Eta2 + 6.5*Eta3;
+
+F[u1_, u2_, u3_]:=
+   Integrate[
+    Integrate[
+     Integrate[ P[Xi1,Xi2,Xi3,Xi1+u1,Xi2+u2,Xi3+u3],
+                 {Xi3, Xi3Lower[u1,u2,u3], Xi2-DXi3Upper[u1,u2,u3]}
+              ], {Xi2, Xi2Lower[u1,u2,u3], Xi1-DXi2Upper[u1,u2,u3]}
+             ],  {Xi1, Xi1Lower[u1,u2,u3], Xi1Upper[u1,u2,u3]}
+            ];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+(*
+F[u1_, u2_, u3_]:=Module[ 
+
+ { Xi1Upper, Xi1Lower, Xi2Upper, Xi2Lower, Xi3Upper, Xi3Lower },
+
+ Xi1Upper=1 - Max[ {0,u1} ];
+ Xi1Lower=Max[ {0,-u1,-u2,-u3,u2-u1,u3-u1,u3-u2,u2-u3-u1} ];
+ Xi2UpperDelta=Max[{0,-u1,u2-u1}];
+ Xi2Lower=Max[{0,-u2,-u3,u3-u2}];
+ Xi3UpperDelta=Max[{0,-u2,u3-u2}];
+ Xi3Lower=Max[{0,-u3}];
+
+(*
+Print["Xi1Lower = ",Xi1Lower,"\n"];
+Print["Xi1Upper = ",Xi1Upper,"\n"];
+Print["Xi2Lower = ",Xi2Lower,"\n"];
+Print["Xi2UpperDelta = ",Xi2UpperDelta,"\n"];
+Print["Xi3Lower = ",Xi3Lower,"\n"];
+Print["Xi3UpperDelta = ",Xi2UpperDelta,"\n"];
+*)
+
+ If[Xi1Lower>=Xi1Upper,  Return[0]];
+
+ (*If[Xi2Lower>=(Xi1Lower-Xi2UpperDelta),  Return[0]];*)
+
+ (*If[Xi3Lower>=(Xi2Lower-Xi3UpperDelta),  Return[0]];*)
+
+ F1[Xi1Lower, Xi1Upper, Xi2Lower, Xi2UpperDelta, Xi3Lower, Xi3UpperDelta]
+
+(*
+ NIntegrate[ 
+  NIntegrate[ 
+   NIntegrate[ P[Xi1,Xi2,Xi3,Xi1+u1,Xi2+u2,Xi3+u3], 
+
+              { Xi3, Xi3Lower, Xi2-Xi3UpperDelta}
+            ], 
+           { Xi2, Xi2Lower, Xi1-Xi2UpperDelta}
+          ], { Xi1, Xi1Lower, Xi1Upper}
+          ]
+*)
+]
+*)

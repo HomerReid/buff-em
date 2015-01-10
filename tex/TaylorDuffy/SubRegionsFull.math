@@ -1,0 +1,59 @@
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IACGFull = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Eta3, Xi3, Eta2}  ],
+ {Xi3, 0, Xi2}      ],
+ {Eta2, Xi2, Eta1}  ],
+ {Xi2, 0,  Xi1}     ],
+ {Eta1, Xi1, 1}     ],
+ {Xi1, 0,  1}       ];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IBEHFull = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Eta3, 0, Xi3}     ],
+ {Xi3, 0, Xi2}      ],
+ {Eta2, Xi2, Eta1}  ],
+ {Xi2, 0, Eta1}     ],
+ {Eta1, 0, Xi1}     ],
+ {Xi1, 0,  1}       ];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IBEGFull = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Eta3, Xi3, Eta2}   ],
+ {Xi3, 0, Xi2}      ],
+ {Eta2, Xi2, Eta1}  ],
+ {Xi2, 0, Eta1}     ],
+ {Eta1, 0, Xi1}     ],
+ {Xi1, 0,  1}       ];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IBFIFull = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Eta3, Xi3, Eta2}   ],
+ {Xi3, 0, Eta2}      ],
+ {Xi2, Eta2, Xi1}    ],
+ {Eta2, 0, Eta1}     ],
+ {Eta1, 0, Xi1}      ],
+ {Xi1, 0,  1}        ];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IBFJFull = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Xi3, Eta3, Xi2}    ],
+ {Eta3, 0, Eta2}     ],
+ {Xi2, Eta2, Xi1}    ],
+ {Eta2, 0, Eta1}     ],
+ {Eta1, 0, Xi1}      ],
+ {Xi1, 0,  1}        ];

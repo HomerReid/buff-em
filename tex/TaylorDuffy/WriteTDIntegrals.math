@@ -1,0 +1,111 @@
+(***************************************************)
+(***************************************************)
+(***************************************************)
+Convert1[ V_ ] := Module[ 
+ {A, B, C, D, Gamma1, Gamma2},
+ Gamma1=Coefficient[ V[[3]], Xi1 ];
+ Gamma2=Coefficient[ V[[4]], Xi1 ];
+ A=V[[1]];
+ B=V[[2]];
+ C=V[[3]] - Gamma1*Xi1;
+ D=V[[4]] - Gamma2*Xi1;
+ { A + Gamma2*(u2-C) + Gamma1*(u2-D), B, C + Gamma1*B, D + Gamma2*B}
+ ];
+
+Convert2[ V_ ] := Module[ 
+ {A, B, C, D, Gamma1, Gamma2},
+ Gamma1=Coefficient[ V[[3]], Xi2 ];
+ Gamma2=Coefficient[ V[[4]], Xi2 ];
+ A=V[[1]];
+ B=V[[2]];
+ C=V[[3]] - Gamma1*Xi2;
+ D=V[[4]] - Gamma2*Xi2;
+ { A + Gamma2*(u3-C) + Gamma1*(u3-D), B, C + Gamma1*B, D + Gamma2*B}
+ ];
+
+Convert3[ V_ ] := Module[ 
+ {A, B, C, D, Gamma1, Gamma2},
+ Gamma1=Coefficient[ V[[3]], Xi1 ];
+ Gamma2=Coefficient[ V[[4]], Xi1 ];
+ A=V[[1]];
+ B=V[[2]];
+ C=V[[3]] - Gamma1*Xi1;
+ D=V[[4]] - Gamma2*Xi1;
+ { A + Gamma2*(u3-C) + Gamma1*(u3-D), B, C + Gamma1*B, D + Gamma2*B}
+ ];
+
+Convert[ V_ ] := Module[
+
+ {A, B, C, D, E, F, G, H, AP, BP, CP, DP, EP, FP, GP, HP, APP, BPP, GPP, HPP},
+
+ A=V[[1]]; B=V[[2]]; C=V[[3]]; D=V[[4]];
+ E=V[[5]]; F=V[[6]]; G=V[[7]]; H=V[[8]];
+
+ V1=Convert1[{A, B, C, D}];
+ AP=V1[[1]]; BP=V1[[2]]; CP=V1[[3]]; DP=V1[[4]];
+
+ V2=Convert2[{E, F, G, H}];
+ EP=V2[[1]]; FP=V2[[2]]; GP=V2[[3]]; HP=V2[[4]];
+
+ V3=Convert3[{AP, BP, GP, HP}];
+ APP=V3[[1]]; BPP=V3[[2]]; GPP=V3[[3]]; HPP=V3[[4]];
+
+ {CP, DP, GPP, HPP, APP, BPP, EP, FP}
+]
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+AVec={0, 1, 0, 1-u1};
+BVec={-1, 0, -u1, 1};
+C1Vec={u1, u1+Xi1, 0, Xi1+u1-u2};
+C2Vec={0, u1, 0, Xi1};
+DVec={-Xi1, 0, -u2, Xi1};
+EVec={0, u1+Xi1, 0, u1+Xi1-u2};
+F1Vec={u1, 0, -u2, Xi1+u1-u2};
+F2Vec={-Xi1, +u1, -u2, Xi1};
+G1Vec={u2, u2+Xi2, 0, Xi2+u2-u3};
+G2Vec={0, u2, 0, Xi2};
+HVec={-Xi2, 0, -u3, Xi2};
+IVec={0, u2+Xi2, 0, u2+Xi2-u3};
+J1Vec={u2, 0, -u3, Xi2+u2-u3};
+J2Vec={-Xi2, u2, -u3, Xi2};
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+WriteIntegral[S1_, S2_, S3_, Name_]:=
+ { V=Join[S1, S2, S3];
+   VP=Convert[ V[[3;;10]]];
+   Print[Name,"=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate["];
+   Print[" P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], "];
+   Print[" {Xi3, ", V[[11]], ", ", V[[12]],"}], "];
+   Print[" {Xi2, ", VP[[7]], ", ", VP[[8]],"}], "];
+   Print[" {Xi1, ", VP[[5]], ", ", VP[[6]],"}], "];
+   Print[" {u3,  ", VP[[3]], ", ", VP[[4]],"}], "];
+   Print[" {u2,  ", VP[[1]], ", ", VP[[2]],"}], "];
+   Print[" {u1,  ",  V[[1]], ", ",  V[[2]],"}];\n "];
+ };
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+WriteIntegral[AVec, C1Vec, G1Vec, "IAC1G1TD"];
+WriteIntegral[AVec, C1Vec, G2Vec, "IAC1G2TD"];
+WriteIntegral[AVec, C2Vec, G1Vec, "IAC2G1TD"];
+WriteIntegral[AVec, C2Vec, G2Vec, "IAC2G2TD"];
+WriteIntegral[AVec, C1Vec,  HVec, "IAC1HTD"];
+WriteIntegral[AVec, C2Vec,  HVec, "IAC2HTD"];
+WriteIntegral[AVec,  DVec,  IVec, "IADITD"];
+WriteIntegral[AVec,  DVec, J1Vec, "IADJ1TD"];
+WriteIntegral[AVec,  DVec, J2Vec, "IADJ2TD"];
+
+WriteIntegral[BVec, EVec,  G1Vec,  "IBEG1TD"];
+WriteIntegral[BVec, EVec,  G2Vec,  "IBEG2TD"];
+WriteIntegral[BVec, EVec,   HVec,  "IBEHTD"];
+WriteIntegral[BVec, F1Vec,  IVec,  "IBF1ITD"];
+WriteIntegral[BVec, F1Vec, J1Vec,  "IBF1J1TD"];
+WriteIntegral[BVec, F1Vec, J2Vec,  "IBF1J2TD"];
+WriteIntegral[BVec, F2Vec,  IVec,  "IBF2ITD"];
+WriteIntegral[BVec, F2Vec, J1Vec,  "IBF2J1TD"];
+WriteIntegral[BVec, F2Vec, J2Vec,  "IBF2J2TD"];

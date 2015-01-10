@@ -1,0 +1,203 @@
+FIAC1G1TD[u1_, u2_, u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3],
+ {Xi3, 0, u2 - u3 + Xi2}],
+ {Xi2, -u2 + u3, u1 - u2 + Xi1}],
+ {Xi1, -u1 + u3, 1 - u1}];
+
+FIAC1G2TD[u1_, u2_, u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3],
+ {Xi3, 0, Xi2}],
+ {Xi2, 0, u1 - u2 + Xi1}],
+ {Xi1, -u1 + u2, 1 - u1}];
+            
+FIAC2G1TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, u2 - u3 + Xi2}], 
+ {Xi2, -u2 + u3, Xi1}], 
+ {Xi1, -u2 + u3, 1 - u1}];
+            
+FIAC2G2TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, Xi2}], 
+ {Xi2, 0, Xi1}], 
+ {Xi1, 0, 1 - u1}];
+            
+FIAC1HTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u2 - u3, 1 - u1}];
+            
+FIAC2HTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, Xi1}], 
+ {Xi1, -u3, 1 - u1}];
+            
+FIADITD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, u2 - u3 + Xi2}], 
+ {Xi2, -u2 + u3, Xi1}], 
+ {Xi1, -u2 + u3, 1 - u1}];
+            
+FIADJ1TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, u2 - u3 + Xi2}], 
+ {Xi2, -u2, Xi1}], 
+ {Xi1, -u2, 1 - u1}];
+            
+FIADJ2TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, Xi1}], 
+ {Xi1, -u3, 1 - u1}]; 
+            
+FIBEG1TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, u2 - u3 + Xi2}], 
+ {Xi2, -u2 + u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u3, 1}]; 
+             
+FIBEG2TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, Xi2}], 
+ {Xi2, 0, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u2, 1}]; 
+             
+FIBEHTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u2 - u3, 1}];
+             
+FIBF1ITD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, u2 - u3 + Xi2}], 
+ {Xi2, -u2 + u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u3, 1}];
+             
+FIBF1J1TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, u2 - u3 + Xi2}], 
+ {Xi2, -u2, u1 - u2 + Xi1}], 
+ {Xi1, -u1, 1}];
+             
+FIBF1J2TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u2 - u3, 1}];
+             
+FIBF2ITD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, 0, u2 - u3 + Xi2}], 
+ {Xi2, -u2 + u3, Xi1}], 
+ {Xi1, -u2 + u3, 1}];
+             
+FIBF2J1TD[u1_,u2_,u3_]=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, u2 - u3 + Xi2}], 
+ {Xi2, -u2, Xi1}], 
+ {Xi1, -u2, 1}];
+             
+FIBF2J2TD[u1_,u2_,u3_]=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, Xi1}], 
+ {Xi1, -u3, 1}];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+(* d==0 *)
+IAC1G1DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIAC1G1TD[y1*y2*y3, y1*y2, y1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==1 *)
+IAC1G2DT=Integrate[Integrate[Integrate[
+ y1^2 * FIAC1G2TD[y1*y2, y1, y1*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==2 *)
+IAC1HDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIAC1HTD[y1*y2*y3, y1*y2, y1-1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==3 *)
+IAC2G1DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIAC2G1TD[y1*y2, y1*y2*y3, 1+y1*y2*y3-y1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==4 *)
+IAC2G2DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIAC2G2TD[y1, y1*y2, y1*y2*y3],
+ {y1, 0, 1}], {f2, 0, 1}], {y3, 0, 1}];
+
+(* d==5 *)
+IAC2HDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIAC2HTD[y1*y2, y1*y2*y3, y1-1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==6 *)
+IADIDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIADITD[y1*y2*y3, y1-1, y1*y2*(1-y3)],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==7 *)
+IADJ1DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIADJ1TD[y1*y2*y3, y1*y2-1, y1-1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==8 *)
+IADJ2DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIADJ2TD[y1*y2*y3, y1-1, y1*y2-1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+(* d==9 *)
+IBEG1DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBEG1TD[y1-1, y1*y2*y3, y1*y2],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==10 *)
+IBEG2DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBEG2TD[y1-1, y1*y2, y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==11 *)
+IBEHDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBEHTD[y1-1, -y1*y2+y1, -y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==12 *)
+IBF1IDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBF1ITD[y1*y2-1, y1-1, y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==13 *)
+IBF1J1DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBF1J1TD[-y1, -y1*y2, -y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==14 *)
+IBF1J2DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBF1J2TD[y1*y2-1, y1-1, y1-1-y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==15 *)
+IBF2IDT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBF2ITD[y1-1, y1*y2-1, y1*y2*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==16 *)
+IBF2J1DT=Integrate[Integrate[Integrate[
+ y1^2 * FIBF2J1TD[-y1*y2, -y1, -y1*y3],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+(* d==17 *)
+IBF2J2DT=Integrate[Integrate[Integrate[
+ y1^2 * y2 * FIBF2J2TD[y1-1, y1*y2-1, y1*y2*y3-1],
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];

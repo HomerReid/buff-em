@@ -1,0 +1,120 @@
+P[Xi1_, Eta1_, Xi2_, Eta2_, Xi3_, Eta3_]:=
+ 0.12 + 0.23*Xi1 + 0.34*Xi2 + 0.45*Xi3 + 0.15*Eta1 + 0.24*Eta2 + 0.33*Eta3;
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+IG1[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Eta3, Xi2, Eta2}],
+  {Xi3,  0,    Xi2}];
+
+IG2[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Eta3, Xi3, Xi2}],
+  {Xi3,  0,   Xi2}]  
+
+IH[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Eta3, 0,    Xi3}],
+  {Xi3,  0,    Xi2}];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+II[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Xi3,  0,   Eta3}],
+  {Eta3, 0,   Eta2}];
+
+IJ1[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Xi3,  Eta3, Eta2}],
+  {Eta3, 0,   Eta2}];
+
+IJ2[Xi1_, Eta1_, Xi2_, Eta2_] := Integrate[ Integrate[
+  P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+  {Xi3,  Eta2, Xi2}],
+  {Eta3, 0,   Eta2}];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+IC1[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Xi2,  0,    Xi1}],
+  {Eta2, Xi1, Eta1}]
+
+IC2[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Xi2,  0,   Eta2}],
+  {Eta2, 0,    Xi1}]
+
+ID[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Eta2, 0,    Xi2}],
+  {Xi2,  0,    Xi1}];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+IE[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Xi2,  0,   Eta2}],
+  {Eta2, 0,   Eta1}];
+
+IF1[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Xi2,  Eta2, Eta1}],
+  {Eta2, 0,   Eta1}];
+
+IF2[Xi1_, Eta1_, F_] := Integrate[ Integrate[
+  F[Xi1, Eta1, Xi2, Eta2],
+  {Xi2,  Eta1, Xi1}],
+  {Eta2, 0,   Eta1}];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+IA[F_, G_] := 
+ Integrate[ Integrate[ F[Xi1, Eta1, G], {Xi1, 0, Eta1}], {Eta1, 0, 1}];
+
+IB[F_, G_] := 
+ Integrate[ Integrate[ F[Xi1, Eta1, G], {Xi1, Eta1, 1}], {Eta1, 0, 1}];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IAC1G1 = IA[IC1, IG1];
+IAC1G2 = IA[IC1, IG2];
+IAC1H  = IA[IC1, IH];
+
+IAC2G1 = IA[IC2, IG1];
+IAC2G2 = IA[IC2, IG2];
+IAC2H  = IA[IC2, IH];
+
+IADI   = IA[ID,  II];
+IADJ1  = IA[ID,  IJ1];
+IADJ2  = IA[ID,  IJ2];
+
+IBEG1  = IB[IE, IG1];
+IBEG2  = IB[IE, IG2];
+IBEH   = IB[IE, IH];
+
+IBF1I  = IB[IF1, II];
+IBF1J1 = IB[IF1, IJ1];
+IBF1J2 = IB[IF1, IJ2];
+
+IBF2I  = IB[IF2, II];
+IBF2J1 = IB[IF2, IJ1];
+IBF2J2 = IB[IF2, IJ2];
+
+(****************************************************)
+(****************************************************)
+(****************************************************)
+IFull1 = IAC1G1 + IAC1G2 + IAC1H +IAC2G1 + IAC2G2 + IAC2H +IADI   + IADJ1  + IADJ2 +IBEG1  + IBEG2  + IBEH +IBF1I  + IBF1J1 + IBF1J2 +IBF2I  + IBF2J1 + IBF2J2;
+
+IFull2 = Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
+ P[Xi1, Eta1, Xi2, Eta2, Xi3, Eta3],
+ {Xi3, 0, Xi2}], {Xi2, 0, Xi1}], {Xi1, 0, 1}],
+ {Eta3, 0, Eta2}], {Eta2, 0, Eta1}], {Eta1, 0, 1}];
