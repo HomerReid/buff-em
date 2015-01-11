@@ -450,8 +450,8 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
               bB[Mu] *= PreFacB;
             };
    
-           Integrand(xA, bA, 3.0*PreFacA, 
-                     xB, bB, 3.0*PreFacB, 
+           Integrand(xA, bA, 3.0*PreFacA,
+                     xB, bB, 3.0*PreFacB,
                      UserData, dI);
 
            for(int nf=0; nf<fdim; nf++)

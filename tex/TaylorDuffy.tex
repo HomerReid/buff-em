@@ -77,7 +77,7 @@ domain of integration is
 \\
  \vb A^\prime&=(\vb V_2^\prime-\vb V_1),       \qquad 
  \vb B^\prime=(\vb V_3^\prime-\vb V_2^\prime), \qquad
- vb C^\prime=(\vb V_4^\prime-\vb V_3^\prime)
+ \vb C^\prime=(\vb V_4^\prime-\vb V_3^\prime)
 \end{align*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 $$
@@ -104,37 +104,45 @@ the relative coordinates
 $$ u_i=\eta_i - \xi_i, $$
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 and decompose the domain of integration in (\ref{OriginalIntegral2})
-into subdomains with the property that, in each subdomain, the
-range of the $\{\vb u\}$ coordinates is a tetrahedron in the 
-$(u_1, u_2, u_3)$ space with one vertex at the origin.
-In total there are 48 such tetrahedra; for example, 
-the integral over one of them reads
+into $D$ subdomains with the following properties:
+\textbf{(a)} In the $d$th subdomain, the range of the $\{u_i\}$ 
+coordinates is a tetrahedron $\mc T_d^{\vb u}$ with one vertex at 
+the origin, while  
+\textbf{(a)} In the $d$th subdomain, the range of the $\{\xi_i\}$
+coordinates is a $\vb u$-dependent tetrahedron 
+$\mc T_d^{\vbXi}(\vb u)$:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\numeq{SingleTetIntegral}
+\numeq{TDIntegral1}
 {
- \Delta \mathcal{I}
-= \int_0^1    \, du_1 \,
-  \int_0^{u_1} \, du_2 \,
-  \int_0^{u_2} \, du_3 \,
-  I(u_1, u_2, u_3),
+\mathcal{I}=\sum_{d=1}^D
+ \int_{\mc T^{\vb u}_d} d\vb u
+ \int_{\mc T^{\vbXi}_d(\vb u)} \, d\vbXi\,
+ P(\vbXi, \vbEta + \vb u)
+ K(\vbXi, \vbEta + \vb u)
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{align*}
-  I(u_1, u_2, u_3)
-&=\int_{\xi_L(u_1)}^{\xi_U(u_1)} \, d\xi_1
-  \int_{\xi_L(u_2)}^{\xi_U(u_2)} \, d\xi_2
-  \int_{\xi_L(u_3)}^{\xi_U(u_3)} \, d\xi_3
-  P(\vbXi, \vb u + \vbXi)
-  K(\vbXi, \vb u + \vbXi)
+ \int_{\mc T^{\vbXi}_d(\vb u)} \, d\vbXi\, F(\vbXi)
+&=\int_{A_d}^{B_d}         d\xi_1 \,
+  \int_{C_d}^{\xi_1 + D_d} d\xi_2 \,
+  \int_{E_d}^{\xi_2 + F_d} d\xi_3 \, F(\xi_1, \xi_2, \xi_3)
+\intertext{Change variables to 
+           $\xi_1^\prime = \xi_1 - A_d,
+           \xi_2^\prime = \xi_2 - C_d,
+           \xi_3^\prime = \xi_2 - E_d$:}
+&=\int_{0}^{B_d-A_d}         d\xi_1^\prime \,
+  \int_{0}^{\xi_1^\prime + A_d + D_d - C_d} d\xi_2^\prime \,
+  \int_{0}^{\xi_2^\prime + C_d + F_d - E_d } d\xi_3^\prime \,
+   F(\xi_1^\prime + A_d, \xi_2^\prime + C_d, \xi_3^\prime + E_d)
+\\
+&=\int_{0}^{B_d-A_d}      d\xi_1^\prime \,
+  \int_{0}^{\xi_1^\prime} d\xi_2^\prime \,
+  \int_{0}^{\xi_2^\prime} d\xi_3^\prime \,
+   F(\xi_1^\prime + A_d, \xi_2^\prime + C_d, \xi_3^\prime + E_d)
+\intertext{Here we have used the property that 
+           $A_d+D_d-C_D=C_d + F_d - E_d = 0$ for all subregions $d$.}
 \end{align*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-where the upper- and lower-bound functions for the $\xi$ variables
-read
-$$ \xi_L(u) = \texttt{MAX}(-u, 0), \qquad 
-   \xi_U(u) = \texttt{MIN}(1, 1-u).
-$$
-Integrals over the remaining 47 tetrahedra may be obtained
-from (\ref{SingleTetIntegral}) by permuting
-the $\vb u$ variables
 
 \end{document}

@@ -113,7 +113,7 @@ IBF1ITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {Xi1, -u1 + u3, 1}], 
  {u3,  0, 1 + u1}], 
  {u2,  u1, 0}], 
- {,u1,  -1, 0}];
+ {u1,  -1, 0}];
              
 IBF1J1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 

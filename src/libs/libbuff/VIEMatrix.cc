@@ -521,13 +521,12 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
                              cdouble Omega, cdouble *dG=0,
                              int Order=0, int MaxEvals=10000)
 {
-
   GSIData MyData, *Data = &MyData;
 
   Data->k = Omega;
   Data->NeedDerivatives = (dG!=0);
 
-  int fDim = (dG==0) ? 2:14; 
+  int fDim = (dG==0) ? 2:14;
   
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
@@ -555,17 +554,9 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
                       GSurfaceIntegrand, (void *)Data, fDim,
-                      (double *)Result, (double *)Error, 
+                      (double *)Result, (double *)Error,
                       Order, MaxEvals, 1.0e-8);
           RetVal += Result[0];
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-FILE *f=fopen("/tmp/LogFile.dat","a");
-fprintf(f,"%4i %i %i %+i %4i %i %i %+i %+.8e %+.8e\n",
-ntA,nfP,nfBFA,ASign,
-ntB,nfQ,nfBFB,BSign,real(Result[0]),imag(Result[0]));
-fclose(f);
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
           if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };

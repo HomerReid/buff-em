@@ -10,6 +10,12 @@ FIAC1G2TD[u1_, u2_, u3_]:=Integrate[Integrate[Integrate[
  {Xi2, 0, u1 - u2 + Xi1}],
  {Xi1, -u1 + u2, 1 - u1}];
             
+FIAC1HTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
+ P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
+ {Xi3, -u3, Xi2}], 
+ {Xi2, -u3, u1 - u2 + Xi1}], 
+ {Xi1, -u1 + u2 - u3, 1 - u1}];
+            
 FIAC2G1TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -21,12 +27,6 @@ FIAC2G2TD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
  {Xi3, 0, Xi2}], 
  {Xi2, 0, Xi1}], 
  {Xi1, 0, 1 - u1}];
-            
-FIAC1HTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
- P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
- {Xi3, -u3, Xi2}], 
- {Xi2, -u3, u1 - u2 + Xi1}], 
- {Xi1, -u1 + u2 - u3, 1 - u1}];
             
 FIAC2HTD[u1_,u2_,u3_]:=Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
@@ -132,7 +132,7 @@ IAC2G1DT=Integrate[Integrate[Integrate[
 (* d==4 *)
 IAC2G2DT=Integrate[Integrate[Integrate[
  y1^2 * y2 * FIAC2G2TD[y1, y1*y2, y1*y2*y3],
- {y1, 0, 1}], {f2, 0, 1}], {y3, 0, 1}];
+ {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
 
 (* d==5 *)
 IAC2HDT=Integrate[Integrate[Integrate[
@@ -201,3 +201,22 @@ IBF2J1DT=Integrate[Integrate[Integrate[
 IBF2J2DT=Integrate[Integrate[Integrate[
  y1^2 * y2 * FIBF2J2TD[y1-1, y1*y2-1, y1*y2*y3-1],
  {y1, 0, 1}], {y2, 0, 1}], {y3, 0, 1}];
+
+Print["d=0:  ",IAC1G1TD, " ", IAC1G1DT];
+Print["d=1:  ",IAC1G2TD, " ", IAC1G2DT];
+Print["d=2:  ",IAC1HTD,  " ", IAC1HDT ];
+Print["d=3:  ",IAC2G1TD, " ", IAC2G1DT];
+Print["d=4:  ",IAC2G2TD, " ", IAC2G2DT];
+Print["d=5:  ",IAC2HTD,  " ", IAC2HDT ];
+Print["d=6:  ",IADITD,   " ", IADIDT  ];
+Print["d=7:  ",IADJ1TD,  " ", IADJ1DT ];
+Print["d=8:  ",IADJ2TD,  " ", IADJ2DT ];
+Print["d=9:  ",IBEG1TD,  " ", IBEG1DT ];
+Print["d=10: ",IBEG2TD,  " ", IBEG2DT ];
+Print["d=11: ",IBEHTD,   " ", IBEHDT  ];
+Print["d=12: ",IBF1ITD,  " ", IBF1IDT ];
+Print["d=13: ",IBF1J1TD, " ", IBF1J1DT];
+Print["d=14: ",IBF1J2TD, " ", IBF1J2DT];
+Print["d=15: ",IBF2ITD,  " ", IBF2IDT ];
+Print["d=16: ",IBF2J1TD, " ", IBF2J1DT];
+Print["d=17: ",IBF2J2TD, " ", IBF2J2DT];

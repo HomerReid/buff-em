@@ -352,6 +352,27 @@ int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB)
+{ 
+  SWGTet *TA = OA->Tets[ntA];
+  SWGTet *TB = OB->Tets[ntB];
+
+  if (OA!=OB)
+   return 0;
+ 
+  int ncv=0;
+  for(int i=0; i<4; i++)
+   for(int j=0; j<4; j++)
+    if (TA->VI[i]==TB->VI[j]) 
+     ncv++;
+
+  return ncv;
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 int GetOverlapElements(SWGVolume *O, int nfA,
                        int Indices[7], double Entries[7])
 { 
