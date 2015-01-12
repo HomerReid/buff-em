@@ -57,6 +57,19 @@ using namespace scuff;
 
 namespace buff {
 
+typedef struct GSIData
+ { 
+   cdouble k;
+   double *QA;
+   double *QB;
+   bool NeedDerivatives;
+ } GSIData;
+
+void FFIntegrand_GMatrixElement(
+                   double *xA, double *bA, double DivbA, double *nHatA,
+                   double *xB, double *bB, double DivbB, double *nHatB,
+                   void *UserData, double *I);
+
 #define MAXSTR 1000
 #define II cdouble(0.0,1.0)
 
@@ -353,165 +366,6 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
 }
 
 /***************************************************************/
-/* routine to compute the h, w, p functions described in the   */
-/* memo                                                        */
-/***************************************************************/
-#define EXPRELTOL  1.0e-8
-void Gethwp(cdouble x, cdouble hwp[3], cdouble *hwpPrime)
-{
-  if ( abs(x) >= 0.1 )
-   { 
-     cdouble x2=x*x;
-     cdouble x3=x2*x;
-     cdouble ExpRel1 = exp(x) - 1.0;
-     cdouble ExpRel2 = ExpRel1 - x;
-     cdouble ExpRel3 = ExpRel2 - 0.5*x2;
-
-     hwp[0] = ExpRel2 / x;
-     hwp[1] = ExpRel3;
-     hwp[2] = hwp[0]/x  - hwp[1]/x3 - 1.0/3.0;
-
-     if (hwpPrime)
-      { cdouble x4=x3*x;
-        hwpPrime[0] = ExpRel1/x - ExpRel2/x2;
-        hwpPrime[1] = ExpRel2;
-        hwpPrime[2] = hwpPrime[0]/x - hwp[0]/x2 + 3.0*hwp[1]/x4 - hwpPrime[1]/x3;
-      };
-   }
-  else
-   { 
-     cdouble x2=x*x;
-
-     hwp[0] = x/2.0 + x2/6.0;
-     hwp[1] = 0.0;
-     hwp[2] = x/8.0 + x2/30.0;
-
-     if (hwpPrime)
-      { hwpPrime[0] = 1.0/2.0 + x/3.0 + x2/8.0;
-        hwpPrime[2] = 1.0/8.0 + x/15.0 + x2/48.0;
-      };
-
-     // in this loop, Term = x^n / n!
-     cdouble Term = x2 / 2.0;
-     for(double n=3.0; n<100.1; n+=1.0)
-      { 
-        Term *= x / n;
-
-        hwp[0] += Term / (n+1.0);
-        hwp[1] += Term;
-        hwp[2] += Term / ( (n+3.0)*(n+1.0) );
-
-        if (hwpPrime)
-         { hwpPrime[0] += Term / (n+2.0);
-           hwpPrime[2] += Term / ( (n+4.0)*(n+2.0) );
-         };
-
-        if ( abs(Term) < EXPRELTOL*abs(hwp[1]) )
-         break;
-
-      };
-
-     if (hwpPrime)
-      hwpPrime[1] = hwp[1] + x2/2.0;
-
-   };
-
-} 
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-typedef struct GSIData
- { 
-   cdouble k;
-   double *QA;
-   double *QB;
-   bool NeedDerivatives;
-
- } GSIData;
-
-void GSurfaceIntegrand(double *xA, double *bA, double DivbA, double *nHatA,
-                       double *xB, double *bB, double DivbB, double *nHatB,
-                       void *UserData, double *I)
-{
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  GSIData *Data        = (GSIData *) UserData;
-  cdouble k            = Data->k;
-  double *QA           = Data->QA;
-  double *QB           = Data->QB;
-  bool NeedDerivatives = Data->NeedDerivatives;
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  double R[3];
-  R[0] = (xA[0]-xB[0]);
-  R[1] = (xA[1]-xB[1]);
-  R[2] = (xA[2]-xB[2]);
-  double r2 = R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
-  if ( fabs(r2) < 1.0e-15 )
-   { int fdim = NeedDerivatives ? 14 : 2;
-     memset(I, 0, fdim*sizeof(double));
-     return;
-   };
-  double r = sqrt(r2);
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  double NdotN =   nHatA[0]*nHatB[0] 
-                 + nHatA[1]*nHatB[1] 
-                 + nHatA[2]*nHatB[2];
-
-  double DQdotR =  (QA[0]-QB[0])*R[0] 
-                  +(QA[1]-QB[1])*R[1] 
-                  +(QA[2]-QB[2])*R[2];
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  cdouble k2  = k*k;
-  cdouble Xi  = II*k*r;
-
-  cdouble hwp[3], hwpPrime[3];
-  Gethwp(Xi, hwp, NeedDerivatives ? hwpPrime : 0 );
-
-  cdouble h=hwp[0];
-  cdouble w=hwp[1];
-  cdouble p=hwp[2];
-
-  double DotProd = (bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2]);
-  cdouble PreFac  = -DivbA*DivbB / (9.0*k2);
-  cdouble T1 = DotProd * h;
-  cdouble T2 = PreFac * (9.0*h + w + k2*DQdotR*p);
-
-  cdouble *zI = (cdouble *)I;
-  zI[0] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
-
-  if (NeedDerivatives)
-   { 
-     cdouble hP=hwpPrime[0];
-     cdouble wP=hwpPrime[1];
-     cdouble pP=hwpPrime[2];
-
-     for(int Mu=0; Mu<3; Mu++)
-      { 
-        cdouble Factor = II*k*R[Mu]/r;
-
-        T1 = Factor*DotProd*hP;
-        T2 = Factor*PreFac*(9.0*hP + wP + k2*DQdotR*pP)
-              +k2*PreFac*(QA[Mu]-QB[Mu])*p;
-        zI[1+Mu] = NdotN * (T1 + T2) / (-4.0*M_PI*II*k);
-
-        zI[4+Mu] = 0.0;
-      };
-   };
-
-}
-
-/***************************************************************/
 /* Compute the G-matrix element between two tetrahedral basis  */
 /* functions using the surface-integral approach of Bleszynski */
 /* et. al.                                                     */
@@ -553,7 +407,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           cdouble Result[7], Error[7];
           FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
                       VB, ntB, nfQ, nfBFB, BSign,
-                      GSurfaceIntegrand, (void *)Data, fDim,
+                      FFIntegrand_GMatrixElement, (void *)Data, fDim,
                       (double *)Result, (double *)Error,
                       Order, MaxEvals, 1.0e-8);
           RetVal += Result[0];
@@ -572,9 +426,6 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
                           cdouble Omega, cdouble *dG=0)
 {
-  SWGFace *FA = VA->Faces[nfA];
-  SWGFace *FB = VB->Faces[nfB];
-
   double rRel;
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 

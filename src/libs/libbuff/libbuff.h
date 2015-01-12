@@ -287,6 +287,20 @@ void TetTetInt(SWGVolume *VA, int ntA, int iQA, double SignA,
                int fdim, double *Result, double *Error,
                int NumPts, int MaxEvals, double RelTol);
 
+void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
+                  SWGVolume *VB, int ntB, int iQB,
+                  UserTTIntegrand UserIntegrand,
+                  void *UserData, int fdim,
+                  double *Result, double *Error,
+                  int NumuPts, int NumXiPts, int MaxEvals, 
+                  double RelTol);
+
+void TetTetInt_SI(SWGVolume *VA, int ntA, int iQa,
+                  SWGVolume *VB, int ntB, int iQb,
+                  UserFFIntegrand Integrand, void *UserData,
+                  int fdim, double *Result, double *Error,
+                  int Order, int MaxEvals, double RelTol);
+
 void BFBFInt(SWGVolume *VA, int nfA,
              SWGVolume *VB, int nfB,
              UserTTIntegrand Integrand, void *UserData,
