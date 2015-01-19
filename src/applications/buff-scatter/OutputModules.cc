@@ -35,6 +35,9 @@
 
 #define II cdouble(0.0,1.0)
 
+using namespace buff;
+using namespace scuff;
+
 /***************************************************************/
 /* compute scattered and total fields at a user-specified list */
 /* of evaluation points                                        */

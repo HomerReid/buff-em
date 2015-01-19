@@ -67,6 +67,7 @@ class IHAIMatProp
    /* class data **************************************************/
    /***************************************************************/
    char *Name;
+   cdouble ConstEps; // =0.0 for parsed materials 
 
    // opaque pointers to cmatheval parsed expressions for
    // components of epsilon and mu

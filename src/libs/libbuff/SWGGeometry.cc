@@ -82,11 +82,11 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
         MeshFileName=strdupEC(Tokens[1]);
       }
      /*--------------------------------------------------------------*/
-     /*- MATFILE keyword --------------------------------------------*/
+     /*- MATERIAL | MATFILE keyword ---------------------------------*/
      /*--------------------------------------------------------------*/
-     else if ( !StrCaseCmp(Tokens[0],"MATFILE") )
+     else if ( !StrCaseCmp(Tokens[0],"MATFILE") || !StrCaseCmp(Tokens[0],"MATERIAL") )
       { if (NumTokens!=2)
-         { *pErrMsg=strdupEC("MATFILE keyword requires one argument");
+         { *pErrMsg=vstrdup("%s keyword requires one argument",Tokens[0]);
            return 0;
          };
         MatFileName=strdupEC(Tokens[1]);

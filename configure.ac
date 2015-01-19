@@ -109,6 +109,7 @@ AC_CONFIG_FILES([
  src/applications/Makefile
  src/applications/buff-analyze/Makefile
  src/applications/buff-scatter/Makefile
+ src/unitTests/Makefile
 ])
 AC_OUTPUT
 

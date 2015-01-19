@@ -45,6 +45,20 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
      EpsExpression[nx][ny]=MuExpression[nx][ny]=0;
+   ConstEps=0.0;
+
+   /*--------------------------------------------------------------*/
+   /*- detect filenames of the form CONST_EPS_xx-------------------*/
+   /*--------------------------------------------------------------*/
+   if (!strncasecmp(Name,"CONST_EPS_",10))
+    { int nConv=S2CD(Name+10,&ConstEps);
+      if (nConv!=1 || ConstEps==0.0)
+       { ErrMsg = vstrdup("invalid material specification %s",Name);
+         return;
+       };
+      Log("Created constant-epsilon material with Eps=%s",z2s(ConstEps));
+      return;
+    };
  
    /*--------------------------------------------------------------*/
    /*- try to open the file ---------------------------------------*/
@@ -136,7 +150,6 @@ char *IHAIMatProp::Parse(FILE *f)
         if ( M<0 || M>3 || N<0 || N>3)
          return vstrdup("%s:%i: invalid indices %c%c",Name,LineNum,p[3],p[4]);
 
-printf("Setting Eps%i%i = %s\n",M,N,pp+1);
         EpsExpression[M][N]=cevaluator_create(pp+1);
         if (!EpsExpression[M][N])
          return vstrdup("%s:%i: invalid expression",Name,LineNum);
@@ -197,6 +210,18 @@ IHAIMatProp::~IHAIMatProp()
 void IHAIMatProp::GetEpsMu(cdouble Omega, double x[3],
                            cdouble Eps[3][3], cdouble Mu[3][3])
 { 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (ConstEps!=0.0)
+   { for(int nx=0; nx<3; nx++)
+      for(int ny=0; ny<3; ny++)
+       { Eps[nx][ny] = (nx==ny) ? ConstEps : 0.0;
+          Mu[nx][ny] = (nx==ny) ? 1.0      : 0.0;
+       };
+     return;
+   };
+
   static char *VNames[4] = {"x", "y", "z", "w"};
   cdouble VValues[4];
 

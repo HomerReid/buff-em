@@ -1,1 +1,1 @@
-SUBDIRS = libs applications
+SUBDIRS = libs applications unitTests

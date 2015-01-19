@@ -28,7 +28,10 @@
 #include <stdarg.h>
 #include <fenv.h>
 
-#include "buff-em.h"
+#include "libbuff.h"
+
+using namespace scuff;
+using namespace buff;
 
 /***************************************************************/
 /***************************************************************/
@@ -37,7 +40,8 @@ void DofprintVec(FILE *f, void *v, bool Complex, int Length,
                  const char *fmt, bool CR)
 {
   char format[100];
-  snprintf(format,100,"%s ",fmt);
+  if (fmt)
+   snprintf(format,100,"%s ",fmt);
 
   if (Complex)
    { cdouble *cv=(cdouble *)v;
@@ -54,16 +58,16 @@ void DofprintVec(FILE *f, void *v, bool Complex, int Length,
    fprintf(f,"\n");
 }
 
-void fprintVec(FILE *f, double *v, int Length, const char *format)
+void fprintVec(FILE *f, double *v, int Length=3, const char *format="%+.8e")
 {  DofprintVec(f, (void *)v, false, Length, format, false); }
 
-void fprintVecCR(FILE *f, double *v, int Length, const char *format)
+void fprintVecCR(FILE *f, double *v, int Length=3, const char *format="%+.8e")
 {  DofprintVec(f, (void *)v, false, Length, format, true); }
 
-void fprintVec(FILE *f, cdouble *v, int Length, const char *format)
+void fprintVec(FILE *f, cdouble *v, int Length=3, const char *format="%+.8e %+.8e")
 {  DofprintVec(f, (void *)v, true, Length, format, false); }
 
-void fprintVecCR(FILE *f, cdouble *v, int Length, const char *format)
+void fprintVecCR(FILE *f, cdouble *v, int Length=3, const char *format="%+.8e %+.8e")
 {  DofprintVec(f, (void *)v, true, Length, format, true); }
 
 /***************************************************************/
@@ -100,20 +104,20 @@ int main(int argc, char *argv[])
   G->AssembleRHSVector(Omega, PW, J);
   M->LUFactorize();
   M->LUSolve(J);
-  HMatrix *F1 = G->GetFields(0,  J, Omega, XMatrix);
-  HMatrix *F2 = G->GetFields(PW, 0, Omega, XMatrix);
+  HMatrix *F1Matrix = G->GetFields(0,  J, Omega, XMatrix);
+  HMatrix *F2Matrix = G->GetFields(PW, 0, Omega, XMatrix);
 
   FILE *f=fopen("buff-test-LFField.dat","w");
-  for(int nx=0; nx<XMatrix->NumPts; nx++)
+  for(int nx=0; nx<XMatrix->NR; nx++)
    {  
      double X[3];
      cdouble F1[6], F2[6];
-     XMatrix->GetEntries(nx,"0:2",X);
+     XMatrix->GetEntriesD(nx,"0:2",X);
      F1Matrix->GetEntries(nx,"0:5",F1);
      F2Matrix->GetEntries(nx,"0:5",F2);
-     fprintVec(f,X);
-     fprintVec(f,F1);
-     fprintVecCR(f,F2);
+     fprintVec(f,X,3);
+     fprintVec(f,F1,6);
+     fprintVecCR(f,F2,6);
    };
   fclose(f);
  
