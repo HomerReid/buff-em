@@ -511,7 +511,7 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
   VecSub(V2B, V1B, Data->L2P);
   VecSub(V3B, V2B, Data->L3P);
   Data->QP  = QB;
-  Data->PreFac = PreFacB;
+  Data->PreFacP = PreFacB;
 
   double Lower[3]={0.0, 0.0, 0.0};
   double Upper[3]={1.0, 1.0, 1.0};

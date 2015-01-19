@@ -1,4 +1,3 @@
-
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
  * This file is part of BUFF-EM.
@@ -243,7 +242,7 @@ void TetTetInt_SI(SWGVolume *VA, int ntA, int iQa,
       FaceFaceInt(VA, ntA, nfP, iQa, 1.0,
                   VB, ntB, nfQ, iQb, 1.0,
                   Integrand, UserData, fdim,
-                  (double *)dResult, (double *)dError,
+                  dResult, dError,
                   Order, MaxEvals, RelTol);
 
       for(int nf=0; nf<fdim; nf++)
