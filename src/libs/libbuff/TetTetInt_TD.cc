@@ -82,6 +82,12 @@ int xIntegrand(unsigned ndim, const double *x, void *params,
   double Xi2 = (BmA)*x[0]*x[1]      + C;
   double Xi3 = (BmA)*x[0]*x[1]*x[2] + E;
   double Jacobian = BmA*BmA*BmA*x[0]*x[0]*x[1];
+
+  if (fabs(Jacobian) < 1.0e-10 ) 
+   { memset(fval, 0, fdim*sizeof(double));
+     return 0;
+   };
+
   double Eta1=Xi1+u[0];
   double Eta2=Xi2+u[1];
   double Eta3=Xi3+u[2];
@@ -445,10 +451,8 @@ int yIntegrand(unsigned ndim, const double *y, void *params,
   memset(fval, 0, fdim*sizeof(double));
   for(int d=0; d<NUMREGIONS; d++)
    { 
-#if 0
-if ( (RegionOnly != -1)  && (d != RegionOnly) )
- continue;
-#endif
+     if (fabs(J[d]) < 1.0e-8 ) 
+      continue;
 
      GetXiIntegral(u[d], ABCDEF[d], TDIData, fThisRegion);
 

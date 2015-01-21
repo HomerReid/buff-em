@@ -2581,11 +2581,11 @@ form
 \begin{align}
  \Psi_{V1}(\vb x-\vb x^\prime) 
  &= 
- g(r)
+ g_{V1}(r)
 \\
  \Psi_{V2}(\vb x-\vb x^\prime) 
  &= 
- (\vb x-\vb Q)\cdot (\vb x^\prime-\vb Q^\prime) g(r)
+ (\vb x-\vb Q)\cdot (\vb x^\prime-\vb Q^\prime) g_{V2}(r)
 \end{align}
 \label{PsiVForms}
 \end{subequations}
@@ -2615,14 +2615,13 @@ Differentiating these three classes of $\Psi_A$ functions, one finds
 \begin{align*}
  \nabla_{\vb x} \nabla_{\vb x^\prime}
  \Psi_{A1}(\vb x-\vb x^\prime)
-&=   h_{A1}(r) 
-  + \bigg[ r^2 - \vb r \cdot \Delta \vb Q 
-              - 2(\vb x-\vb Q)\cdot(\vb x^\prime - \vb Q^\prime)
-    \bigg]\left[ \frac{1}{r}h_{A1}^\prime(r)\right]
+&=  3h_{A1}(r) + rh_{A1}^\prime(r) 
+     -  \Big(\vb r \cdot \Delta \vb Q \Big)
+       \left[\frac{1}{r} h_{A1}^\prime(r)\right]
 \\
 &\qquad
-  - \bigg[ (\vb x-\vb Q)\cdot(\vb x^\prime - \vb Q^\prime)
-    \bigg]h_{A1}^{\prime \prime}(r)
+     - \big(\vb x-\vb Q\big)\cdot\big(\vb x^\prime - \vb Q^\prime\big)
+       \left[ \frac{2}{r}h_{A1}^\prime(r) + h_{A1}^{\prime\prime}(r)\right]
 \\
 %--------------------------------------------------------------------%
  \nabla_{\vb x} \nabla_{\vb x^\prime}
@@ -2653,18 +2652,20 @@ Summing, I have
                +h^{\prime\prime}_{A2}\bigg]
 \\
 &\qquad
- + h_{A1} + r h_{A1}^\prime
+ + 3h_{A1} + r h_{A1}^\prime
           - \frac{2}{r}h^\prime_{A3} - h^{\prime\prime}_{A3}.
 \end{align*}
 %====================================================================%
 To satisfy equation (\ref{PsiVPsiA}) for a $\Psi_V$ function
 of the form (\ref{PsiVForms}a), it suffices to take $h_{A1}=h_{A2}=0$
 and to choose $h_{A3}$ to satisfy the differential equation
-$$ - \frac{2}{r}h^\prime_{A3}(r) - h^{\prime\prime}_{A3}(r) = g(r).$$
+%====================================================================%
+$$ - \frac{2}{r}h^\prime_{A3}(r) - h^{\prime\prime}_{A3}(r) = g_{V1}(r).$$
+%====================================================================%
 Examples of solutions include
 %====================================================================%
 $$\begin{array}{lclclcl}
- \displaystyle{ g(r) }
+ \displaystyle{ g_{V1}(r) }
  &=& 
  \displaystyle{ r^p  }
  \qquad &\Longrightarrow& \qquad
@@ -2673,7 +2674,7 @@ $$\begin{array}{lclclcl}
  \displaystyle{-\frac{1}{(p+2)(p+3)} r^{p+2}}
 \\[12pt]
 %--------------------------------------------------------------------%
- \displaystyle{ g(r) }
+ \displaystyle{ g_{V1}(r) }
  &=& 
  \displaystyle{ \frac{e^{ikr}}{4\pi r} }
  \qquad &\Longrightarrow& \qquad
@@ -2689,27 +2690,71 @@ equations
 %====================================================================%
 \begin{align*}
   - \frac{2}{r}h^\prime_{A1} -h^{\prime\prime}_{A1} 
-&= g(r) 
+&= g_{V2}(r) 
 \\
  \frac{1}{r} h^\prime_{A1} + \frac{4}{r}h^\prime_{A2}
  +h^{\prime\prime}_{A2}
 &=0
 \\
- + h_{A1} + r h_{A1}^\prime
+ +3h_{A1} + r h_{A1}^\prime
           - \frac{2}{r}h^\prime_{A3} - h^{\prime\prime}_{A3}
 &=0.
 \end{align*}
 %====================================================================%
-For example, if $g(r)=\frac{e^{ikr}}{4\pi r}$ then I find
-\begin{align*}
- h_{A1}(r) &= -\frac{\texttt{ExpRel}(ikr,2)}{4\pi r} 
-\\
- h_{A2}(r) &= +\frac{\texttt{ExpRel}(ikr,2)}{4\pi r^2} 
-              -\frac{\texttt{ExpRel}(ikr,3)}{4\pi r^3} 
-              -\frac{1}{3}
-\\
- h_{A3}(r) &=
-\end{align*}
+Examples of solutions include
+%====================================================================%
+%====================================================================%
+$$
+ g_{V2}(r) 
+ = 
+ \displaystyle{ r^p  }
+ \qquad \Longrightarrow \qquad
+ \left\{
+ \begin{array}{ccl}
+ \displaystyle{ h_{A1}(r) }
+ &=& 
+ \displaystyle{-\frac{1}{(p+2)(p+3)} r^{p+2}}
+\\[8pt]
+ \displaystyle{ h_{A2}(r) }
+ &=& 
+ \displaystyle{+\frac{1}{(p+2)(p+3)(p+5)} r^{p+2}}
+\\[8pt]
+ \displaystyle{ h_{A3}(r) }
+ &=& 
+ \displaystyle{-\frac{1}{(p+2)(p+3)(p+4)} r^{p+4}}
+\\ 
+ \end{array}
+ \right.
+\\[12pt]
+$$
+%====================================================================%
+and
+%====================================================================%
+$$
+ g_{V2}(r) 
+ = 
+ \displaystyle{ \frac{e^{ikr}}{4\pi r}  }
+ \qquad \Longrightarrow \qquad
+ \left\{
+ \begin{array}{ccl}
+ \displaystyle{ h_{A1}(r) }
+ &=& 
+ \displaystyle{-\frac{\texttt{ExpRel}(ikr,2)}{4\pi (ik)^2 r}}
+\\[8pt]
+ \displaystyle{ h_{A2}(r) }
+ &=& 
+ \displaystyle{+\frac{\texttt{ExpRel}(ikr,3)}{4\pi (ik)^3 r^2}
+               -\frac{\texttt{ExpRel}(ikr,4)}{4\pi (ik)^4 r^3}
+              }
+\\[8pt]
+ \displaystyle{ h_{A3}(r) }
+ &=& 
+ \displaystyle{-\frac{\texttt{ExpRel}(ikr,3)}{4\pi (ik)^3}}
+\\ 
+ \end{array}
+ \right.
+\\[12pt]
+$$
 
 %====================================================================%
 %====================================================================%
