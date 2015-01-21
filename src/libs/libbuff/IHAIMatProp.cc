@@ -51,8 +51,8 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
    /*- detect filenames of the form CONST_EPS_xx-------------------*/
    /*--------------------------------------------------------------*/
    if (!strncasecmp(Name,"CONST_EPS_",10))
-    { int nConv=S2CD(Name+10,&ConstEps);
-      if (nConv!=1 || ConstEps==0.0)
+    { int Status=S2CD(Name+10,&ConstEps);
+      if (Status!=0 || ConstEps==0.0)
        { ErrMsg = vstrdup("invalid material specification %s",Name);
          return;
        };

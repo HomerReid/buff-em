@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  SWGGeometry *G = new SWGGeometry("buff-test-E10Sphere.buffgeo");
+  SWGGeometry *G = new SWGGeometry("E10Sphere_533.buffgeo");
   HMatrix *M     = G->AllocateVIEMatrix();
   HVector *J     = G->AllocateRHSVector();
   cdouble Omega  = 0.1;
