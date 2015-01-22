@@ -56,6 +56,7 @@ typedef void (*UserFIntegrand)(double *x, double *b, double Divb, double *nHat,
 typedef void (*UserFFIntegrand)(double *xA, double *bA, double DivbA, double *nHatA,
                                 double *xB, double *bB, double DivbB, double *nHatB,
                                 void *UserData, double *I);
+
 /***************************************************************/
 /* utility routine to get the outward-pointing normal to a     */
 /* triangle with vertices (V1, V2, V3). 'Outward-pointing'     */

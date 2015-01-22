@@ -95,15 +95,22 @@ void AnalyzeVolume(SWGVolume *V)
   printf(" \n");
 
   double MinQF=1.0e9, MaxQF=-1.0e9, AvgQF=0.0;
-  FILE *f=vfopen("/tmp/%s.TQFs","w",GetFileBase(V->MeshFileName));
+//  FILE *f=vfopen("/tmp/%s.TQFs","w",GetFileBase(V->MeshFileName));
   for(int nt=0; nt<V->NumTets; nt++)
    { double QF = GetTetrahedronQualityFactor(V,nt);
-     fprintf(f,"Tet %5i: QF = %e \n",nt,QF);
+#if 0
+     fprintf(f,"Tet %5i: (V,QF) = (%e,%e) A=(%.2e,%.2e,%.2e,%.2e)\n",
+                nt,V->Tets[nt]->Volume,QF,
+                V->Faces[V->Tets[nt]->FI[0]]->Area,
+                V->Faces[V->Tets[nt]->FI[1]]->Area,
+                V->Faces[V->Tets[nt]->FI[2]]->Area,
+                V->Faces[V->Tets[nt]->FI[3]]->Area);
+#endif
      MinQF=fmin(MinQF, QF);
      MaxQF=fmax(MaxQF, QF);
      AvgQF+=QF;
    };
-  fclose(f);
+//  fclose(f);
   AvgQF/=((double)(V->NumTets));
 
   printf(" Min/Max/Avg Quality factor: %e / %e / %e \n",
