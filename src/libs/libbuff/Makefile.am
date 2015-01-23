@@ -5,6 +5,7 @@ libbuff_la_SOURCES = 	\
  Cubature.cc     	\
  IHAIMatProp.cc  	\
  InitFaceList.cc 	\
+ PFT.cc          	\
  ReadGMSHFile.cc 	\
  RHSVector.cc    	\
  SWGGeometry.cc  	\

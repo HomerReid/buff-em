@@ -125,9 +125,9 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgincludedir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libbuff_la_LIBADD =
 am_libbuff_la_OBJECTS = GetFields.lo Cubature.lo IHAIMatProp.lo \
-	InitFaceList.lo ReadGMSHFile.lo RHSVector.lo SWGGeometry.lo \
-	SWGVolume.lo TetCR.lo TetTetInt_SI.lo TetTetInt_TD.lo \
-	VIEMatrix.lo Visualize.lo
+	InitFaceList.lo PFT.lo ReadGMSHFile.lo RHSVector.lo \
+	SWGGeometry.lo SWGVolume.lo TetCR.lo TetTetInt_SI.lo \
+	TetTetInt_TD.lo VIEMatrix.lo Visualize.lo
 libbuff_la_OBJECTS = $(am_libbuff_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -229,7 +229,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS =  -I/home/homer/work/scuff-em-installation/include/scuff-em -I/home/homer/work/scuff-em-installation/include/scuff-em
+CPPFLAGS =  -I/home/homer/work/scuff-em-installation/include/scuff-em
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -257,7 +257,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LAPACK_LIBS = -llapack
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS =  -L/home/homer/work/scuff-em-installation/lib -L/home/homer/work/scuff-em-installation/lib
+LDFLAGS =  -L/home/homer/work/scuff-em-installation/lib
 LIBOBJS = 
 LIBS = -lscuff -lreadline -llapack -lblas   -L/home/homer/work/scuff-em-installation/lib -L/usr/lib/gcc/x86_64-linux-gnu/4.8 -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../.. -lgfortran -lm -lquadmath
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
@@ -350,6 +350,7 @@ libbuff_la_SOURCES = \
  Cubature.cc     	\
  IHAIMatProp.cc  	\
  InitFaceList.cc 	\
+ PFT.cc          	\
  ReadGMSHFile.cc 	\
  RHSVector.cc    	\
  SWGGeometry.cc  	\
@@ -448,6 +449,7 @@ include ./$(DEPDIR)/Cubature.Plo
 include ./$(DEPDIR)/GetFields.Plo
 include ./$(DEPDIR)/IHAIMatProp.Plo
 include ./$(DEPDIR)/InitFaceList.Plo
+include ./$(DEPDIR)/PFT.Plo
 include ./$(DEPDIR)/RHSVector.Plo
 include ./$(DEPDIR)/ReadGMSHFile.Plo
 include ./$(DEPDIR)/SWGGeometry.Plo

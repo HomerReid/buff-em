@@ -144,7 +144,7 @@ class SWGVolume
    SWGFace **ExteriorFaces;        /* array of pointers to exterior faces */
 
    char *MeshFileName;             /* saved name of mesh file */
-   char *Label;                    /* unique label identifying surface */
+   char *Label;                    /* unique label identifying the volume*/
 
    char *MatFileName;              /* saved name of material property file */
    IHAIMatProp *MP;                /* material property */
@@ -205,6 +205,8 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
+   HMatrix *GetPFT(IncField *IF, HVector *JVector,
+                   cdouble Omega, HMatrix *PFTMatrix=0);
 
    // compute individual matrix blocks
    void AssembleGBlock(int noa, int nob, cdouble Omega,
@@ -243,7 +245,7 @@ class SWGGeometry
 SWGTet *NewSWGTet(double *Vertices, int iV1, int iV2, int iV3, int iV4);
 
 int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
-               double *rRel);
+               double *rRel=0);
 
 int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB);
 
@@ -291,9 +293,8 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
                   SWGVolume *VB, int ntB, int iQB,
                   UserTTIntegrand UserIntegrand,
                   void *UserData, int fdim,
-                  double *Result, double *Error,
-                  int NumuPts, int NumXiPts, int MaxEvals, 
-                  double RelTol);
+                  double *Result, double *Error, double *Buffer,
+                  int MaxEvals, double RelTol);
 
 void TetTetInt_SI(SWGVolume *VA, int ntA, int iQa,
                   SWGVolume *VB, int ntB, int iQb,

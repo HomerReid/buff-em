@@ -25,7 +25,6 @@
  */
 #include <stdio.h>
 
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <libhrutil.h>
@@ -49,158 +48,11 @@ typedef struct TDIntegrandData
    double *V0P, L1P[3], L2P[3], L3P[3];
    double *Q, *QP, PreFac, PreFacP;
 
-   double *u;
-   double *ABCDEF;
-
    UserTTIntegrand UserFunction;
    void *UserData;
-   int fdim;
-
-   int NumuPts;
-   int NumXiPts;
+   double *fBuffer;
 
  } TDIntegrandData;
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-int xIntegrand(unsigned ndim, const double *x, void *params,
-               unsigned fdim, double *fval)
-{
-  TDIntegrandData *TDIData=(TDIntegrandData *)params;
-
-  double *u = TDIData->u;
-  double A  = TDIData->ABCDEF[0];
-  double B  = TDIData->ABCDEF[1];
-  double C  = TDIData->ABCDEF[2];
-  double D  = TDIData->ABCDEF[3];
-  double E  = TDIData->ABCDEF[4];
-  double F  = TDIData->ABCDEF[5];
-  double BmA = B-A;
-
-  double Xi1 = (BmA)*x[0]           + A;
-  double Xi2 = (BmA)*x[0]*x[1]      + C;
-  double Xi3 = (BmA)*x[0]*x[1]*x[2] + E;
-  double Jacobian = BmA*BmA*BmA*x[0]*x[0]*x[1];
-
-  if (fabs(Jacobian) < 1.0e-10 ) 
-   { memset(fval, 0, fdim*sizeof(double));
-     return 0;
-   };
-
-  double Eta1=Xi1+u[0];
-  double Eta2=Xi2+u[1];
-  double Eta3=Xi3+u[2];
-
-  double *V0     = TDIData->V0;
-  double *L1     = TDIData->L1;
-  double *L2     = TDIData->L2;
-  double *L3     = TDIData->L3;
-  double *V0P    = TDIData->V0P;
-  double *L1P    = TDIData->L1P;
-  double *L2P    = TDIData->L2P;
-  double *L3P    = TDIData->L3P;
-  double *Q      = TDIData->Q;
-  double *QP     = TDIData->QP;
-  double PreFac  = TDIData->PreFac;
-  double PreFacP = TDIData->PreFacP;
-
-  double X[3], b[3], XP[3], bP[3];
-  for(int Mu=0; Mu<3; Mu++)
-   { X[Mu] = V0[Mu] + Xi1*L1[Mu] + Xi2*L2[Mu] + Xi3*L3[Mu];
-     b[Mu] = PreFac * ( X[Mu] - Q[Mu] ); 
-     XP[Mu] = V0P[Mu] + Eta1*L1P[Mu] + Eta2*L2P[Mu] + Eta3*L3P[Mu];
-     bP[Mu] = PreFacP * ( XP[Mu] - QP[Mu] ); 
-   };
-
-  TDIData->UserFunction(X,  b,  3.0*PreFac,
-                        XP, bP, 3.0*PreFacP,
-                        TDIData->UserData, fval);
-
-  for(int nf=0; nf<fdim; nf++)
-   fval[nf]*=Jacobian;
-
-  return 0;
-
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void GetXiIntegral(double u[3], double ABCDEF[6],
-                   TDIntegrandData *TDIData, double *Result)
-{
-  TDIData->u      = u;
-  TDIData->ABCDEF = ABCDEF;
-
-  double A=ABCDEF[0];
-  double B=ABCDEF[1];
-  double C=ABCDEF[2];
-  double D=ABCDEF[3];
-  double E=ABCDEF[4];
-  double F=ABCDEF[5];
-
-  if ( fabs(A+D-C) > 1.0e-8  || fabs(C+F-E)>1.0e-8 )
-   ErrExit("%s:%i: internal error (%e,%e)",
-            __FILE__,__LINE__,fabs(A+D-C),fabs(C+F-E));
-
-  double Lower[3]={0.0, 0.0, 0.0};
-  double Upper[3]={1.0, 1.0, 1.0};
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  int NumPts = TDIData->NumXiPts;
-  int fdim   = TDIData->fdim;
-  if (NumPts==0)
-   {
-/*
-     hcubature(fdim, XiIntegrand, (void *)Data, 3, Lower, Upper,
-	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
-*/
-     ErrExit("%s:%i: internal error",__FILE__,__LINE__);
-   }
-  else
-   { 
-     double Avg[3], Delta[3];
-     double Jacobian=1.0;
-     for(int i=0; i<3; i++)
-      {
-        Avg[i]     = 0.5*(Upper[i] + Lower[i]);
-        Delta[i]   = 0.5*(Upper[i] - Lower[i]);
-        Jacobian*=Delta[i];
-      };
-     double *CCQR=GetCCRule(NumPts);
-     double *fval = new double[fdim];
-     double x[3];
-     memset(Result, 0, fdim*sizeof(double));
-     for(int nx1=0; nx1<NumPts; nx1++)
-      { 
-        double x1=CCQR[2*nx1+0];
-        double w1=CCQR[2*nx1+1];
-        x[0] = Avg[0] + x1*Delta[0];
-        for(int nx2=0; nx2<NumPts; nx2++)
-         { 
-            double x2=CCQR[2*nx2+0];
-            double w2=CCQR[2*nx2+1];
-            x[1] = Avg[1] + x2*Delta[1];
-
-            for(int nx3=0; nx3<NumPts; nx3++)
-             { 
-               double x3=CCQR[2*nx3+0];
-               double w3=CCQR[2*nx3+1];
-               x[2] = Avg[2] + x3*Delta[2];
-   
-               xIntegrand(3, x, (void *)TDIData, fdim, fval);
-               for(int nf=0; nf<fdim; nf++)
-                Result[nf] += w1*w2*w3*Jacobian*fval[nf];
-             };
-         };
-      };
-     delete[] fval;
-   }; 
-
-}
 
 /***************************************************************/
 /***************************************************************/
@@ -437,29 +289,84 @@ void GetSubregionData(double y1, double y2, double y3,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-int yIntegrand(unsigned ndim, const double *y, void *params,
-               unsigned fdim, double *fval)
+void GetxIntegrand(const double x[3], const double u[3], const double ABCDEF[6],
+                   TDIntegrandData *TDIData, double *xJacobian, double *f)
+{
+  double A  = ABCDEF[0];
+  double B  = ABCDEF[1];
+  double C  = ABCDEF[2];
+  double D  = ABCDEF[3];
+  double E  = ABCDEF[4];
+  double F  = ABCDEF[5];
+  double BmA = B-A;
+
+  double Xi1 = (BmA)*x[0]           + A;
+  double Xi2 = (BmA)*x[0]*x[1]      + C;
+  double Xi3 = (BmA)*x[0]*x[1]*x[2] + E;
+  *xJacobian = BmA*BmA*BmA*x[0]*x[0]*x[1];
+
+  double Eta1=Xi1+u[0];
+  double Eta2=Xi2+u[1];
+  double Eta3=Xi3+u[2];
+
+  double *V0     = TDIData->V0;
+  double *L1     = TDIData->L1;
+  double *L2     = TDIData->L2;
+  double *L3     = TDIData->L3;
+  double *V0P    = TDIData->V0P;
+  double *L1P    = TDIData->L1P;
+  double *L2P    = TDIData->L2P;
+  double *L3P    = TDIData->L3P;
+  double *Q      = TDIData->Q;
+  double *QP     = TDIData->QP;
+  double PreFac  = TDIData->PreFac;
+  double PreFacP = TDIData->PreFacP;
+
+  double X[3], b[3], XP[3], bP[3];
+  for(int Mu=0; Mu<3; Mu++)
+   { X[Mu] = V0[Mu] + Xi1*L1[Mu] + Xi2*L2[Mu] + Xi3*L3[Mu];
+     b[Mu] = PreFac * ( X[Mu] - Q[Mu] ); 
+     XP[Mu] = V0P[Mu] + Eta1*L1P[Mu] + Eta2*L2P[Mu] + Eta3*L3P[Mu];
+     bP[Mu] = PreFacP * ( XP[Mu] - QP[Mu] ); 
+   };
+
+  TDIData->UserFunction(X,  b,  3.0*PreFac,
+                        XP, bP, 3.0*PreFacP,
+                        TDIData->UserData, f);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+int yxIntegrand(unsigned ndim, const double *yx, void *params,
+                unsigned fdim, double *fval)
 {
   TDIntegrandData *TDIData = (TDIntegrandData *)params;
+  const double *y = yx + 0;
+  const double *x = yx + 3;
 
   double u[NUMREGIONS][3];
   double ABCDEF[NUMREGIONS][6];
-  double J[NUMREGIONS];
-  GetSubregionData(y[0], y[1], y[2], u, ABCDEF, J);
+  double yJacobian[NUMREGIONS];
+  GetSubregionData(y[0], y[1], y[2], u, ABCDEF, yJacobian);
 
-  double *fThisRegion = new double[fdim];
+  double *fThisRegion = TDIData->fBuffer;
   memset(fval, 0, fdim*sizeof(double));
   for(int d=0; d<NUMREGIONS; d++)
    { 
-     if (fabs(J[d]) < 1.0e-8 ) 
+     if (fabs(yJacobian[d]) < 1.0e-8) 
       continue;
 
-     GetXiIntegral(u[d], ABCDEF[d], TDIData, fThisRegion);
+     double Jacobian;
+     GetxIntegrand(x, u[d], ABCDEF[d], TDIData, &Jacobian, fThisRegion);
+     Jacobian *= yJacobian[d];
 
+     if (fabs(Jacobian) < 1.0e-8) 
+      continue;
+     
      for(int nf=0; nf<fdim; nf++)
-      fval[nf] += J[d]*fThisRegion[nf];
+      fval[nf] += Jacobian*fThisRegion[nf];
    };
-  delete[] fThisRegion;
 
   return 0;
 
@@ -473,8 +380,8 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
                   UserTTIntegrand UserIntegrand,
                   void *UserData, int fdim,
                   double *Result, double *Error,
-                  int NumuPts, int NumXiPts, int MaxEvals, 
-                  double RelTol)
+                  double *fBuffer,
+                  int MaxEvals, double RelTol)
 {
   /***************************************************************/
   /***************************************************************/
@@ -499,9 +406,7 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
   TDIntegrandData MyData, *Data=&MyData;
   Data->UserFunction = UserIntegrand;
   Data->UserData     = UserData;
-  Data->fdim         = fdim;
-  Data->NumuPts      = NumuPts;
-  Data->NumXiPts     = NumXiPts;
+  Data->fBuffer      = fBuffer;
   
   Data->V0 = QA;
   VecSub(V1A, QA,  Data->L1);
@@ -517,62 +422,19 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
   Data->QP  = QB;
   Data->PreFacP = PreFacB;
 
-  double Lower[3]={0.0, 0.0, 0.0};
-  double Upper[3]={1.0, 1.0, 1.0};
+  double Lower[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double Upper[6]={1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
   double Jacobian = 36.0 * TA->Volume * TB->Volume;
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  int NumPts=NumuPts;
-  if (NumPts==0)
-   {
-     hcubature(fdim, yIntegrand, (void *)Data, 3, Lower, Upper,
-	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+  hcubature(fdim, yxIntegrand, (void *)Data, 6, Lower, Upper,
+	    MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
 
-     for(int nf=0; nf<fdim; nf++)
-      { Result[nf]*=Jacobian;
-        Error[nf]*=Jacobian;
-      };
-   }
-  else
-   { 
-     double Avg[3], Delta[3];
-     for(int i=0; i<3; i++)
-      {
-        Avg[i]     = 0.5*(Upper[i] + Lower[i]);
-        Delta[i]   = 0.5*(Upper[i] - Lower[i]);
-        Jacobian*=Delta[i];
-      };
-     double *CCQR=GetCCRule(NumPts);
-     double *fval = new double[fdim];
-     double u[3];
-     memset(Result, 0, fdim*sizeof(double));
-     memset(Error, 0, fdim*sizeof(double));
-     for(int nx1=0; nx1<NumPts; nx1++)
-      { 
-        double x1=CCQR[2*nx1+0];
-        double w1=CCQR[2*nx1+1];
-        u[0] = Avg[0] + x1*Delta[0];
-        for(int nx2=0; nx2<NumPts; nx2++)
-         { 
-            double x2=CCQR[2*nx2+0];
-            double w2=CCQR[2*nx2+1];
-            u[1] = Avg[1] + x2*Delta[1];
-
-            for(int nx3=0; nx3<NumPts; nx3++)
-             { 
-               double x3=CCQR[2*nx3+0];
-               double w3=CCQR[2*nx3+1];
-               u[2] = Avg[2] + x3*Delta[2];
-   
-               yIntegrand(3, u, (void *)Data, fdim, fval);
-               for(int nf=0; nf<fdim; nf++)
-                Result[nf] += w1*w2*w3*Jacobian*fval[nf];
-             };
-         };
-      };
-     delete[] fval;
+  for(int nf=0; nf<fdim; nf++)
+   { Result[nf]*=Jacobian;
+     Error[nf]*=Jacobian;
    };
 
 }

@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
   char *OmegaFile;                   int nOmegaFiles;
   char *EPFiles[MAXEPF];             int nEPFiles;
   char *JPlotFile=0;
+  char *PFTFile=0;  
   int ExportMatrix=0;
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
@@ -89,6 +90,8 @@ int main(int argc, char *argv[])
      {"psStrength",     PA_CDOUBLE, 3, MAXPS,   (void *)psStrength,  &npsStrength,  "point source strength"},
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
+/**/
+     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,             "name of PFT output file"},
 /**/
      {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "J-plot file"},
      {0,0,0,0,0,0,0}
@@ -257,6 +260,12 @@ int main(int argc, char *argv[])
       G->PlotCurrentDistribution(JPlotFile, J, "J_%s",CD2S(Omega));
 
      /*--------------------------------------------------------------*/
+     /*--------------------------------------------------------------*/
+     /*--------------------------------------------------------------*/
+     if (PFTFile)
+      WritePFTFile(BSD, PFTFile);
+
+     /*--------------------------------------------------------------*/
      /*- scattered fields at user-specified points ------------------*/
      /*--------------------------------------------------------------*/
      for(int nepf=0; nepf<nEPFiles; nepf++)
@@ -270,3 +279,4 @@ int main(int argc, char *argv[])
   printf("Thank you for your support.\n");
 
 }
+
