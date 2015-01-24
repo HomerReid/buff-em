@@ -293,12 +293,12 @@ int NumThreads = GetNumThreads();
           { 
             int nbfA, nbfB;
             if (UseSymmetry)
-             { nbfA      = NBFPairs / NBFB;
-               nbfB      = NBFPairs % NBFB;
+             { nbfA      = nbfp / NBFB;
+               nbfB      = nbfp % NBFB;
              }
             else
-             { nbfA      = NBFPairs / NBFB;
-               nbfB      = NBFPairs % NBFB;
+             { nbfA      = nbfp / NBFB;
+               nbfB      = nbfp % NBFB;
              };
    
             cdouble IPFT[7];
