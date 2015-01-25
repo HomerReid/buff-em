@@ -435,7 +435,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega, cdouble *dG=0)
+                          cdouble Omega)
 {
   cdouble IPFT[7];
   GetPFTIntegrals_BFBF(VA, nfA, VB, nfB, Omega, IPFT);
@@ -459,8 +459,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G, HMatrix **dGMatrix,
-                                 int RowOffset, int ColOffset)
+                                 HMatrix *G, int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -477,7 +476,8 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 #else
   int NumThreads=GetNumThreads();
   Log(" OpenMP multithreading (%i threads...)",NumThreads);
-#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
+#pragma omp parallel for schedule(dynamic,1),		\
+                         num_threads(NumThreads)
 #endif
   for(int nfa=0; nfa<NFA; nfa++)
    for(int nfb=SameObject*nfa; nfb<NFB; nfb++)
@@ -487,17 +487,10 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 
       int Row=RowOffset + nfa;
       int Col=ColOffset + nfb;
-      if (dGMatrix==0)
-       {
-         G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, 0) );
-       }
-      else 
-       { cdouble dG[6];
-         G->SetEntry(Row, Col, GetGMatrixElement(OA, nfa, OB, nfb, Omega, dG) );
-         for(int Mu=0; Mu<6; Mu++)
-          if (dGMatrix[Mu]) 
-           dGMatrix[Mu]->SetEntry(Row, Col, dG[Mu]);
-       };
+      cdouble GAB=GetGMatrixElement(OA, nfa, OB, nfb, Omega);
+      G->SetEntry(Row, Col, GAB);
+      if (SameObject && nfb>nfa)
+       G->SetEntry(Col, Row, GAB);
     };
 
 }
@@ -550,7 +543,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     { 
-      AssembleGBlock(noa, nob, Omega, M, 0,
+      AssembleGBlock(noa, nob, Omega, M,
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)

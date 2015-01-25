@@ -210,7 +210,7 @@ class SWGGeometry
 
    // compute individual matrix blocks
    void AssembleGBlock(int noa, int nob, cdouble Omega,
-                       HMatrix *G, HMatrix **GradG,
+                       HMatrix *G,
                        int RowOffset=0, int ColOffset=0);
    void AssembleVInvBlock(int no, cdouble Omega,
                           SMatrix *VInv, SMatrix *ImEps,
@@ -222,6 +222,8 @@ class SWGGeometry
    // directories within which to search for mesh files
    static int NumMeshDirs;
    static char **MeshDirs;
+   static int MaxTDEvals;
+   static int TDNCVThreshold;
 
 //  private:
 

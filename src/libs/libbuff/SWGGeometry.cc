@@ -46,6 +46,8 @@ namespace buff{
 /***************************************************************/
 int SWGGeometry::NumMeshDirs=0;
 char **SWGGeometry::MeshDirs=0;
+int SWGGeometry::TDNCVThreshold=3;
+int SWGGeometry::MaxTDEvals=100000;
 
 /***********************************************************************/
 /* parser subroutine for OBJECT...ENDOBJECT section in file ************/
@@ -183,6 +185,23 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
         Log("Added %s to mesh search path.",MeshDirs[nt]);
       };
    };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  char *s;
+  if ( (s=getenv("BUFF_MAXTDEVALS")) )
+   { sscanf(s,"%i",&MaxTDEvals);
+     Log("Setting MaxTDEvals=%i.",MaxTDEvals);
+   };
+  if ( (s=getenv("BUFF_TDNCVTHRESHOLD")) )
+   { sscanf(s,"%i",&TDNCVThreshold);
+     Log("Setting TDNCVThreshold=%i.",TDNCVThreshold);
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
 
   /***************************************************************/
   /* try to open input file **************************************/

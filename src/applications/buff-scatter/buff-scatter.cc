@@ -270,7 +270,6 @@ int main(int argc, char *argv[])
      if (MomentFile)
       WriteMomentFile(BSD, MomentFile);
 
-
      /*--------------------------------------------------------------*/
      /*- scattered fields at user-specified points ------------------*/
      /*--------------------------------------------------------------*/

@@ -110,8 +110,6 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /* compute PFT integrals between pairs of SWG basis functions  */
 /***************************************************************/
-int TDNCVThreshold=3;
-int MaxTDEvals=100000;
 void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
                           SWGVolume *OB, int nbfB,
                           cdouble Omega, cdouble IPFT[NUMPFTIS])
@@ -147,7 +145,7 @@ void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
 
          cdouble Result[NUMPFTIS], Error[NUMPFTIS], Buffer[NUMPFTIS];
          ncv=CompareTets(OA, ntA, OB, ntB);
-         if (ncv<=TDNCVThreshold)
+         if (ncv<=SWGGeometry::TDNCVThreshold)
           TetTetInt(OA, ntA, iQA, 1.0, OB, ntB, iQB, 1.0,
                     PFTIntegrand_BFBF, (void *)Data, 2*NUMPFTIS, 
                     (double *)Result, (double *)Error, 
@@ -156,7 +154,7 @@ void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
           TetTetInt_TD(OA, ntA, iQA, OB, ntB, iQB,
                        PFTIntegrand_BFBF, (void *)Data, 2*NUMPFTIS,
                        (double *)Result, (double *)Error, (double *)Buffer,
-                       MaxTDEvals, 1.0e-12);
+                       SWGGeometry::MaxTDEvals, 1.0e-12);
  
          double Sign = (SignA==SignB) ? 1.0 : -1.0;
          for(int n=0; n<NUMPFTIS; n++)
@@ -232,27 +230,11 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 }
 
 /***************************************************************/
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
                              cdouble Omega, HMatrix *PFTMatrix)
 { 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  char *s;
-  if ( (s=getenv("BUFF_MAXTDEVALS")) )
-   { sscanf(s,"%i",&MaxTDEvals);
-     Log("Setting MaxTDEvals=%i.",MaxTDEvals);
-   };
-  if ( (s=getenv("BUFF_TDNCVTHRESHOLD")) )
-   { sscanf(s,"%i",&TDNCVThreshold);
-     Log("Setting TDNCVThreshold=%i.",TDNCVThreshold);
-   };
-
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
