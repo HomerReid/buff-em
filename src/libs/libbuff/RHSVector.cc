@@ -112,6 +112,10 @@ HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V)
       }; // for(int nf=0; nf<O->NumInteriorFaces; no++, nbf++)
 
    }; // for(int no=0...)
+  
+  return V;
+
+
 }
 
 } // namespace buff

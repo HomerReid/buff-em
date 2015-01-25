@@ -117,6 +117,8 @@ typedef struct VIIData
 void VIntegrand(double *x, double *b, double DivB, 
                 void *UserData, double *I)
 {
+  (void) DivB;
+
   VIIData *Data   = (VIIData *)UserData;
   double *QA      = Data->QA;
   double PreFacA  = Data->PreFacA;

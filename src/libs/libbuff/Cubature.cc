@@ -147,7 +147,7 @@ int TIIntegrand(unsigned ndim, const double *uvw, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  for(int n=0; n<fdim; n++)
+  for(unsigned int n=0; n<fdim; n++)
    fval[n]*=Jacobian;
 
   return 0;
@@ -247,9 +247,9 @@ void BFInt(SWGVolume *V, int nf,
   TetInt(V, F->iMTet, F->MIndex, -1.0, Integrand, UserData, 
          fdim, MResult, MError, NumPts, MaxEvals, RelTol);
 
-  for(int nf=0; nf<fdim; nf++) 
-   { Result[nf] += MResult[nf];
-     if (Error) Error[nf] +=  MError[nf];
+  for(int n=0; n<fdim; n++) 
+   { Result[n] += MResult[n];
+     if (Error) Error[n] +=  MError[n];
    };
 
   delete[] MResult;
@@ -286,6 +286,7 @@ int TTIIntegrand(unsigned ndim, const double *uvw, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  (void) ndim;
   TTIData *Data= (TTIData *)params;
 
   double *QA     = Data->QA;
@@ -346,7 +347,7 @@ int TTIIntegrand(unsigned ndim, const double *uvw, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  for(int n=0; n<fdim; n++)
+  for(unsigned int n=0; n<fdim; n++)
    fval[n]*=Jacobian;
 
   return 0;
@@ -586,7 +587,7 @@ int FIIntegrand(unsigned ndim, const double *uv, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  for(int n=0; n<fdim; n++)
+  for(unsigned int n=0; n<fdim; n++)
    fval[n]*=Jacobian;
 
   return 0;
@@ -668,8 +669,8 @@ void FaceInt(SWGVolume *V, int nt, int nf, int nfBF, double Sign,
 
         Integrand(x, b, 3.0*PreFac, nHat, UserData, dI);
 
-        for(int nf=0; nf<fdim; nf++)
-         Result[nf]+=w*dI[nf];
+        for(int n=0; n<fdim; n++)
+         Result[n]+=w*dI[n];
       };
      delete[] dI;
    };
@@ -705,6 +706,7 @@ int FFIIntegrand(unsigned ndim, const double *uv, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  (void)ndim;
   FFIData *Data   = (FFIData *)params;
 
   double *V1A     = Data->V1A;
@@ -762,7 +764,7 @@ int FFIIntegrand(unsigned ndim, const double *uv, void *params,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  for(int n=0; n<fdim; n++)
+  for(unsigned int n=0; n<fdim; n++)
    fval[n]*=Jacobian;
 
   return 0;

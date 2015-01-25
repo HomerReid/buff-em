@@ -47,11 +47,21 @@
 
 using namespace scuff;
 
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+namespace buff {
+
 // numbers of PFT quantities and integrals
 #define NUMPFTQS 7
 #define NUMPFTIS 7
 
-namespace buff {
+
+int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
+                           cdouble Omega, int Indices[7],
+                           cdouble VInvEntries[7], 
+                           double ImEpsEntries[7]);
+
 
 typedef struct PFTIntegrandData
  {
@@ -82,7 +92,7 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
      return;
    };
 
-  cdouble ScalarFactor = VecDot(bA, bB) + DivbA*DivbB/(k*k);
+  cdouble ScalarFactor = VecDot(bA, bB) - DivbA*DivbB/(k*k);
   cdouble ExpFac=exp(II*k*r)/(4.0*M_PI*r);
   cdouble *zI = (cdouble *)I;
   zI[0] = ScalarFactor * ExpFac;
@@ -223,6 +233,9 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 }
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
@@ -255,94 +268,90 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if (JVector)
-   { 
-     for(int noA=0; noA<NumObjects; noA++)
-      for(int noB=noA; noB<NumObjects; noB++)
-       { 
-         SWGVolume *OA = Objects[noA];
-         int OffsetA   = BFIndexOffset[noA];
-         int NBFA      = OA->NumInteriorFaces;
+  for(int noA=0; noA<NumObjects; noA++)
+   for(int noB=noA; noB<NumObjects; noB++)
+    { 
+      SWGVolume *OA = Objects[noA];
+      int OffsetA   = BFIndexOffset[noA];
+      int NBFA      = OA->NumInteriorFaces;
    
-         SWGVolume *OB = Objects[noB];
-         int OffsetB   = BFIndexOffset[noB];
-         int NBFB      = OB->NumInteriorFaces;
+      SWGVolume *OB = Objects[noB];
+      int OffsetB   = BFIndexOffset[noB];
+      int NBFB      = OB->NumInteriorFaces;
    
-         int NBFPairs;
-         bool UseSymmetry = false;
-         if (UseSymmetry)
-          NBFPairs = OA==OB ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
-         else 
-          NBFPairs = NBFA*NBFB;
+      int NBFPairs;
+      bool UseSymmetry = false;
+      if (UseSymmetry)
+       NBFPairs = OA==OB ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
+      else 
+       NBFPairs = NBFA*NBFB;
    
-         /*--------------------------------------------------------------*/
-         /*- multithreaded loop over basis functions on OA, OB-----------*/
-         /*--------------------------------------------------------------*/
-         double P=0.0, Fx=0.0, Fy=0.0, Fz=0.0, Tx=0.0, Ty=0.0, Tz=0.0;
+      /*--------------------------------------------------------------*/
+      /*- multithreaded loop over basis functions on OA, OB-----------*/
+      /*--------------------------------------------------------------*/
+      double P=0.0, Fx=0.0, Fy=0.0, Fz=0.0, Tx=0.0, Ty=0.0, Tz=0.0;
 #ifdef USE_OPENMP
 int NumThreads = GetNumThreads();
 #pragma omp parallel for schedule(dynamic,1),      \
                          num_threads(NumThreads),  \
                          reduction(+:P, Fx, Fy, Fz, Tx, Ty, Tz)
 #endif
-         for(int nbfp=0; nbfp<NBFPairs; nbfp++)
-          { 
-            int nbfA, nbfB;
-            if (UseSymmetry)
-             { nbfA      = nbfp / NBFB;
-               nbfB      = nbfp % NBFB;
-             }
-            else
-             { nbfA      = nbfp / NBFB;
-               nbfB      = nbfp % NBFB;
-             };
-   
-            cdouble IPFT[7];
-            GetPFTIntegrals_BFBF(OA, nbfA, OB, nbfB, Omega, IPFT);
-            cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
-                             *( JVector->GetEntry(OffsetB + nbfB) );
-   
-            double Factor = 0.5;
-            if (noA==noB && nbfB > nbfA)
-             Factor = 1.0;
-   
-            P  += Factor * real( JJ * IPFT[0] );
-
-            Factor/= real(Omega);
-
-            Fx += Factor*imag( JJ * IPFT[1] );
-            Fy += Factor*imag( JJ * IPFT[2] );
-            Fz += Factor*imag( JJ * IPFT[3] );
-            Tx += Factor*imag( JJ * IPFT[4] );
-            Ty += Factor*imag( JJ * IPFT[5] );
-            Tz += Factor*imag( JJ * IPFT[6] );
+      for(int nbfp=0; nbfp<NBFPairs; nbfp++)
+       { 
+         int nbfA, nbfB;
+         if (UseSymmetry)
+          { nbfA      = nbfp / NBFB;
+            nbfB      = nbfp % NBFB;
+          }
+         else
+          { nbfA      = nbfp / NBFB;
+            nbfB      = nbfp % NBFB;
           };
    
-         /*--------------------------------------------------------------*/
-         /*- accumulate PFT contributions for this pair of objects       */
-         /*--------------------------------------------------------------*/
-         PFTMatrix->AddEntry(noA, 0, P  );
-         if (noB!=noA)
-          PFTMatrix->AddEntry(noB, 0, P );
+         cdouble IPFT[7];
+         GetPFTIntegrals_BFBF(OA, nbfA, OB, nbfB, Omega, IPFT);
+         cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
+                          *( JVector->GetEntry(OffsetB + nbfB) );
    
-         PFTMatrix->AddEntry(noA, 1, Fx );
-         PFTMatrix->AddEntry(noA, 2, Fy );
-         PFTMatrix->AddEntry(noA, 3, Fz );
-         PFTMatrix->AddEntry(noA, 4, Tx );
-         PFTMatrix->AddEntry(noA, 5, Ty );
-         PFTMatrix->AddEntry(noA, 6, Tz );
-         if (noB>noA)
-          { PFTMatrix->AddEntry(noB, 1, -1.0 * Fx );
-            PFTMatrix->AddEntry(noB, 2, -1.0 * Fy );
-            PFTMatrix->AddEntry(noB, 3, -1.0 * Fz );
-            PFTMatrix->AddEntry(noB, 4, -1.0 * Tx );
-            PFTMatrix->AddEntry(noB, 5, -1.0 * Ty );
-            PFTMatrix->AddEntry(noB, 6, -1.0 * Tz );
-          };
+         double Factor = 0.5;
+         if (noA==noB && nbfB > nbfA && UseSymmetry)
+          Factor = 1.0;
    
-       };  // for(int noA=0:NumObjects, noB=noA:NumObjects
+         P  += Factor * real( JJ * IPFT[0] );
 
-   }; // if (JVector) 
+         Factor/= real(Omega);
+
+         Fx += Factor*imag( JJ * IPFT[1] );
+         Fy += Factor*imag( JJ * IPFT[2] );
+         Fz += Factor*imag( JJ * IPFT[3] );
+         Tx += Factor*imag( JJ * IPFT[4] );
+         Ty += Factor*imag( JJ * IPFT[5] );
+         Tz += Factor*imag( JJ * IPFT[6] );
+       }; 
+   
+      /*--------------------------------------------------------------*/
+      /*- accumulate PFT contributions for this pair of objects       */
+      /*--------------------------------------------------------------*/
+      PFTMatrix->AddEntry(noA, 0, P  );
+      if (noB!=noA)
+       PFTMatrix->AddEntry(noB, 0, P );
+   
+      PFTMatrix->AddEntry(noA, 1, Fx );
+      PFTMatrix->AddEntry(noA, 2, Fy );
+      PFTMatrix->AddEntry(noA, 3, Fz );
+      PFTMatrix->AddEntry(noA, 4, Tx );
+      PFTMatrix->AddEntry(noA, 5, Ty );
+      PFTMatrix->AddEntry(noA, 6, Tz );
+      if (noB>noA)
+       { PFTMatrix->AddEntry(noB, 1, -1.0 * Fx );
+         PFTMatrix->AddEntry(noB, 2, -1.0 * Fy );
+         PFTMatrix->AddEntry(noB, 3, -1.0 * Fz );
+         PFTMatrix->AddEntry(noB, 4, -1.0 * Tx );
+         PFTMatrix->AddEntry(noB, 5, -1.0 * Ty );
+         PFTMatrix->AddEntry(noB, 6, -1.0 * Tz );
+       };
+   
+   };  // for(int noA=0:NumObjects, noB=noA:NumObjects
 
   /***************************************************************/
   /* add incident-field contributions ****************************/
@@ -369,7 +378,7 @@ int NumThreads = GetNumThreads();
           { 
             cdouble IPFT[7];
             GetPFTIntegrals_BFInc(O, nbf, IF, Omega, IPFT);
-            cdouble J = JVector->GetEntry(Offset + nbf);
+            cdouble J = conj(JVector->GetEntry(Offset + nbf));
             P  += real( J*IPFT[0] );
             Fx += imag( J*IPFT[1] );
             Fy += imag( J*IPFT[2] );
@@ -394,6 +403,41 @@ int NumThreads = GetNumThreads();
        };
 
    }; // if (IF)
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+  for(int no=0; no<NumObjects; no++)
+   { 
+     SWGVolume *O = Objects[no];
+     int Offset   = BFIndexOffset[no];
+     int NBF      = O->NumInteriorFaces;
+
+     double P2=0.0;
+     for(int nbfA=0; nbfA<NBF; nbfA++)
+      { 
+        int nbfBList[7];
+        cdouble VInvList[7];
+        double ImEpsList[7];
+        int NNZ=GetVInvAndImEpsEntries(O, nbfA, Omega, nbfBList,
+                                       VInvList, ImEpsList);
+
+        for(int nnz=0; nnz<NNZ; nnz++)
+         { 
+           int nbfB = nbfBList[nnz];
+
+           cdouble JJ = conj ( JVector->GetEntry(Offset + nbfA) )
+                            *( JVector->GetEntry(Offset + nbfB) );
+  
+           cdouble IKZVInv = II*Omega*ZVAC*VInvList[nnz];
+
+           P2 += 0.5*real( JJ * IKZVInv );
+         }; // for(int nnz=0; nnz<NNZ; nnz++)
+
+      }; // for(int nbfA=0; nbfA<NBF; nbfA++)
+     PFTMatrix->SetEntry(no, 4, P2);
+
+   }; // for(int no=0; no<NumObjects; no++)
 
   /***************************************************************/
   /***************************************************************/

@@ -295,9 +295,7 @@ void GetxIntegrand(const double x[3], const double u[3], const double ABCDEF[6],
   double A  = ABCDEF[0];
   double B  = ABCDEF[1];
   double C  = ABCDEF[2];
-  double D  = ABCDEF[3];
   double E  = ABCDEF[4];
-  double F  = ABCDEF[5];
   double BmA = B-A;
 
   double Xi1 = (BmA)*x[0]           + A;
@@ -341,6 +339,7 @@ void GetxIntegrand(const double x[3], const double u[3], const double ABCDEF[6],
 int yxIntegrand(unsigned ndim, const double *yx, void *params,
                 unsigned fdim, double *fval)
 {
+  (void)ndim;
   TDIntegrandData *TDIData = (TDIntegrandData *)params;
   const double *y = yx + 0;
   const double *x = yx + 3;
@@ -364,7 +363,7 @@ int yxIntegrand(unsigned ndim, const double *yx, void *params,
      if (fabs(Jacobian) < 1.0e-8) 
       continue;
      
-     for(int nf=0; nf<fdim; nf++)
+     for(unsigned int nf=0; nf<fdim; nf++)
       fval[nf] += Jacobian*fThisRegion[nf];
    };
 

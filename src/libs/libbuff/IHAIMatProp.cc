@@ -119,9 +119,9 @@ char *IHAIMatProp::Parse(FILE *f)
      char *pp=strchr(p,'=');
      if (pp) // strip off trailing semicolon and/or carriage return
       { char *ppp;
-        if ( ppp=strchr(pp,';') )
+        if ( (ppp=strchr(pp,';')) )
          *ppp=0;
-        if ( ppp=strchr(pp,'\n') )
+        if ( (ppp=strchr(pp,'\n')) )
          *ppp=0;
       };
 

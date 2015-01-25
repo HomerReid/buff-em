@@ -321,8 +321,8 @@ void SWGGeometry::PlotCurrentDistribution(const char *FileName,
          SWGFace *F = O->Faces[nf];
          double JAlpha = real(J->GetEntry(Offset + nf));
          double PreFac = F->Area / (3.0*T->Volume);
-         double Sign; 
-         double *Q;
+         double Sign=1.0; 
+         double *Q=0;
          if ( F->iPTet == nt)
           { Sign = +1.0;
             Q    = O->Vertices + 3*F->iQP;
@@ -365,8 +365,8 @@ void SWGGeometry::PlotCurrentDistribution(const char *FileName,
          SWGFace *F = O->Faces[nf];
          double JAlpha = imag(J->GetEntry(Offset + nf));
          double PreFac = F->Area / (3.0*T->Volume);
-         double Sign; 
-         double *Q;
+         double Sign=1.0;
+         double *Q=0;
          if ( F->iPTet == nt)
           { Sign = +1.0;
             Q    = O->Vertices + 3*F->iQP;

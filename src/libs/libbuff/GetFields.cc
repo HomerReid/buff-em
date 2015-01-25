@@ -76,7 +76,7 @@ typedef struct G1BFData
 void G1BFSIIntegrand(double *XSource, double *b, double Divb, double *nHat,
                      void *UserData, double *I)
 { 
-  /*--------------------------------------------------------------*
+  /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   G1BFData *Data = (G1BFData *)UserData;
@@ -176,6 +176,8 @@ typedef struct GFVIData
 void GetFields_VIntegrand(double *XSource, double *b, double Divb,
                           void *UserData, double *I)
 {
+  (void)Divb;
+
   GFVIData *Data = (GFVIData *)UserData;
   cdouble Omega = Data->Omega;
   double *XDest = Data->XDest;
@@ -311,10 +313,10 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
   // scalars to use with the OpenMP 'reduction' clause below...
   // if anybody knows how to use a cdouble-valued array in 
   // a 'reduction' clause please let me know!
-  double ExReal, ExImag, EyReal, EyImag, EzReal, EzImag;
-  double HxReal, HxImag, HyReal, HyImag, HzReal, HzImag;
+  double ExReal=0.0, ExImag=0.0, EyReal=0.0, EyImag=0.0, EzReal=0.0, EzImag=0.0;
+  double HxReal=0.0, HxImag=0.0, HyReal=0.0, HyImag=0.0, HzReal=0.0, HzImag=0.0;
 
-  int NumTasks, NumThreads = GetNumThreads();
+  int NumThreads = GetNumThreads();
   Log("Getting fields...");
 #ifdef USE_OPENMP
 #pragma omp parallel for schedule(dynamic,1),      \

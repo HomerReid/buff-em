@@ -103,6 +103,8 @@ double *GetTetCR(int NumPts)
      case 33: return TetCR33;
      default: ErrExit("unsupported numpts %i in GetTetCR",NumPts);
    };
+
+ return 0;
   
 } 
 

@@ -192,10 +192,10 @@ void SWGVolume::ReadGMSHFile(FILE *MeshFile, const GTransformation *OTGT)
       ErrExit("too few elements in input file");
      LineNum++;
 
-     int ElNum, ElType, RegPhys;
+     int ElType;
      if (WhichMeshFormat==FORMAT_LEGACY)
       { 
-        int NodeCnt, RegElem;
+        int ElNum, RegPhys, RegElem, NodeCnt;
         nConv=sscanf(buffer,"%i %i %i %i %i %i %i %i",
                      &ElNum,&ElType,&RegPhys,&RegElem,&NodeCnt,VI,VI+1,VI+2);
         if (nConv<5)
@@ -203,7 +203,7 @@ void SWGVolume::ReadGMSHFile(FILE *MeshFile, const GTransformation *OTGT)
       }
      else
       { 
-        int nTags, nRead;
+        int ElNum, nTags, nRead;
         nConv=sscanf(buffer,"%i %i %i%n",&ElNum,&ElType,&nTags,&nRead);
         int bufPos=nRead;
         if (nConv<3)
