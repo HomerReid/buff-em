@@ -118,6 +118,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile)
 { 
   SWGGeometry *G = BSD->G;
 
+#if 0
   HMatrix *PFTMatrix=G->GetPFT(BSD->IF, BSD->J, BSD->Omega);
 
   FILE *f=fopen(PFTFile,"a");
@@ -130,5 +131,23 @@ void WritePFTFile(BSData *BSD, char *PFTFile)
   fclose(f);
 
   delete PFTMatrix;
+#endif
+
+  HMatrix *PFTMatrix1=G->GetPFT(0, BSD->J, BSD->Omega);
+  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, 0, BSD->Omega);
+
+  FILE *f=fopen(PFTFile,"a");
+  for(int no=0; no<G->NumObjects; no++)
+   { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
+     for(int n=0; n<7; n++)
+      fprintf(f,"%e ",PFTMatrix1->GetEntryD(no,n));
+     for(int n=0; n<7; n++)
+      fprintf(f,"%e ",PFTMatrix2->GetEntryD(no,n));
+     fprintf(f,"\n");
+   };
+  fclose(f);
+
+  delete PFTMatrix1;
+  delete PFTMatrix2;
 
 }

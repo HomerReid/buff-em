@@ -220,10 +220,6 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
         2*NUMPFTIS, (double *)IPFT, (double *)Error,
         16, 0, 0);
-
-  cdouble IKZ=II*Omega*ZVAC;
-  for(int n=0; n<NUMPFTIS; n++)
-   IPFT[n] *= IKZ;
 }
 
 /***************************************************************/
