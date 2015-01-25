@@ -151,3 +151,44 @@ void WritePFTFile(BSData *BSD, char *PFTFile)
   delete PFTMatrix2;
 
 }
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void WriteMomentFile(BSData *BSD, char *FileName)
+{
+  SWGGeometry *G    = BSD->G;
+  HVector *JVector  = BSD->J;
+  cdouble Omega     = BSD->Omega;
+
+  FILE *f=fopen(FileName,"a");
+  for(int no=0; no<G->NumObjects; no++)
+   { 
+     SWGVolume *O = G->Objects[no];
+     fprintf(f,"%s %s ",z2s(Omega),O->Label);
+
+     cdouble M[3]={0.0, 0.0, 0.0};
+     int NBF    = G->Objects[no]->NumInteriorFaces;
+     int Offset = G->BFIndexOffset[no];
+     for(int nbf=0; nbf<NBF; nbf++)
+      { 
+        cdouble J = JVector->GetEntry(Offset + nbf);
+
+        SWGFace *F = O->Faces[nbf];
+        double *QP = O->Vertices + 3*F->iQP;
+        double *QM = O->Vertices + 3*F->iQM;
+        double A   = F->Area;
+
+        M[0] += 0.25*J*A*(QM[0] - QP[0]);
+        M[1] += 0.25*J*A*(QM[1] - QP[1]);
+        M[2] += 0.25*J*A*(QM[2] - QP[2]);
+      };
+
+     fprintf(f,"%e %e %e %e %e %e ",
+                real(M[0]),imag(M[0]),
+                real(M[1]),imag(M[1]),
+                real(M[2]),imag(M[2]));
+   };
+  fclose(f);
+  
+}

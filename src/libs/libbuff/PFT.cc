@@ -59,9 +59,8 @@ namespace buff {
 
 int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
                            cdouble Omega, int Indices[7],
-                           cdouble VInvEntries[7], 
+                           cdouble VInvEntries[7],
                            double ImEpsEntries[7]);
-
 
 typedef struct PFTIntegrandData
  {

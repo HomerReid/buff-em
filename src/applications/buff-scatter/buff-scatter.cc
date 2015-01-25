@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
   char *OmegaFile;                   int nOmegaFiles;
   char *EPFiles[MAXEPF];             int nEPFiles;
   char *JPlotFile=0;
-  char *PFTFile=0;  
+  char *PFTFile=0;
+  char *MomentFile=0;
   int ExportMatrix=0;
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
@@ -93,7 +94,8 @@ int main(int argc, char *argv[])
 /**/
      {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,             "name of PFT output file"},
 /**/
-     {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "J-plot file"},
+     {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "name of J-plot file"},
+     {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,             "name of induced-dipole-moment output file"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -264,6 +266,10 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      if (PFTFile)
       WritePFTFile(BSD, PFTFile);
+
+     if (MomentFile)
+      WriteMomentFile(BSD, MomentFile);
+
 
      /*--------------------------------------------------------------*/
      /*- scattered fields at user-specified points ------------------*/

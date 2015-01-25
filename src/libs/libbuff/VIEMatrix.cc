@@ -76,6 +76,13 @@ void FFIntegrand_GMatrixElement(
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
+                          SWGVolume *OB, int nbfB,
+                          cdouble Omega, cdouble IPFT[NUMPFTIS]);
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3])
 {
   cdouble M11=M[0][0], M12=M[0][1], M13=M[0][2];
@@ -417,7 +424,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };
     };
-
+*
   return RetVal;
 }
 
@@ -428,6 +435,10 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
                           cdouble Omega, cdouble *dG=0)
 {
+  cdouble IPFT[7];
+  GetPFTIntegrals_BFBF(Oa, nbfA, OB, nbfB, Omega, IPFT);
+  return IPFT[0] / (II*Omega*ZVAC);
+/*
   double rRel;
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
@@ -437,6 +448,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
    return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, dG, 9);
   else
    return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, dG, 16);
+*/
   
 }
 
