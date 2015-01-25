@@ -76,6 +76,7 @@ void FFIntegrand_GMatrixElement(
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+#define NUMPFTIS 7
 void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
                           SWGVolume *OB, int nbfB,
                           cdouble Omega, cdouble IPFT[NUMPFTIS]);
@@ -125,6 +126,7 @@ void VIntegrand(double *x, double *b, double DivB,
                 void *UserData, double *I)
 {
   (void) DivB;
+  (void) b;
 
   VIIData *Data   = (VIIData *)UserData;
   double *QA      = Data->QA;
@@ -424,7 +426,7 @@ cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
           if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
         };
     };
-*
+
   return RetVal;
 }
 
@@ -436,8 +438,9 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           cdouble Omega, cdouble *dG=0)
 {
   cdouble IPFT[7];
-  GetPFTIntegrals_BFBF(Oa, nbfA, OB, nbfB, Omega, IPFT);
+  GetPFTIntegrals_BFBF(VA, nfA, VB, nfB, Omega, IPFT);
   return IPFT[0] / (II*Omega*ZVAC);
+
 /*
   double rRel;
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
