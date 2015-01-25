@@ -133,8 +133,8 @@ void WritePFTFile(BSData *BSD, char *PFTFile)
   delete PFTMatrix;
 #endif
 
-  HMatrix *PFTMatrix1=G->GetPFT(0, BSD->J, BSD->Omega);
-  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, 0, BSD->Omega);
+  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega);
+  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega);
 
   FILE *f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)

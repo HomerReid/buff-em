@@ -125,7 +125,7 @@ CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2
 CPP = gcc -E
-CPPFLAGS =  -I/home/homer/work/scuff-em-installation/include/scuff-em -I/home/homer/work/scuff-em-installation/include/scuff-em
+CPPFLAGS =  -I/home/homer/work/scuff-em-installation/include/scuff-em
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -153,7 +153,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LAPACK_LIBS = -llapack
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS =  -L/home/homer/work/scuff-em-installation/lib -L/home/homer/work/scuff-em-installation/lib
+LDFLAGS =  -L/home/homer/work/scuff-em-installation/lib
 LIBOBJS = 
 LIBS = -lscuff -lreadline -llapack -lblas   -L/home/homer/work/scuff-em-installation/lib -L/usr/lib/gcc/x86_64-linux-gnu/4.8 -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.8/../../.. -lgfortran -lm -lquadmath
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
