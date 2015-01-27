@@ -178,7 +178,7 @@ void VIntegrand(double *x, double *b, double DivB,
 int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, int Indices[7],
                            cdouble VInvEntries[7], double ImEpsEntries[7])
 {
-  Indices[0]=0.0;
+  Indices[0]=nfA;
   VInvEntries[0]=0.0;
   ImEpsEntries[0]=0.0;
   int NNZ=1;
@@ -482,7 +482,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   for(int nfa=0; nfa<NFA; nfa++)
    for(int nfb=SameObject*nfa; nfb<NFB; nfb++)
     { 
-      if (nfb==SameObject*nfa) 
+      if (nfb==SameObject*nfa)
        LogPercent(nfa, NFA);
 
       int Row=RowOffset + nfa;
@@ -541,7 +541,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
    M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 
   for(int noa=0; noa<NumObjects; noa++)
-   for(int nob=noa; nob<NumObjects; nob++)
+   for(int nob=0/*noa*/; nob<NumObjects; nob++)
     { 
       AssembleGBlock(noa, nob, Omega, M,
                      BFIndexOffset[noa], BFIndexOffset[nob]);
@@ -550,9 +550,11 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
        AssembleVInvBlock(noa, Omega, 0, 0, M, BFIndexOffset[noa]);
     };
 
+#if 0
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
     M->SetEntry(nr, nc, M->GetEntry(nc,nr));
+#endif
 
   return M;
 

@@ -59,7 +59,7 @@ typedef struct RHSVectorIntegrandData
    IncField *IF;
  } RHSVectorIntegrandData;
 
-void RHSVectorIntegrand(double *x, double *b, double Divb, 
+void RHSVectorIntegrand(double *x, double *b, double Divb,
                         void *UserData, double *I)
 {
   RHSVectorIntegrandData *Data = (RHSVectorIntegrandData *)UserData;
@@ -86,14 +86,12 @@ HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  int NumTasks, NumThreads = GetNumThreads();
   Log("Assembling RHS vector at Omega=%g\n",z2s(Omega));
 #ifndef USE_OPENMP
-  NumTasks=NumThreads=1;
   Log(" no multithreading...");
 #else
-  NumTasks=NumThreads*100;
-  Log(" OpenMP multithreading (%i threads,%i tasks)...",NumThreads,NumTasks);
+  int NumThreads=GetNumThreads();
+  Log(" OpenMP multithreading (%i threads)...",NumThreads);
 #pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
 #endif
   for(int no=0; no<NumObjects; no++)

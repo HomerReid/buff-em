@@ -173,11 +173,11 @@ void WriteMomentFile(BSData *BSD, char *FileName)
      for(int nbf=0; nbf<NBF; nbf++)
       { 
         SWGFace *F = O->Faces[nbf];
-        double *QP = O->Vertices + 3*F->iQP;
-        double *QM = O->Vertices + 3*F->iQM;
+        double *QP = O->Vertices + 3*(F->iQP);
+        double *QM = O->Vertices + 3*(F->iQM);
         double A   = F->Area;
 
-        cdouble PreFactor = A*(JVector->GetEntry(Offset + nbf)) / (II*Omega*3.0);
+        cdouble PreFactor = A*(JVector->GetEntry(Offset + nbf)) / (II*Omega*4.0);
 
         M[0] += PreFactor*(QP[0] - QM[0]);
         M[1] += PreFactor*(QP[1] - QM[1]);
