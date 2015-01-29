@@ -437,21 +437,19 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
                           cdouble Omega)
 {
+/*
   cdouble IPFT[7];
   GetPFTIntegrals_BFBF(VA, nfA, VB, nfB, Omega, IPFT);
   return IPFT[0] / (II*Omega*ZVAC);
+*/
 
-/*
   double rRel;
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
-  if ( ncv>=2 )
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, dG, 20);
-  else if (ncv==1)
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, dG, 9);
+  if ( ncv>=0 )
+   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 0, 20);
   else
-   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, dG, 16);
-*/
+   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 0, 16);
   
 }
 
