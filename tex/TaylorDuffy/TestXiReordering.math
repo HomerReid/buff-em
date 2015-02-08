@@ -1,0 +1,20 @@
+S=Random[];
+V=Table[Random[], {m,1,3}];
+M=Table[Random[], {m,1,3}, {n,1,3}];
+
+F[Xi1_, Xi2_, Xi3_] := Module[ {XiVec},
+ XiVec={Xi1, Xi2, Xi3};
+ S + XiVec.V + XiVec.M.XiVec];
+
+AA=Random[];
+BB=AA+Random[];
+CC=Random[];
+DD=AA-CC;
+EE=Random[];
+FF=CC-EE;
+
+I1=Integrate[Integrate[Integrate[F[Xi1,Xi2,Xi3],
+    {Xi3, EE, Xi2-FF}], {Xi2,CC, Xi1-DD}], {Xi1, AA, BB}];
+
+I2=Integrate[Integrate[Integrate[F[Xi1,Xi2,Xi3],
+    {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}],{Xi3,EE,BB-DD-FF}];

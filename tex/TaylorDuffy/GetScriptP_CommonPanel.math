@@ -1,0 +1,42 @@
+<< SubregionFunctions.math
+<< DefineP.math
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+F[d_, u1_, u2_, u3_, Xi3]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
+ ABCDEF=GetABCDEF[d,u1,u2,u3];
+ AA=ABCDEF[[1]];
+ BB=ABCDEF[[2]];
+ CC=ABCDEF[[3]];
+ DD=-ABCDEF[[4]];
+ EE=ABCDEF[[5]];
+ FF=-ABCDEF[[6]];
+ Integrate[Integrate
+  P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3],
+  {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}]];
+];
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+OutFile=OpenWrite["ScriptP_CommonEdge.cc"];
+AppendTo[ $Output, OutFile ];
+For[ d=0, d<18, d++,
+
+     uVector=GetuVector[d,w,y1,y2];
+ 
+     MyF=F[d, uVector[[1]], uVector[[2]], uVector[[3]], Xi3 ];
+     MyS=Series[ MyF, {w,0,10} ];
+
+     For[ n=0, n<10, n++,
+          ScriptP = Coefficient[MyS,w,n];
+
+          Print[ "P[", d, "][", n, "]=", 
+               InputForm[FullSimplify[ScriptP]],";"
+               ];
+
+        ];
+     Print["\n"];
+];
+Close[OutFile];

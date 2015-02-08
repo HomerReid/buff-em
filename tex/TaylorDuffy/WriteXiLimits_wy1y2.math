@@ -1,0 +1,22 @@
+<< SubregionFunctions.math
+
+For[d=0, d<18, d++,
+ uVector=GetuVector[d,w,y1,y2];
+ ABCDEF=GetABCDEF[d,uVector[[1]],uVector[[2]],uVector[[3]]];
+ AA=ABCDEF[[1]];
+ BB=ABCDEF[[2]];
+ CC=ABCDEF[[3]];
+ DD=-ABCDEF[[4]];
+ EE=ABCDEF[[5]];
+ FF=-ABCDEF[[6]];
+ L3=EE;
+ U3=BB-DD-FF;
+ L2=FF;
+ U2=BB-DD;
+ L1=DD;
+ U1=BB;
+ Print["d=",d," L3, U3 =",L3," , ",U3];
+ Print["d=",d," L2, U2 =",L2," , ",U2];
+ Print["d=",d," L1, U1 =",L1," , ",U1];
+ Print[];
+];

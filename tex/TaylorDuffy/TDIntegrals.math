@@ -1,3 +1,4 @@
+(*d=1*)
 IAC1G1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3],
  {Xi3, 0, u2 - u3 + Xi2}],
@@ -7,6 +8,7 @@ IAC1G1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 1}],
  {u1,  0, 1}];
             
+(*d=2*)
 IAC1G2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3],
  {Xi3, 0, Xi2}],
@@ -16,6 +18,7 @@ IAC1G2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 1}],
  {u1,  0, 1}];
             
+(*d=3*)
 IAC1HTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
@@ -25,6 +28,7 @@ IAC1HTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 1}], 
  {u1,  0, 1}];
             
+(*d=4*)
 IAC2G1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -34,6 +38,7 @@ IAC2G1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, u1}], 
  {u1,  0, 1}];
             
+(*d=5*)
 IAC2G2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, Xi2}], 
@@ -43,6 +48,7 @@ IAC2G2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, u1}], 
  {u1,  0, 1}];
             
+(*d=6*)
 IAC2HTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
@@ -52,6 +58,7 @@ IAC2HTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, u1}], 
  {u1,  0, 1}];
             
+(*d=7*)
 IADITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -61,6 +68,7 @@ IADITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  -1 + u1, 0}], 
  {u1,  0, 1}];
             
+(*d=8*)
 IADJ1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, u2 - u3 + Xi2}], 
@@ -70,6 +78,7 @@ IADJ1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  -1 + u1, 0}], 
  {u1,  0, 1}];
             
+(*d=9*)
 IADJ2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
@@ -79,6 +88,7 @@ IADJ2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  -1 + u1, 0}], 
  {u1,  0, 1}];
             
+(*d=10*)
 IBEG1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -88,6 +98,7 @@ IBEG1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, 1 + u1}], 
  {u1,  -1, 0}];
              
+(*d=11*)
 IBEG2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, Xi2}], 
@@ -97,6 +108,7 @@ IBEG2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, 1 + u1}], 
  {u1,  -1, 0}];
              
+(*d=12*)
 IBEHTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
@@ -106,6 +118,7 @@ IBEHTD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  0, 1 + u1}], 
  {u1,  -1, 0}];
              
+(*d=13*)
 IBF1ITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -115,6 +128,7 @@ IBF1ITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 0}], 
  {u1,  -1, 0}];
              
+(*d=14*)
 IBF1J1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, u2 - u3 + Xi2}], 
@@ -124,6 +138,7 @@ IBF1J1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 0}], 
  {u1,  -1, 0}];
              
+(*d=15*)
 IBF1J2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
@@ -133,6 +148,7 @@ IBF1J2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  u1, 0}], 
  {u1,  -1, 0}];
              
+(*d=16*)
 IBF2ITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, 0, u2 - u3 + Xi2}], 
@@ -142,6 +158,7 @@ IBF2ITD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  -1, u1}], 
  {u1,  -1, 0}];
              
+(*d=17*)
 IBF2J1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, u2 - u3 + Xi2}], 
@@ -151,6 +168,7 @@ IBF2J1TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  {u2,  -1, u1}], 
  {u1,  -1, 0}];
              
+(*d=18*)
 IBF2J2TD=Integrate[Integrate[Integrate[Integrate[Integrate[Integrate[
  P[Xi1, u1+Xi1, Xi2, u2+Xi2, Xi3, Xi3+u3], 
  {Xi3, -u3, Xi2}], 
