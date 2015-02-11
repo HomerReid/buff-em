@@ -1,0 +1,134 @@
+<< uXiLimits.math
+
+(**************************************************)
+(**************************************************)
+(**************************************************)
+(* 
+  Given an integral of the form
+    \int_{x1}^{x2} dx \int_{yMin(x)}^{yMax(x)} dy
+  this routine interchanges the order of integration to
+    \int_{y1}^{y2} dy \int_{xMin(y)}^{xMax(y)} dx
+
+  Assumptions: (1) yMin(x) and yMax(x) are of one of the following three forms:
+                   (a) yMin(x) = y0 + x, yMax(x) = y1
+                   (b) yMin(x) = y0    , yMax(x) = y1 - x
+                   (c) yMin(x) = y0    , yMax(x) = y1
+               (2) y2-y1 == x2.
+  
+  Inputs:  V={x1, x2, yMin, yMax}
+  Outputs:   {y1, y2, xMin, xMax}
+ *)
+FlipIntegrationLimits[V_, x_, y_]:=Module[
+ {x1,x2,y1,y2,A,B},
+ x1=V[[1]];
+ x2=V[[2]];
+ y1=Coefficient[ V[[3]], x, 0 ];
+ A=Coefficient[ V[[3]], x, 1 ];
+ y2=Coefficient[ V[[4]], x, 0 ];
+ B=Coefficient[ V[[4]], x, 1 ];
+ (*If [ (y2-y1)!=x2, Print["Badcallatage! V=",V," x=",x,"A=",A,"B=",B]; VPrime={0,0,0,0} ];*)
+ VPrime={0,0,0,0};
+ If[ (A==0 && B==0 ) , VPrime={y1, y2, x1, x2}       ];
+ If[ (A==1 && B==0 ) , VPrime={y1+x1, y2, x1, y-y1}  ];
+ If[ (A==0 && B==-1) , VPrime={y1, y2-x1, x1, y2-y}  ];
+ If[ (A==0 && B==1)  , VPrime={y1, y2+x2, x1, y-y2}  ];
+ 
+ VPrime
+];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+GetuXiLimits[d_]:= Module[VPrime,
+ VPrime=GetuXiLimits[d];
+ VPrime[[9]]=VPrime[[9]]+Xi3;
+ VPrime[[11]]=VPrime[[11]]+Xi3;
+ VPrime
+];
+
+(***************************************************)
+(***************************************************)
+(***************************************************)
+GoodVars=0;
+GoodLimits=0;
+KeepGoing=1;
+TryOrder[Vars_, Limits_, 10, KeepGoing_]:=0;
+TryOrder[Vars_, Limits_, Depth_, 0]:=0;
+
+TryOrder[Vars_, Limits_, Depth_, 1]:=Module[
+(***************************************************)
+ {NumVars, Works, Temp, nv},
+(***************************************************) 
+
+  (***************************************************)
+  (* First see if this order 'works.'                *)
+  (***************************************************)
+  NumVars=Length[Vars];
+  Doom=0; 
+  Works1=1;
+  For[ nv=1, nv<=NumVars, nv++,
+        If[ (Limits[[2*nv-1]]===0), Doom=1, Works1=0];
+     ];
+
+  For[ nv=2, nv<=NumVars, nv++,
+       If[ (Limits[[2*nv]]===Vars[[nv-1]]), Doom=1, Works1=0];
+     ];
+
+  (***************************************************)
+  (***************************************************)
+  (***************************************************)
+  Works2=0
+  For[ nv=1, nv<=NumVars, nv++,
+        If[ (Limits[[2*nv]]===1), Doom=1, Works2=0];
+     ];
+
+  For[ nv=2, nv<=NumVars, nv++,
+       If[ (Limits[[2*nv-1]]===Vars[[nv-1]]), Doom=1, Works2=0];
+     ];
+
+  If[ (Works1==1 || Works2==1), Works=1, Works=0];
+
+  If[ Works==1,
+
+      (***************************************************)
+      (* If this order works, we're done!                *) 
+      (***************************************************)
+      ( Print["It works! ",Vars];
+        If[ Works1==1, Print[Vars," works (type 1)"],
+                       Print[Vars," works (type 2)"]];
+        GoodVars=Vars;
+        GoodLimits=Limits;
+        KeepGoing=0;
+      ),
+
+      (***************************************************)
+      (* Otherwise, try other orders obtained by         *)
+      (* interchanging integrals.                        *)
+      (***************************************************)
+      For[nv=1, nv<NumVars, nv++,
+            
+            NewVars=Vars;
+            Temp=Vars[[nv]];
+            NewVars[[nv]]=Vars[[nv+1]];
+            NewVars[[nv+1]]=Temp;
+
+            V= Limits[[ 2*nv-1 ;; 2*nv+2]]; 
+            NewV = FlipIntegrationLimits[V, Vars[[nv]], Vars[[nv+1]] ];            
+            NewLimits=Limits;
+            NewLimits[[ 2*nv-1 ;; 2*nv+2]] = NewV;
+
+            Print[];
+            Print["(Depth, nv)=",Depth," ",nv];
+            Print[" (Vars,Limits)=",Vars," ",Limits];
+            Print[" (NewV,NewLimits)=",NewVars," ",NewLimits];
+
+            If[  (NewV[[1]]==0 && NewV[[2]]==0 && NewV[[3]]==0 && NewV[[4]]==0),
+                 (*********************)
+                 Print[" Bawonkatage! "],
+                 (*********************)
+                 TryOrder[ NewVars, NewLimits, Depth+1, KeepGoing]
+              ]
+         ];
+    ];
+
+]
