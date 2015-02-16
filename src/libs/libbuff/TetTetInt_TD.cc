@@ -1,3 +1,4 @@
+int RegionOnly=-1;
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
  * This file is part of BUFF-EM.
@@ -354,6 +355,9 @@ int yxIntegrand(unsigned ndim, const double *yx, void *params,
   for(int d=0; d<NUMREGIONS; d++)
    { 
      if (fabs(yJacobian[d]) < 1.0e-8) 
+      continue; 
+
+     if ( RegionOnly!=-1 && RegionOnly!=d )
       continue;
 
      double Jacobian;
@@ -374,30 +378,37 @@ int yxIntegrand(unsigned ndim, const double *yx, void *params,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
-                  SWGVolume *VB, int ntB, int iQB,
+void TetTetInt_TD(SWGVolume *OA, int ntA, int iQA,
+                  SWGVolume *OB, int ntB, int iQB,
                   UserTTIntegrand UserIntegrand,
                   void *UserData, int fdim,
                   double *Result, double *Error,
                   double *fBuffer,
                   int MaxEvals, double RelTol)
 {
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  SWGTet *TA     = VA->Tets[ntA];
-  double *QA     = VA->Vertices + 3*(TA->VI[ iQA ]);
-  double *V1A    = VA->Vertices + 3*(TA->VI[ (iQA+1)%4 ]);
-  double *V2A    = VA->Vertices + 3*(TA->VI[ (iQA+2)%4 ]);
-  double *V3A    = VA->Vertices + 3*(TA->VI[ (iQA+3)%4 ]);
-  double PreFacA = (VA->Faces[TA->FI[iQA]]->Area) / (3.0 * TA->Volume);
+  SWGTet *TA     = OA->Tets[ntA];
+  double *QA     = OA->Vertices + 3*(TA->VI[ iQA ]);
+  double PreFacA = (OA->Faces[TA->FI[iQA]]->Area) / (3.0 * TA->Volume);
 
-  SWGTet *TB     = VB->Tets[ntB];
-  double *QB     = VB->Vertices + 3*(TB->VI[ iQB ]);
-  double *V1B    = VB->Vertices + 3*(TB->VI[ (iQB+1)%4 ]);
-  double *V2B    = VB->Vertices + 3*(TB->VI[ (iQB+2)%4 ]);
-  double *V3B    = VB->Vertices + 3*(TB->VI[ (iQB+3)%4 ]);
-  double PreFacB = (VB->Faces[TB->FI[iQB]]->Area) / (3.0 * TB->Volume);
+  SWGTet *TB     = OB->Tets[ntB];
+  double *QB     = OB->Vertices + 3*(TB->VI[ iQB ]);
+  double PreFacB = (OB->Faces[TB->FI[iQB]]->Area) / (3.0 * TB->Volume);
+
+  int OVIA[4], OVIB[4]; 
+  double *V0A, *V1A, *V2A, *V3A, *V0B, *V1B, *V2B, *V3B;
+  int ncv=CompareTets(OA, ntA, OB, ntB, OVIA, OVIB);
+  V0A = V0B = OA->Vertices + 3*OVIA[0];
+  V1A = V1B = OA->Vertices + 3*OVIA[1];
+  V2A = V2B = OA->Vertices + 3*OVIA[2];
+  V3A = V3B = OA->Vertices + 3*OVIA[3];
+  if (ncv<4)
+   V3B = OA->Vertices + 3*OVIB[3];
+  if (ncv<3)
+   V2B = OA->Vertices + 3*OVIB[2];
+  if (ncv<2)
+   V1B = OA->Vertices + 3*OVIB[1];
+  if (ncv<1)
+   V0B = OA->Vertices + 3*OVIB[0];
 
   /***************************************************************/
   /***************************************************************/
@@ -407,15 +418,15 @@ void TetTetInt_TD(SWGVolume *VA, int ntA, int iQA,
   Data->UserData     = UserData;
   Data->fBuffer      = fBuffer;
   
-  Data->V0 = QA;
-  VecSub(V1A, QA,  Data->L1);
+  Data->V0 = V0A;
+  VecSub(V1A, V0A, Data->L1);
   VecSub(V2A, V1A, Data->L2);
   VecSub(V3A, V2A, Data->L3);
   Data->Q  = QA;
   Data->PreFac = PreFacA;
 
-  Data->V0P = QB;
-  VecSub(V1B, QB,  Data->L1P);
+  Data->V0P = V0B;
+  VecSub(V1B, V0B, Data->L1P);
   VecSub(V2B, V1B, Data->L2P);
   VecSub(V3B, V2B, Data->L3P);
   Data->QP  = QB;

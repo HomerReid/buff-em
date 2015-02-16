@@ -1,106 +1,94 @@
-dMax=4;
-
+NumRegions=18;
 << DefineP.math
 
-(*************************************************************)
-(*************************************************************)
-(*************************************************************)
 << GetXiLimits.math
 << DuffyTransformations.math
+<< DefinePBar.math
 
 (*************************************************************)
 (*************************************************************)
 (*************************************************************)
-PBar4CV[d_, u1_, u2_, u3_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
- ABCDEF=GetABCDEF[d,u1,u2,u3];
- AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
- DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
- Integrate[Integrate[Integrate[
-  P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3],
-  {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}],{Xi3,EE,BB-DD-FF}]
-];
-
-(*************************************************************)
-(*************************************************************)
-(*************************************************************)
-PBar3CV[d_, u1_, u2_, u3_, Xi3_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
- ABCDEF=GetABCDEF[d,u1,u2,u3];
- AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
- DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
- Integrate[Integrate[
-  P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3],
-  {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}]
-];
-
-(*************************************************************)
-(*************************************************************)
-(*************************************************************)
-PBar2CV[d_, u1_, u2_, u3_, Xi3_, Xi2_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
- ABCDEF=GetABCDEF[d,u1,u2,u3];
- AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
- DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
- Integrate[ P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3], {Xi1,Xi2+DD,BB} ]
-];
-
-(*************************************************************)
-(*************************************************************)
-(*************************************************************)
-(*
-GetScriptP4CV=Module[
- {}, 
- For[ d=0, d<dMax, d++,
+GetScriptP4CV[PFunction_, Name_]:=Module[
+(***)
+ {OutFile, d},
+(***)
+ OutFile=OpenWrite[ StringJoin["ScriptP_CommonTet_",Name,".cc"] ];
+ For[ d=0, d<NumRegions, d++,
 
      uXiVector=GetuXiVector[d, 4];
-     PBar=PBar4CV[d, uXiVector[[1]], uXiVector[[2]], uXiVector[[3]] ];
+     PBar=PBar4CV[PFunction, d, uXiVector[[1]], uXiVector[[2]], uXiVector[[3]] ];
      MySeries=Series[ PBar, {w,0,10} ];
      For[ n=0, n<10, n++,
           ScriptP = FullSimplify[Coefficient[MySeries,w,n]];
           If[ !(ScriptP===0),
-              Print[ "P[", d, "][", n, "]=", CForm[ScriptP], ";" ]
+              (*Print[ "P[", d, "][", n, "]=", CForm[ScriptP], ";" ]*)
+              WriteString[OutFile, "P[", d, "][", n, "]=", CForm[ScriptP], ";\n" ]
             ]
         ];
-     Print[];
-]];
-*)
+     (*Print[];*)
+     WriteString[OutFile,"\n"];
+    ]
+  Close[OutFile];
+];
 
 (*************************************************************)
 (*************************************************************)
 (*************************************************************)
-(*
-GetScriptP3CV=Module[
- {}, 
- For[ d=0, d<dMax, d++,
+GetScriptP3CV[PFunction_, Name_]:=Module[
+(***)
+ {OutFile, d},
+(***)
+ OutFile=OpenWrite[ StringJoin["ScriptP_CommonTriangle_",Name,".cc"] ];
+ For[ d=0, d<NumRegions, d++,
 
      uXiVector=GetuXiVector[d, 3];
-     PBar=PBar3CV[d, uXiVector[[1]], uXiVector[[2]],
-                     uXiVector[[3]], uXiVector[[4]] ];
+     PBar=PBar3CV[PFunction, d, uXiVector[[1]], uXiVector[[2]],
+                  uXiVector[[3]], uXiVector[[4]] ];
      MySeries=Series[ PBar, {w,0,10} ];
      For[ n=0, n<10, n++,
           ScriptP = FullSimplify[Coefficient[MySeries,w,n]];
           If[ !(ScriptP===0),
-              Print[ "P[", d, "][", n, "]=", CForm[ScriptP], ";" ];
+              WriteString[OutFile, "P[", d, "][", n, "]=", CForm[ScriptP], ";\n" ];
             ]
         ];
-     Print[];
-]];
-*)
+     WriteString[OutFile,"\n"];
+    ];
+ Close[OutFile];
+]
 
 (*************************************************************)
 (*************************************************************)
 (*************************************************************)
-GetScriptP2CV=Module[
- {}, 
- For[ d=0, d<dMax, d++,
+GetScriptP2CV[PFunction_, Name_]:=Module[
+(***)
+ {OutFile, d},
+(***)
+ OutFile=OpenWrite[ StringJoin["ScriptP_CommonEdge_",Name,".cc"] ];
+ For[ d=0, d<NumRegions, d++,
 
      uXiVector=GetuXiVector[d, 2];
-     PBar=PBar2CV[d, uXiVector[[1]], uXiVector[[2]],
-                     uXiVector[[3]], uXiVector[[4]], uXiVector[[5]] ];
+     PBar=PBar2CV[PFunction, d, uXiVector[[1]], uXiVector[[2]],
+                  uXiVector[[3]], uXiVector[[4]], uXiVector[[5]] ];
      MySeries=Series[ PBar, {w,0,10} ];
      For[ n=0, n<10, n++,
           ScriptP = FullSimplify[Coefficient[MySeries,w,n]];
           If[ !(ScriptP===0), 
-              Print[ "P[", d, "][", n, "]=", ScriptP, ";" ]
+              WriteString[OutFile, "P[", d, "][", n, "]=", CForm[ScriptP], ";\n" ]
             ]
         ];
-     Print[];
-]];
+     WriteString[OutFile,"\n"];
+    ]
+
+ Close[OutFile];
+
+];
+
+(*************************************************************)
+(* usage example:                                            *)
+(*  WriteScriptP[4, PBDotBP, "BDotBP"]                       *)
+(*************************************************************)
+WriteScriptP[NCV_, PFunction_, Name_]:=Switch[ NCV,
+ 4, GetScriptP4CV[PFunction, Name],
+ 3, GetScriptP3CV[PFunction, Name],
+ 2, GetScriptP2CV[PFunction, Name]
+];

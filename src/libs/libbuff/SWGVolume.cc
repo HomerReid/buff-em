@@ -350,21 +350,56 @@ int CompareBFs(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 }
 
 /***************************************************************/
+/* Return the number of common vertices between two            */
+/* tetrahedra.                                                 */
+/* If OVIA and OVIB are non-null they must point to buffers    */
+/* with enough space to store 4 ints. In this case, on return  */
+/* the first ncv slots of OVIA and OVIB agree with each other  */ 
+/* and contain the indices of the common vertices, while the   */
+/* remaining slots of OVIA/OVIB are the indices of the         */
+/* non-common vertices.  (Here ncv = return value = number of  */
+/* common vertices.)                                           */
 /***************************************************************/
-/***************************************************************/
-int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB)
+int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB,
+                int *OVIA, int *OVIB)
 { 
   SWGTet *TA = OA->Tets[ntA];
   SWGTet *TB = OB->Tets[ntB];
 
   if (OA!=OB)
-   return 0;
- 
+   { if (OVIA) memcpy(OVIA, TA->VI, 4*sizeof(int));
+     if (OVIB) memcpy(OVIB, TB->VI, 4*sizeof(int));
+     return 0;
+   };
+
   int ncv=0;
+  bool IndexIsCommonA[4]={false, false, false, false};
+  bool IndexIsCommonB[4]={false, false, false, false};
   for(int i=0; i<4; i++)
    for(int j=0; j<4; j++)
     if (TA->VI[i]==TB->VI[j]) 
-     ncv++;
+     { IndexIsCommonA[i] = IndexIsCommonB[j] = true;
+       ncv++;
+     };
+
+  if (!OVIA || !OVIB) 
+   return ncv;
+
+  int nvA=0, nvB=0;
+  for(int i=0; i<4; i++)
+   { if (IndexIsCommonA[i])
+      OVIA[nvA++]=OVIB[nvB++]=TA->VI[i];
+   };
+
+  for(int i=0; i<4; i++)
+   { if (!IndexIsCommonA[i])
+      OVIA[nvA++]=TA->VI[i];
+     if (!IndexIsCommonB[i])
+      OVIB[nvB++]=TB->VI[i];
+   };
+
+  if (nvA!=4 || nvB!=4)
+   ErrExit("%s:%i: internal error",__FILE__,__LINE__);
 
   return ncv;
 

@@ -1,7 +1,7 @@
 (*************************************************************)
+(* general quadratic + linear + constant form ****************)
 (*************************************************************)
-(*************************************************************)
-PP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] :=          		   	\
+PGeneral[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] :=          		   	\
  +  Xi1*(M11*Xi1 + M12*Xi2 + M13*Xi3 + M14*Eta1 + M15*Eta2 + M16*Eta3)/2  \
  +  Xi2*(M21*Xi1 + M22*Xi2 + M23*Xi3 + M24*Eta1 + M25*Eta2 + M26*Eta3)/2  \
  +  Xi3*(M31*Xi1 + M32*Xi2 + M33*Xi3 + M34*Eta1 + M35*Eta2 + M36*Eta3)/2  \
@@ -11,4 +11,31 @@ PP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] :=          		   	\
  +       (V1*Xi1 +  V2*Xi2 +  V3*Xi3 +  V4*Eta1 +  V5*Eta2 +  V6*Eta3)    \
  +    S;
  
-P[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 1;
+(*************************************************************)
+(* unity                                                     *)
+(*************************************************************)
+PUnity[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 1;
+ 
+(*************************************************************)
+(* b \cdot bPrime                                            *)
+(*************************************************************)
+PBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] :=       \
+  Xi1*( L1dL1P*Eta1 + L1dL2P*Eta2 + L1dL3P*Eta3)  \
+ +Xi2*( L2dL1P*Eta1 + L2dL2P*Eta2 + L2dL3P*Eta3)  \
+ +Xi3*( L3dL1P*Eta1 + L3dL2P*Eta2 + L3dL3P*Eta3)  \
+ +Xi1*L1dDP  + Xi2*L2dDP + Xi3*L3dDP		  \
+ +Eta1*DdL1P + Eta2*DdL2P + Eta3*DdL3P + DdDP;
+ 
+(*************************************************************)
+(* R_Mu * (b \cdot bPrime)                                   *)
+(*************************************************************)
+PRMuBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 	\
+ (  Xi1*L1Mu  +  Xi2*L2Mu  +  Xi3*L3Mu  + DMu		\
+  - Eta1*L1PMu - Eta2*L2PMu - Eta3*L3PMu - DPMu		\
+ )*							\
+ ( Xi1*( L1dL1P*Eta1 + L1dL2P*Eta2 + L1dL3P*Eta3)       \
+  +Xi2*( L2dL1P*Eta1 + L2dL2P*Eta2 + L2dL3P*Eta3)       \
+  +Xi3*( L3dL1P*Eta1 + L3dL2P*Eta2 + L3dL3P*Eta3)       \
+  +Xi1*L1dDP  + Xi2*L2dDP + Xi3*L3dDP		        \
+  +Eta1*DdL1P + Eta2*DdL2P + Eta3*DdL3P + DdDP		\
+ );

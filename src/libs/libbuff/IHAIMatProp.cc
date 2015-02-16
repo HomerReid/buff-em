@@ -41,11 +41,13 @@
 IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
  {
    Name=strdupEC(IHAIMatFileName);
+   ErrMsg=0;
    NumConstants=0;
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
      EpsExpression[nx][ny]=MuExpression[nx][ny]=0;
    ConstEps=0.0;
+   
 
    /*--------------------------------------------------------------*/
    /*- detect filenames of the form CONST_EPS_xx-------------------*/

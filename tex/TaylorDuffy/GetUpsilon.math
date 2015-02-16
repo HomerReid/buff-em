@@ -1,0 +1,73 @@
+NumRegions=18;
+<< DefineP.math
+
+<< GetXiLimits.math
+<< DuffyTransformations.math
+<< DefinePBar.math
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+GetUpsilon[NCV_, PFunction_, Name_]:=Module[
+(***)
+ {OutFile, d},
+(***)
+ MinwyPowers={100,100,100,100,100};
+ MaxwyPowers={0,0,0,0,0};
+
+ Shape=Switch[NCV, 4, "Tet_", 3, "Triangle_", 2, "Edge_"];
+ OutFile=OpenWrite[ StringJoin["Upsilon_Common",Shape,Name,".cc"] ];
+ For[ d=0, d<NumRegions, d++,
+
+      Print["Region ",d,"..."];
+
+     (***************************************************)
+     (* Compute the PBar polynomial corresponding to the*)
+     (* specified PFunction for this region.            *)
+     (***************************************************)
+     PBar=GetPBar[NCV, PFunction, d, GetuXiVector[d,NCV] ];
+
+     (***************************************************)
+     (* Decompose the PBar polynomial as a power series *)
+     (* in w and the y variables and write out the      *)
+     (* coefficients of each term in the series.        *)
+     (***************************************************)
+     Rules=CoefficientRules[ PBar, {w, y1, y2, y3, y4} ];
+     For[ nRules=1, nRules<=Length[Rules], nRules++,
+
+          wyPowers=Rules[[nRules,1]];
+          MyCoefficient=Rules[[nRules,2]];
+
+          WriteString[OutFile,"Upsilon[",d,"]"];
+          For[np=1, np<=Length[wyPowers], np++,
+               MinwyPowers[[np]]=Min[ MinwyPowers[[np]], wyPowers[[np]] ];
+               MaxwyPowers[[np]]=Max[ MaxwyPowers[[np]], wyPowers[[np]] ];
+               WriteString[OutFile,"[",wyPowers[[np]],"]"];
+             ];
+          WriteString[OutFile,"=", CForm[MyCoefficient],";\n"];
+        ];
+
+     (***************************************************)
+     (* Write a newline to the output file to separate  *)
+     (* portions corresponding to different regions.    *)
+     (***************************************************)
+     WriteString[OutFile,"\n"];
+
+    ]; (* For[ d=0, d<NumRegions, d++, *)
+
+ (***************************************************)
+ (* Write the minimum and maximum powers for the    *)
+ (* w and y variables.                              *)
+ (***************************************************)
+ WriteString[OutFile,"*MinwPower=",MinwyPowers[[1]],";\n"];
+ WriteString[OutFile,"*MaxwPower=",MaxwyPowers[[1]],";\n"];
+ For[np=2, np<=Length[wyPowers], np++,
+
+       WriteString[OutFile,"MaxyPower[",np-2,"]=",MaxwyPowers[[np]],";\n"];
+
+    ];
+ WriteString[OutFile,"\n"];
+
+ Close[OutFile];
+
+];

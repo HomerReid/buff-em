@@ -1,0 +1,49 @@
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+PBar4CV[P_, d_, u1_, u2_, u3_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
+ ABCDEF=GetABCDEF[d,u1,u2,u3];
+ AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
+ DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
+ Integrate[Integrate[Integrate[
+  P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3],
+  {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}],{Xi3,EE,BB-DD-FF}]
+];
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+PBar3CV[P_, d_, u1_, u2_, u3_, Xi3_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
+ ABCDEF=GetABCDEF[d,u1,u2,u3];
+ AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
+ DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
+ Integrate[Integrate[
+  P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3],
+  {Xi1,Xi2+DD,BB}],{Xi2,Xi3+FF,BB-DD}]
+];
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+PBar2CV[P_, d_, u1_, u2_, u3_, Xi3_, Xi2_]:=Module[ {ABCDEF,AA,BB,CC,DD,EE,FF},
+ ABCDEF=GetABCDEF[d,u1,u2,u3];
+ AA=ABCDEF[[1]];  BB=ABCDEF[[2]]; CC=ABCDEF[[3]];
+ DD=-ABCDEF[[4]]; EE=ABCDEF[[5]]; FF=-ABCDEF[[6]];
+ Integrate[ P[Xi1, Xi2, Xi3, u1+Xi1, u2+Xi2, u3+Xi3], {Xi1,Xi2+DD,BB} ]
+];
+
+(*************************************************************)
+(*************************************************************)
+(*************************************************************)
+GetPBar[NCV_, PFunction_, d_, uXiVector_]:=Switch[NCV,
+ 4, PBar4CV[PFunction, d, uXiVector[[1]], uXiVector[[2]], 
+                          uXiVector[[3]]
+           ],
+ 3, PBar3CV[PFunction, d, uXiVector[[1]], uXiVector[[2]], 
+                          uXiVector[[3]], uXiVector[[4]]
+           ],
+ 2, PBar2CV[PFunction, d, uXiVector[[1]], uXiVector[[2]], 
+                          uXiVector[[3]], uXiVector[[4]], 
+                          uXiVector[[5]]
+           ]
+];

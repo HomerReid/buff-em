@@ -1,0 +1,5 @@
+<<GetScriptP.math
+WriteScriptP[2, PBDotBP, "BDotBP"];
+WriteScriptP[4, PRMuBDotBP, "RMuBDotBP"];
+WriteScriptP[3, PRMuBDotBP, "RMuBDotBP"];
+WriteScriptP[2, PRMuBDotBP, "RMuBDotBP"];
