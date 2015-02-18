@@ -30,8 +30,8 @@ PBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] :=       \
 (* R_Mu * (b \cdot bPrime)                                   *)
 (*************************************************************)
 PRMuBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 	\
- (  Xi1*L1Mu  +  Xi2*L2Mu  +  Xi3*L3Mu  + DMu		\
-  - Eta1*L1PMu - Eta2*L2PMu - Eta3*L3PMu - DPMu		\
+ (  Xi1*L1Mu  +  Xi2*L2Mu  +  Xi3*L3Mu        	        \
+  - Eta1*L1PMu - Eta2*L2PMu - Eta3*L3PMu       		\
  )*							\
  ( Xi1*( L1dL1P*Eta1 + L1dL2P*Eta2 + L1dL3P*Eta3)       \
   +Xi2*( L2dL1P*Eta1 + L2dL2P*Eta2 + L2dL3P*Eta3)       \

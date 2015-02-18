@@ -38,7 +38,7 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
           wyPowers=Rules[[nRules,1]];
           MyCoefficient=Rules[[nRules,2]];
 
-          WriteString[OutFile,"Upsilon[",d,"]"];
+          WriteString[OutFile,"(*Upsilon)[",d,"]"];
           For[np=1, np<=Length[wyPowers], np++,
                MinwyPowers[[np]]=Min[ MinwyPowers[[np]], wyPowers[[np]] ];
                MaxwyPowers[[np]]=Max[ MaxwyPowers[[np]], wyPowers[[np]] ];
@@ -63,7 +63,7 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
  WriteString[OutFile,"*MaxwPower=",MaxwyPowers[[1]],";\n"];
  For[np=2, np<=Length[wyPowers], np++,
 
-       WriteString[OutFile,"MaxyPower[",np-2,"]=",MaxwyPowers[[np]],";\n"];
+       WriteString[OutFile,"(*MaxyPower)[",np-2,"]=",MaxwyPowers[[np]],";\n"];
 
     ];
  WriteString[OutFile,"\n"];
