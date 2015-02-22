@@ -1,0 +1,8 @@
+<<GetScriptP.math
+(*GetUpsilon[2, PBDotBP, "BDotBP"];*)
+(*GetUpsilon[4, PTMuBDotBP, "RMuBDotBP"];*)
+(*GetUpsilon[3, PTMuBDotBP, "RMuBDotBP"];*)
+(*GetUpsilon[2, PTMuBDotBP, "RMuBDotBP"];*)
+GetUpsilon[4, PTMuBDotBP, "TMuBDotBP"];
+GetUpsilon[3, PTMuBDotBP, "TMuBDotBP"];
+GetUpsilon[2, PTMuBDotBP, "TMuBDotBP"];
