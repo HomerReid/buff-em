@@ -15,6 +15,11 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
  MinwyPowers={100,100,100,100,100};
  MaxwyPowers={0,0,0,0,0};
 
+ RepRules=Switch[NCV,
+  4, {L1PMu->L1Mu, L2PMu->L2Mu, L3PMu->L3Mu},
+  3, {L1PMu->L1Mu, L2PMu->L2Mu},
+  4, {L1PMu->L1Mu}];
+  
  Shape=Switch[NCV, 4, "Tet_", 3, "Triangle_", 2, "Edge_"];
  OutFile=OpenWrite[ StringJoin["Upsilon_Common",Shape,Name,".cc"] ];
  For[ d=0, d<NumRegions, d++,
@@ -36,7 +41,48 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
      For[ nRules=1, nRules<=Length[Rules], nRules++,
 
           wyPowers=Rules[[nRules,1]];
+(*
           MyCoefficient=Rules[[nRules,2]];
+*)
+(*
+          If [ NCV==4,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMu->L1Mu, L2PMu->L2Mu, L3PMu->L3Mu},
+                                                  {L1Mu, L2Mu, L3Mu}
+                                                ]
+                                       ]
+             ];
+          If [ NCV==3,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMu->L1Mu, L2PMu->L2Mu},
+                                                  {L1Mu, L2Mu, L3Mu, L3PMu}
+                                                ]
+                                       ]
+             ];
+          If [ NCV==2,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMu->L1Mu},
+                                                  {L1Mu, L2Mu, L3Mu, L3PMu, L2PMu}
+                                                ]
+                                       ]
+             ];
+*)
+          If [ NCV==4,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP2->L1MP2, L2PMP2->L2MP2, L3PMP2->L3MP2},
+                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2}
+                                                ]
+                                       ]
+             ];
+          If [ NCV==3,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP2->L1MP2, L2PMP2->L2MP2},
+                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2, L3PMP2}
+                                                ]
+                                       ]
+             ];
+          If [ NCV==2,
+             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP2->L1MP2},
+                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2, L3PMP2, L2PMP2}
+                                                ]
+                                       ]
+             ];
+
 
           WriteString[OutFile,"(*Upsilon)[",d,"]"];
           For[np=1, np<=Length[wyPowers], np++,
