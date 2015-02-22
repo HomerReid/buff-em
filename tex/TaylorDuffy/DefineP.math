@@ -39,3 +39,19 @@ PRMuBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 	\
   +Xi1*L1dDP  + Xi2*L2dDP + Xi3*L3dDP		        \
   +Eta1*DdL1P + Eta2*DdL2P + Eta3*DdL3P + DdDP		\
  );
+ 
+(*************************************************************)
+(* \Tau_Mu * (b \cdot bPrime)                                *)
+(*************************************************************)
+PTMuBDotBP[Xi1_, Xi2_, Xi3_, Eta1_, Eta2_, Eta3_] := 		\
+ (  Xi1*L1MP1  +  Xi2*L2MP1   +  Xi3*L3MP1 + V0mXTorqueMP1  	\
+ )*								\
+ (  Xi1*L1MP2  +  Xi2*L2MP2   +  Xi3*L3MP2               	\
+  - Eta1*L1PMP2 - Eta2*L2PMP2 - Eta3*L3PMP2      		\
+ )*								\
+ ( Xi1*( L1dL1P*Eta1 + L1dL2P*Eta2 + L1dL3P*Eta3)       	\
+  +Xi2*( L2dL1P*Eta1 + L2dL2P*Eta2 + L2dL3P*Eta3)       	\
+  +Xi3*( L3dL1P*Eta1 + L3dL2P*Eta2 + L3dL3P*Eta3)       	\
+  +Xi1*L1dDP  + Xi2*L2dDP + Xi3*L3dDP		        	\
+  +Eta1*DdL1P + Eta2*DdL2P + Eta3*DdL3P + DdDP			\
+ );
