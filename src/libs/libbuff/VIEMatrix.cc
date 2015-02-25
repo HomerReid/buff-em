@@ -279,7 +279,7 @@ int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, int Indices[7],
 typedef struct GVIData
  {
    cdouble k;
-   double x0[3]; // origin for torque calculations
+   double xTorque[3]; // origin for torque calculations
    bool NeedDerivatives;
  } GVIData;
  
@@ -322,7 +322,7 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
      zI[3] = R[2]*PolyFac*Psi;
 
      double xAmx0[3];
-     double *x0 = Data->x0;
+     double *x0 = Data->xTorque;
      xAmx0[0] = xA[0] - x0[0];
      xAmx0[1] = xA[1] - x0[1];
      xAmx0[2] = xA[2] - x0[2];
@@ -340,11 +340,6 @@ void GVIntegrand(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /* Compute the G-matrix element between two tetrahedral basis  */
 /* functions using a volume cubature method.                   */
-/* If dG is non-null, then on return we have                   */
-/*  dG[0..2] = dG/dR_i,    i=x,y,z,                            */
-/*  dG[3..5] = dG/dTheta_i                                     */
-/* where dG/dTheta_i is the angular derivative with respect to */
-/* rotations about the ith axis                                */
 /***************************************************************/
 cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
                              SWGVolume *VB, int nfB,
@@ -356,9 +351,9 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
   int nFun;
 
   if (dG==0)
-   { Data->NeedDerivatives = false;
-     nFun = 2;
-   }
+   Data->NeedDerivatives = false;
+   nFun = 2;
+  }
   else
    { Data->NeedDerivatives = true;
      nFun = 14;
@@ -368,66 +363,10 @@ cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
    };
 
   cdouble Result[7], Error[7];
-  BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun,
-          (double *)Result, (double *)Error, Order, MaxEvals, 1.0e-8);
 
   if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
 
   return Result[0];
-}
-
-/***************************************************************/
-/* Compute the G-matrix element between two tetrahedral basis  */
-/* functions using the surface-integral approach of Bleszynski */
-/* et. al.                                                     */
-/***************************************************************/
-cdouble GetGMatrixElement_SI(SWGVolume *VA, int nfA,
-                             SWGVolume *VB, int nfB,
-                             cdouble Omega, cdouble *dG=0,
-                             int Order=0, int MaxEvals=10000)
-{
-  GSIData MyData, *Data = &MyData;
-
-  Data->k = Omega;
-  Data->NeedDerivatives = (dG!=0);
-
-  int fDim = (dG==0) ? 2:14;
-  
-  SWGFace *FA = VA->Faces[nfA];
-  SWGFace *FB = VB->Faces[nfB];
-
-  // 64 surface-surface integrals
-  cdouble RetVal=0.0;
-  if (dG) memset(dG, 0, 6*sizeof(cdouble));
-  for(int ASign=+1; ASign>=-1; ASign-=2)
-   for(int BSign=+1; BSign>=-1; BSign-=2)
-    {
-      int ntA    = (ASign==1) ? FA->iPTet  : FA->iMTet;
-      int nfBFA  = (ASign==1) ? FA->PIndex : FA->MIndex;
-      SWGTet *TA = VA->Tets[ ntA ];
-      Data->QA   = VA->Vertices + 3*TA->VI[nfBFA];
-
-      int ntB    = (BSign==1) ? FB->iPTet  : FB->iMTet;
-      int nfBFB  = (BSign==1) ? FB->PIndex : FB->MIndex;
-      SWGTet *TB = VB->Tets[ ntB ];
-      Data->QB   = VB->Vertices + 3*TB->VI[nfBFB];
-
-      for(int nfP=0; nfP<4; nfP++)
-       for(int nfQ=0; nfQ<4; nfQ++)
-        { 
-          cdouble Result[7], Error[7];
-          FaceFaceInt(VA, ntA, nfP, nfBFA, ASign,
-                      VB, ntB, nfQ, nfBFB, BSign,
-                      FFIntegrand_GMatrixElement, (void *)Data, fDim,
-                      (double *)Result, (double *)Error,
-                      Order, MaxEvals, 1.0e-8);
-          RetVal += Result[0];
-
-          if (dG) for(int n=0; n<6; n++) dG[n]+=Result[n+1];
-        };
-    };
-
-  return RetVal;
 }
 
 /***************************************************************/
@@ -437,19 +376,19 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
                           cdouble Omega)
 {
-/*
-  cdouble IPFT[7];
-  GetPFTIntegrals_BFBF(VA, nfA, VB, nfB, Omega, IPFT);
-  return IPFT[0] / (II*Omega*ZVAC);
-*/
-
   double rRel;
   int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
 
-  if ( ncv>=0 )
-   return GetGMatrixElement_SI(VA, nfA, VB, nfB, Omega, 0, 20);
-  else
+  if ( ncv==0 )
+   { BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun,
+             (double *)Result, (double *)Error, Order, 
+             MaxEvals, 1.0e-8);
+     return 
+
+  else if ( ncv==1 )
    return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 0, 16);
+  else
+   return GetGMatrixElement_TD(VA, nfA, VB, nfB, Omega, 0, 16);
   
 }
 

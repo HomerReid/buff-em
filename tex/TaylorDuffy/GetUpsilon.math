@@ -67,8 +67,9 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
 
           If [ NCV==4,
              MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L2PMP1->L2MP1, L3PMP1->L3MP1,
-                                                                        L1PMP2->L1MP2, L2PMP2->L2MP2, L3PMP2->L3MP2}
-                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2, V0mXTorqueMP2}
+                                                                        L1PMP2->L1MP2, L2PMP2->L2MP2, L3PMP2->L3MP2},
+                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1,
+                                                   L1MP2, L2MP2, L3MP2, V0mXTorqueMP2}
                                                 ]
                                        ]
              ];
@@ -76,17 +77,18 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
           If [ NCV==3,
              MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L2PMP1->L2MP1,
                                                                         L1PMP2->L1MP2, L2PMP2->L2MP2},
-                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2, V0mXTorqueMP2, \
-                                                   L3PMP1, L3PMP2}
+                                                  {L1MP1, L2MP1, L3MP1, L3PMP1, V0mXTorqueMP1, 
+                                                   L1MP2, L2MP2, L3MP2, L3PMP2, V0mXTorqueMP2}
                                                 ]
                                        ]
              ];
 
           If [ NCV==2,
              MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L1PMP2->L1MP2}
-                                                  {L1MP1, L2MP1, L3MP1, V0mXTorqueMP1, L1MP2, L2MP2, L3MP2, V0mXTorqueMP2, \
-                                                   L3PMP1, L3PMP2, L2PMP1, L2PMP2}
+                                                  {L1MP1, L2MP1, L3MP1, L3PMP1, L2PMP1, V0mXTorqueMP1,
+                                                   L1MP2, L2MP2, L3MP2, L3PMP2, L2PMP2, V0mXTorqueMP2}
                                                 ]
+                                       ]
              ];
 
 

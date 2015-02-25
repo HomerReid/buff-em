@@ -56,7 +56,6 @@ namespace buff {
 #define NUMPFTQS 7
 #define NUMPFTIS 7
 
-
 int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
                            cdouble Omega, int Indices[7],
                            cdouble VInvEntries[7],
