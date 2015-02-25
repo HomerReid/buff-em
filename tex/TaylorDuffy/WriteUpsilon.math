@@ -1,8 +1,10 @@
 <<GetUpsilon.math
 (*GetUpsilon[2, PBDotBP, "BDotBP"];*)
-GetUpsilon[4, PRMuBDotBP, "RMuBDotBP"];
-GetUpsilon[3, PRMuBDotBP, "RMuBDotBP"];
-GetUpsilon[2, PRMuBDotBP, "RMuBDotBP"];
-(*GetUpsilon[4, PTMuBDotBP, "TMuBDotBP"];*)
+(*
+  GetUpsilon[4, PRMuBDotBP, "RMuBDotBP"];
+  GetUpsilon[3, PRMuBDotBP, "RMuBDotBP"];
+  GetUpsilon[2, PRMuBDotBP, "RMuBDotBP"];
+*)
+GetUpsilon[4, PTMuBDotBP, "TMuBDotBP"];
 (*GetUpsilon[3, PTMuBDotBP, "TMuBDotBP"];*)
 (*GetUpsilon[2, PTMuBDotBP, "TMuBDotBP"];*)
