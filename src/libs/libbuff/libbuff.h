@@ -165,7 +165,7 @@ class SWGVolume
    /*--------------------------------------------------------------*/ 
    /* constructor subroutines */
    void InitFaceList();
-   void ReadGMSHFile(FILE *MeshFile, const GTransformation *GT);
+   void ReadGMSHFile(FILE *MeshFile);
    void InitSWGFace(SWGFace *F);
 
  }; // class SWGVolume
@@ -206,7 +206,7 @@ class SWGGeometry
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
    HMatrix *GetPFT(IncField *IF, HVector *JVector,
-                   cdouble Omega, HMatrix *PFTMatrix=0);
+                   cdouble Omega, HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
 
    // compute individual matrix blocks
    void AssembleGBlock(int noa, int nob, cdouble Omega,
@@ -242,7 +242,7 @@ class SWGGeometry
  }; // class SWGGeometry
 
 /***************************************************************/
-/* other non-class methods *************************************/
+/* non-class utility methods ***********************************/
 /***************************************************************/
 SWGTet *NewSWGTet(double *Vertices, int iV1, int iV2, int iV3, int iV4);
 
@@ -258,6 +258,16 @@ int GetOverlapElements(SWGVolume *O, int nfA,
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
                   bool NeedQ=true);
 
+/***************************************************************/
+/* routine to compute matrix elements of the dyadic GF and its */
+/* derivatives                                                 */
+/***************************************************************/
+cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
+                          SWGVolume *VB, int nfB,
+                          cdouble Omega,
+                          bool *NeedDerivatives=0,
+                          cdouble *dG=0,
+                          int rPower=-10, bool ForceBF=false);
 
 /***************************************************************/
 /* routines for integrating over tetrahedra and faces          */

@@ -167,7 +167,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   if (!p)
    ErrExit("file %s: invalid extension",MeshFileName);
   else if (!StrCaseCmp(p,"msh"))
-   ReadGMSHFile(MeshFile,0);
+   ReadGMSHFile(MeshFile);
   else
    ErrExit("file %s: unknown extension %s",MeshFileName,p);
 

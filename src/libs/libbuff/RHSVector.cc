@@ -62,6 +62,8 @@ typedef struct RHSVectorIntegrandData
 void RHSVectorIntegrand(double *x, double *b, double Divb,
                         void *UserData, double *I)
 {
+  (void )Divb; // unused
+
   RHSVectorIntegrandData *Data = (RHSVectorIntegrandData *)UserData;
 
   cdouble EH[6];

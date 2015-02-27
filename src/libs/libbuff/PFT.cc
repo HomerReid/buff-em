@@ -61,111 +61,17 @@ int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
                            cdouble VInvEntries[7],
                            double ImEpsEntries[7]);
 
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 typedef struct PFTIntegrandData
  {
    cdouble k;
    bool NeedDerivatives;
    IncField *IF;
+   double XTorque[3];
 
  } PFTIntegrandData;
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
-                       double *xB, double *bB, double DivbB,
-                       void *UserData, double *I)
-{
-  PFTIntegrandData *Data = (PFTIntegrandData *)UserData;
-  cdouble k             = Data->k;
-  bool NeedDerivatives  = Data->NeedDerivatives;
-
-  double R[3];
-  R[0]=xA[0]-xB[0];
-  R[1]=xA[1]-xB[1];
-  R[2]=xA[2]-xB[2];
-  double r=sqrt(R[0]*R[0] + R[1]*R[1] + R[2]*R[2]);
-  if ( fabs(r)<1.0e-12 )
-   { memset(I, 0, 2*NUMPFTIS*sizeof(double));
-     return;
-   };
-
-  cdouble ScalarFactor = VecDot(bA, bB) - DivbA*DivbB/(k*k);
-  cdouble ExpFac=exp(II*k*r)/(4.0*M_PI*r);
-  cdouble *zI = (cdouble *)I;
-  zI[0] = ScalarFactor * ExpFac;
-  if (NeedDerivatives)
-   { cdouble Psi=(II*k*r-1.0)*ExpFac/(r*r);
-     zI[1] = ScalarFactor * R[0] * Psi;
-     zI[2] = ScalarFactor * R[1] * Psi;
-     zI[3] = ScalarFactor * R[2] * Psi;
-     zI[4] = 0.0;
-     zI[5] = 0.0;
-     zI[6] = 0.0;
-   };
-
-}
-
-/***************************************************************/
-/* compute PFT integrals between pairs of SWG basis functions  */
-/***************************************************************/
-void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
-                          SWGVolume *OB, int nbfB,
-                          cdouble Omega, cdouble IPFT[NUMPFTIS])
-{ 
-  double rRel=0.0;
-  int ncv= (OA==OB) ? CompareBFs(OA, nbfA, OB, nbfB, &rRel) : 0;
-  
-  PFTIntegrandData MyData, *Data=&MyData;
-  Data->k               = Omega;
-  Data->NeedDerivatives = true;
-
-  if (ncv==0)
-   { 
-     /* if there are no common vertices, use low-order cubature */
-     cdouble Error[NUMPFTIS];
-     BFBFInt(OA, nbfA, OB, nbfB, PFTIntegrand_BFBF, (void *)Data,
-             2*NUMPFTIS, (double *)IPFT, (double *)Error, 4, 0, 0);
-   }
-  else 
-   { 
-     /* use Taylor-Duffy for pairs of tetrahedra with 3 or 4 */
-     /* common vertices, and high-order cubature otherwise   */
-     SWGFace *FA = OA->Faces[nbfA];
-     SWGFace *FB = OB->Faces[nbfB];
-     memset(IPFT, 0, NUMPFTIS*sizeof(cdouble));
-     for(int SignA=1; SignA>=-1; SignA-=2)
-      for(int SignB=1; SignB>=-1; SignB-=2)
-       { 
-         int ntA = (SignA==1) ? FA->iPTet  : FA->iMTet;
-         int iQA = (SignA==1) ? FA->PIndex : FA->MIndex;
-         int ntB = (SignB==1) ? FB->iPTet  : FB->iMTet;
-         int iQB = (SignB==1) ? FB->PIndex : FB->MIndex;
-
-         cdouble Result[NUMPFTIS], Error[NUMPFTIS], Buffer[NUMPFTIS];
-         ncv=CompareTets(OA, ntA, OB, ntB);
-         if (ncv<=SWGGeometry::TDNCVThreshold)
-          TetTetInt(OA, ntA, iQA, 1.0, OB, ntB, iQB, 1.0,
-                    PFTIntegrand_BFBF, (void *)Data, 2*NUMPFTIS, 
-                    (double *)Result, (double *)Error, 
-                    33, 0, 0);
-         else
-          TetTetInt_TD(OA, ntA, iQA, OB, ntB, iQB,
-                       PFTIntegrand_BFBF, (void *)Data, 2*NUMPFTIS,
-                       (double *)Result, (double *)Error, (double *)Buffer,
-                       SWGGeometry::MaxTDEvals, 1.0e-12);
- 
-         double Sign = (SignA==SignB) ? 1.0 : -1.0;
-         for(int n=0; n<NUMPFTIS; n++)
-          IPFT[n] += Sign*Result[n];
-       };
-   };
-
-  cdouble IKZ=II*Omega*ZVAC;
-  for(int n=0; n<NUMPFTIS; n++)
-   IPFT[n] *= IKZ;
-
-}
 
 /***************************************************************/
 /***************************************************************/
@@ -197,6 +103,9 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
       dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
    };
 
+  double XmXT[3];
+  VecSub(x, PFTIData->XTorque, XmXT);
+
   cdouble *zI = (cdouble *)I;
   memset(zI, 0, NUMPFTIS*sizeof(cdouble));
   for(int Mu=0; Mu<3; Mu++)
@@ -204,9 +113,9 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
      zI[1] += b[Mu]*dEH[0][Mu];
      zI[2] += b[Mu]*dEH[1][Mu];
      zI[3] += b[Mu]*dEH[2][Mu];
-     zI[4] += 0.0;
-     zI[5] += 0.0;
-     zI[6] += 0.0;
+     zI[4] += b[Mu]*(XmXT[1]*dEH[2][Mu]-XmXT[2]*dEH[1][Mu]);
+     zI[5] += b[Mu]*(XmXT[2]*dEH[0][Mu]-XmXT[0]*dEH[2][Mu]);
+     zI[6] += b[Mu]*(XmXT[0]*dEH[1][Mu]-XmXT[1]*dEH[0][Mu]);
    };
 
 }
@@ -221,6 +130,9 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
   PFTIData->IF = IF;
+  PFTIData->XTorque[0]=PFTIData->XTorque[1]=PFTIData->XTorque[2]=0.0;
+  if (O->OTGT) O->OTGT->Apply(PFTIData->XTorque);
+  if (O->GT) O->GT->Apply(PFTIData->XTorque);
 
   cdouble Error[NUMPFTIS];
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
@@ -232,7 +144,8 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
-                             cdouble Omega, HMatrix *PFTMatrix)
+                             cdouble Omega, HMatrix *PFTMatrix,
+                             bool *NeedQuantity)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -288,8 +201,8 @@ int NumThreads = GetNumThreads();
             nbfB      = nbfp % NBFB;
           };
    
-         cdouble IPFT[7];
-         GetPFTIntegrals_BFBF(OA, nbfA, OB, nbfB, Omega, IPFT);
+         cdouble G, dG[6];
+         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, NeedQuantity, dG);
          cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
                           *( JVector->GetEntry(OffsetB + nbfB) );
    
@@ -297,16 +210,16 @@ int NumThreads = GetNumThreads();
          if (noA==noB && nbfB > nbfA && UseSymmetry)
           Factor = 1.0;
    
-         P  += Factor * real( JJ * IPFT[0] );
+         P  += Factor * real( JJ * G );
 
          Factor/= real(Omega);
 
-         Fx += Factor*imag( JJ * IPFT[1] );
-         Fy += Factor*imag( JJ * IPFT[2] );
-         Fz += Factor*imag( JJ * IPFT[3] );
-         Tx += Factor*imag( JJ * IPFT[4] );
-         Ty += Factor*imag( JJ * IPFT[5] );
-         Tz += Factor*imag( JJ * IPFT[6] );
+         Fx += Factor*imag( JJ * dG[0] );
+         Fy += Factor*imag( JJ * dG[1] );
+         Fz += Factor*imag( JJ * dG[2] );
+         Tx += Factor*imag( JJ * dG[3] );
+         Ty += Factor*imag( JJ * dG[4] );
+         Tz += Factor*imag( JJ * dG[5] );
        }; 
    
       /*--------------------------------------------------------------*/
@@ -384,9 +297,9 @@ int NumThreads = GetNumThreads();
 
    }; // if (IF)
 
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   for(int no=0; no<NumObjects; no++)
    { 
      SWGVolume *O = Objects[no];
@@ -418,6 +331,9 @@ int NumThreads = GetNumThreads();
      PFTMatrix->SetEntry(no, 4, P2);
 
    }; // for(int no=0; no<NumObjects; no++)
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   /***************************************************************/
   /***************************************************************/

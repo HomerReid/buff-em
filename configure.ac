@@ -106,6 +106,7 @@ AC_CONFIG_FILES([
  src/Makefile
  src/libs/Makefile
  src/libs/libbuff/Makefile
+ src/libs/libbuff/UpsilonFiles/Makefile
  src/applications/Makefile
  src/applications/buff-analyze/Makefile
  src/applications/buff-scatter/Makefile

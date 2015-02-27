@@ -63,7 +63,7 @@ namespace buff {
 /* Otherwise, only panels on the specified physical region   */
 /* are read.                                                 */
 /*************************************************************/
-void SWGVolume::ReadGMSHFile(FILE *MeshFile, const GTransformation *OTGT)
+void SWGVolume::ReadGMSHFile(FILE *MeshFile)
 {
  
   /*------------------------------------------------------------*/

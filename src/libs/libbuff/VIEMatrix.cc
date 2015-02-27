@@ -39,47 +39,12 @@
 #  include <omp.h>
 #endif
 
-namespace scuff{
-
-void CalcGC(double R[3], cdouble Omega,
-            cdouble EpsR, cdouble MuR,
-            cdouble GMuNu[3][3], cdouble CMuNu[3][3],
-            cdouble GMuNuRho[3][3][3], cdouble CMuNuRho[3][3][3]);
-
-void CalcGC(double R1[3], double R2[3],
-            cdouble Omega, cdouble EpsR, cdouble MuR, 
-            cdouble GMuNu[3][3], cdouble CMuNu[3][3],
-            cdouble GMuNuRho[3][3][3], cdouble CMuNuRho[3][3][3]);
-
-}
-
 using namespace scuff;
 
 namespace buff {
 
-typedef struct GSIData
- { 
-   cdouble k;
-   double *QA;
-   double *QB;
-   bool NeedDerivatives;
- } GSIData;
-
-void FFIntegrand_GMatrixElement(
-                   double *xA, double *bA, double DivbA, double *nHatA,
-                   double *xB, double *bB, double DivbB, double *nHatB,
-                   void *UserData, double *I);
-
 #define MAXSTR 1000
 #define II cdouble(0.0,1.0)
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-#define NUMPFTIS 7
-void GetPFTIntegrals_BFBF(SWGVolume *OA, int nbfA,
-                          SWGVolume *OB, int nbfB,
-                          cdouble Omega, cdouble IPFT[NUMPFTIS]);
 
 /***************************************************************/
 /***************************************************************/
@@ -175,8 +140,10 @@ void VIntegrand(double *x, double *b, double DivB,
 /* a maximum of 7 such BFs.) The indices of the f_b functions  */
 /* are returned in Indices.                                    */
 /***************************************************************/
-int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, int Indices[7],
-                           cdouble VInvEntries[7], double ImEpsEntries[7])
+int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, 
+                           int Indices[7],
+                           cdouble VInvEntries[7], 
+                           double ImEpsEntries[7])
 {
   Indices[0]=nfA;
   VInvEntries[0]=0.0;
@@ -272,125 +239,6 @@ int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, int Indices[7],
   return NNZ;
 
 } // routine GetVInvAndImEpsEntries
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-typedef struct GVIData
- {
-   cdouble k;
-   double xTorque[3]; // origin for torque calculations
-   bool NeedDerivatives;
- } GVIData;
- 
-void GVIntegrand(double *xA, double *bA, double DivbA,
-                 double *xB, double *bB, double DivbB,
-                 void *UserData, double *I)
-{
-  GVIData *Data        = (GVIData *)UserData;
-  bool NeedDerivatives = Data->NeedDerivatives;
-  cdouble k            = Data->k;
-
-  double R[3]; 
-  R[0] = (xA[0] - xB[0]);
-  R[1] = (xA[1] - xB[1]);
-  R[2] = (xA[2] - xB[2]);
-
-  double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2]);
-  if ( fabs(r) < 1.0e-12 ) 
-   { if (Data->NeedDerivatives)
-      memset(I,0,14*sizeof(double)); 
-     else
-      I[0]=I[1]=0.0;
-     return;
-   };
-
-  double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
-  cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
-
-  cdouble IKR = II*k*r;
-  cdouble Phi= exp(IKR)/(4.0*M_PI*r);
-
-  cdouble *zI = (cdouble *)I;
-  zI[0] = PolyFac*Phi;
-
-  if (NeedDerivatives)
-   { 
-     cdouble Psi = (IKR-1.0) * Phi / (r*r);
-     zI[1] = R[0]*PolyFac*Psi;
-     zI[2] = R[1]*PolyFac*Psi;
-     zI[3] = R[2]*PolyFac*Psi;
-
-     double xAmx0[3];
-     double *x0 = Data->xTorque;
-     xAmx0[0] = xA[0] - x0[0];
-     xAmx0[1] = xA[1] - x0[1];
-     xAmx0[2] = xA[2] - x0[2];
-     for(int Mu=0; Mu<3; Mu++)
-      { int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
-        zI[4 + Mu] 
-         = (xAmx0[MP1]*bB[MP2]-xAmx0[MP2]*bB[MP1])*Phi*DivbA/3.0
-          +(xAmx0[MP1]* R[MP2]-xAmx0[MP2]* R[MP1])*PolyFac*Psi;
-      };
-
-   };
-
-}
-
-/***************************************************************/
-/* Compute the G-matrix element between two tetrahedral basis  */
-/* functions using a volume cubature method.                   */
-/***************************************************************/
-cdouble GetGMatrixElement_VI(SWGVolume *VA, int nfA,
-                             SWGVolume *VB, int nfB,
-                             cdouble Omega, cdouble *dG=0,
-                             int Order=0, int MaxEvals=10000)
-{
-  GVIData MyData, *Data = &MyData;
-  Data->k               = Omega;
-  int nFun;
-
-  if (dG==0)
-   Data->NeedDerivatives = false;
-   nFun = 2;
-  }
-  else
-   { Data->NeedDerivatives = true;
-     nFun = 14;
-     Data->x0[0] = Data->x0[1] = Data->x0[2] = 0.0;
-     if (VA->OTGT) VA->OTGT->Apply( Data->x0 );
-     if (VA->GT) VA->GT->Apply( Data->x0 );
-   };
-
-  cdouble Result[7], Error[7];
-
-  if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
-
-  return Result[0];
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
-                          SWGVolume *VB, int nfB,
-                          cdouble Omega)
-{
-  double rRel;
-  int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
-
-  if ( ncv==0 )
-   { BFBFInt(VA, nfA, VB, nfB, GVIntegrand, (void *)Data, nFun,
-             (double *)Result, (double *)Error, Order, 
-             MaxEvals, 1.0e-8);
-     return 
-
-  else if ( ncv==1 )
-   return GetGMatrixElement_VI(VA, nfA, VB, nfB, Omega, 0, 16);
-  else
-   return GetGMatrixElement_TD(VA, nfA, VB, nfB, Omega, 0, 16);
-  
-}
 
 /***************************************************************/
 /***************************************************************/

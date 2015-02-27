@@ -106,6 +106,8 @@ typedef struct TIData
 int TIIntegrand(unsigned ndim, const double *uvw, void *params,
                 unsigned fdim, double *fval)
 {
+  (void) ndim; // unused
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -548,6 +550,8 @@ typedef struct FIData
 int FIIntegrand(unsigned ndim, const double *uv, void *params,
                 unsigned fdim, double *fval)
 {
+  (void) ndim; // unused 
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
