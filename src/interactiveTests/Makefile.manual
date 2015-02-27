@@ -1,0 +1,47 @@
+##################################################
+##################################################
+##################################################
+#SCUFFEM  = /home/homer/work/scuff-em-installation
+SCUFFEM  = /home/homer/work/scuff-em-debug
+LIBDIR   = $(SCUFFEM)/lib
+
+BUFFLIBDIR = /home/homer/work/buff-em-installation/lib
+#BUFFLIBDIR = /home/homer/work/buff-em-debug/lib
+BUFFINCDIR = /home/homer/work/buff-em-installation/include/buff-em
+
+MU=/home/homer/work/scuff-em-sandbox/MoreUtils_20141022
+CPPFLAGS+=-I$(MU)/
+MUOBJS=$(MU)/MoreUtils.o
+
+##################################################
+##################################################
+##################################################
+CPPFLAGS += -I$(SCUFFEM)/include/scuff-em -I$(HOME)/include -I. -fopenmp
+CPPFLAGS += -I/home/homer/work/scuff-em/src/libs/libscuff
+CPPFLAGS += -I$(BUFFINCDIR)
+CPPFLAGS += -I$(MU)
+LDFLAGS += -L$(LIBDIR) -Wl,-rpath,$(LIBDIR)
+LDFLAGS += -L$(HOME)/codes/lib -L$(HOME)/lib -L$(BUFFLIBDIR) -L.
+CXXFLAGS += -O3 
+#CXXFLAGS = -ggdb -O0
+
+HR_LIBS=-lbuff -lscuff
+#HR_LIBS=-lscuff
+
+RDL_LIBS=-lreadline -lncurses
+HDF5_LIBS= -lhdf5_hl -lhdf5 
+LB_LIBS=-llapack -lopenblas -lgomp -lgfortran 
+OTHER_LIBS = $(RDL_LIBS) $(HDF5_LIBS) $(LB_LIBS)
+
+LIBS = $(HR_LIBS) $(OTHER_LIBS)
+
+##################################################
+##################################################
+##################################################
+TGME= tGMatrixElement.o
+
+tGMatrixElement:	$(TGME) $(MUOBJS)
+			$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+clean:
+		/bin/rm *.o *.a
