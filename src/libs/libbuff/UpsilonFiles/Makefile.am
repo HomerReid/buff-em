@@ -1,0 +1,19 @@
+EXTRA_DIST=				\
+ Upsilon_CommonTet_Unity.cc		\
+ Upsilon_CommonTet_BDotBP.cc		\
+ Upsilon_CommonTet_RMuUnity.cc		\
+ Upsilon_CommonTet_RMuBDotBP.cc		\
+ Upsilon_CommonTet_TMuUnity.cc		\
+ Upsilon_CommonTet_TMuBDotBP.cc		\
+ Upsilon_CommonTriangle_BDotBP.cc	\
+ Upsilon_CommonTriangle_RMuBDotBP.cc	\
+ Upsilon_CommonTriangle_RMuUnity.cc	\
+ Upsilon_CommonTriangle_TMuBDotBP.cc	\
+ Upsilon_CommonTriangle_TMuUnity.cc	\
+ Upsilon_CommonTriangle_Unity.cc	\
+ Upsilon_CommonEdge_Unity.cc		\
+ Upsilon_CommonEdge_BDotBP.cc		\
+ Upsilon_CommonEdge_RMuUnity.cc		\
+ Upsilon_CommonEdge_RMuBDotBP.cc	\
+ Upsilon_CommonEdge_TMuUnity.cc		\
+ Upsilon_CommonEdge_TMuBDotBP.cc
