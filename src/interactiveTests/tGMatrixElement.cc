@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
   if (nfb==-1)
    nfb = lrand48() % O->NumInteriorFaces;
 
-  if (ncv!=1)
+  if (ncv!=-1)
    { for(nfb=0; nfb<O->NumInteriorFaces-1; nfb++)
       if (CompareBFs(O,nfa,O,nfb,0)==ncv) 
        break; 
@@ -157,6 +157,7 @@ int main(int argc, char *argv[])
   bool NeedDerivatives[6]={true, true, true, true, true, true};
   GHR[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, NeedDerivatives,
                            GHR+1, rPower, ForceBF);
+printf("Survived THAT ok...\n");
 
   /***************************************************************/
   /***************************************************************/

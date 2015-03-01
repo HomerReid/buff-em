@@ -228,11 +228,18 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 {
   cdouble Result[7], Error[7];
 
+  // derivatives vanish identically for diagonal matrix elements
+  if (VA==VB && nfA==nfB && NeedDerivatives)
+   { if (dG) memset(dG, 0, 6*sizeof(cdouble));
+     NeedDerivatives=false; 
+   };
+
   GMEData MyData, *Data=&MyData;
   Data->k=Omega;
   Data->NeedDerivatives = (NeedDerivatives == 0) ? false : true;
   Data->rPower=rPower;
   int fdim = Data->NeedDerivatives ? 7 : 1;
+
 
   if (NeedDerivatives) 
    { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
@@ -268,9 +275,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
    for(int BSign=0; BSign<2; BSign++)
     { 
       int ntA = (ASign==0) ? FA->iPTet : FA->iMTet;
-      int iQA = (ASign==0) ? FA->iQP   : FA->iQM;
       int ntB = (BSign==0) ? FB->iPTet : FB->iMTet;
-      int iQB = (BSign==0) ? FB->iQP   : FB->iQM;
       int OVIA[4], OVIB[4];
       ncv=CompareTets(VA, ntA, VB, ntB, OVIA, OVIB);
 
@@ -282,12 +287,16 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
       if (ncv<=1 || ForceBF)
        { 
          int NumPts=16;
+         int iQA = (ASign==0) ? FA->PIndex : FA->MIndex;
+         int iQB = (BSign==0) ? FB->PIndex : FB->MIndex;
          TetTetInt(VA, ntA, iQA, 1.0, VB, ntB, iQB, 1.0,
                    GMEIntegrand, (void *)Data, 2*fdim,
                    (double *)TTI, (double *)Error, NumPts, 0, 0);
        }
       else
        { 
+         int iQA = (ASign==0) ? FA->iQP   : FA->iQM;
+         int iQB = (BSign==0) ? FB->iQP   : FB->iQM;
          GetGMETTI_TaylorDuffy(VA, OVIA, iQA, VB, OVIB, iQB,
                                Omega, ncv, NeedDerivatives,
                                rPower, TTI);
