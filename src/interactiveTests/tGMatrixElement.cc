@@ -82,10 +82,6 @@ void GBFIntegrand(double *xA, double *bA, double DivbA,
 
   double *XmXT=xA; // assume torque center is the origin
 
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-PEFIE = DivbA*DivbB/9.0;
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
   cdouble *zI = (cdouble *)I;
   zI[0] = PEFIE * Phi;
   zI[1] = R[0] * PEFIE * Psi;
@@ -169,14 +165,6 @@ int main(int argc, char *argv[])
   Data->k=Omega;
   Data->rPower=rPower;
   cdouble GBF[7], Error[7];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-#if 0
-  TetTetInt(O, O->Faces[nfa]->iPTet, O->Faces[nfa]->PIndex, 1.0, 
-            O, O->Faces[nfb]->iPTet, O->Faces[nfb]->PIndex, 1.0, 
-            GBFIntegrand, (void *)Data,
-            14, (double *)GBF, (double *)Error, 0, MaxBFEvals, RelTol);
-#endif
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   BFBFInt(O, nfa, O, nfb, GBFIntegrand, (void *)Data,
           14, (double *)GBF, (double *)Error, 0, MaxBFEvals, RelTol);
 

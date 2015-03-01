@@ -86,11 +86,6 @@ void GMEIntegrand(double *xA, double *bA, double DivbA,
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   cdouble PEFIE = DotProduct - DivbA*DivbB/(k*k);
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-PEFIE=DivbA*DivbB/9.0;
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
   cdouble IKR = II*k*r;
   cdouble Phi= exp(IKR)/(4.0*M_PI*r);
 
@@ -198,25 +193,16 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
   // assemble results into output quantities
   cdouble NOK2=9.0/(k*k);
   TTI[0] = TDI[0] - NOK2*TDI[1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-TTI[0] = TDI[1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   if (NeedDerivatives)
    { int npk=2;
      for(int Mu=0; Mu<3; Mu++)
       { if (NeedDerivatives[Mu])
         { TTI[1 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-TTI[1 + Mu] = TDI[npk+1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
           npk+=2;
         };
        if (NeedDerivatives[3+Mu])
         { TTI[4 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-TTI[4 + Mu] = TDI[npk+1];
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
           npk+=2;
         };
       };
