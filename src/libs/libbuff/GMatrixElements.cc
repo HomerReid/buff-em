@@ -85,9 +85,10 @@ void GMEIntegrand(double *xA, double *bA, double DivbA,
    };
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
-  cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
+  cdouble PEFIE = DotProduct - DivbA*DivbB/(k*k);
+
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-PolyFac=DivbA*DivbB/9.0;
+PEFIE=DivbA*DivbB/9.0;
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   cdouble IKR = II*k*r;
@@ -95,15 +96,15 @@ PolyFac=DivbA*DivbB/9.0;
 
   if (rPower!=-10) Phi=pow(r,rPower);
 
-  zI[0] = PolyFac*Phi;
+  zI[0] = PEFIE*Phi;
 
   if (NeedDerivatives)
    { 
      cdouble Psi = (IKR-1.0) * Phi / (r*r);
      if (rPower!=-10) Psi=pow(r,rPower);
-     zI[1] = R[0]*PolyFac*Psi;
-     zI[2] = R[1]*PolyFac*Psi;
-     zI[3] = R[2]*PolyFac*Psi;
+     zI[1] = R[0]*PEFIE*Psi;
+     zI[2] = R[1]*PEFIE*Psi;
+     zI[3] = R[2]*PEFIE*Psi;
 
      double XmXTorque[3];
      XmXTorque[0] = xA[0] - (Data->XTorque[0]);
@@ -112,7 +113,7 @@ PolyFac=DivbA*DivbB/9.0;
      for(int Mu=0; Mu<3; Mu++)
       { int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
         zI[4 + Mu]
-         = (XmXTorque[MP1]*R[MP2]-XmXTorque[MP2]*R[MP1])*PolyFac*Psi;
+         = (XmXTorque[MP1]*R[MP2]-XmXTorque[MP2]*R[MP1])*PEFIE*Psi;
       };
    };
 
@@ -181,9 +182,9 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
   Args->V2     = Args->V2P = VA->Vertices + 3*OVIA[1];
   Args->V3     = Args->V3P = VA->Vertices + 3*OVIA[2];
   Args->V4     = Args->V4P = VA->Vertices + 3*OVIA[3];
-  if (ncv<4)  Args->V4P = VB->Vertices + 3*OVIB[3];
-  if (ncv<3)  Args->V3P = VB->Vertices + 3*OVIB[2];
-  if (ncv<2)  Args->V2P = VB->Vertices + 3*OVIB[1];
+  if (ncv<4)     Args->V4P = VB->Vertices + 3*OVIB[3];
+  if (ncv<3)     Args->V3P = VB->Vertices + 3*OVIB[2];
+  if (ncv<2)     Args->V2P = VB->Vertices + 3*OVIB[1];
   Args->Q      = VA->Vertices + 3*iQA;
   Args->QP     = VB->Vertices + 3*iQB;
 
@@ -305,7 +306,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                                Omega, ncv, NeedDerivatives,
                                rPower, TTI);
          for(int nf=0; nf<fdim; nf++)
-          TTI[nf]*=AreaFactor;
+          TTI[nf] *= 4.0*AreaFactor;
 
        }; // if (ncv<=1 ... else )
 

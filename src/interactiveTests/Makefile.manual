@@ -4,7 +4,8 @@
 SCUFFEM  = /home/homer/work/scuff-em-installation
 SCUFFINC = /home/homer/work/scuff-em/src/libs/libscuff
 
-BUFFEM   = /home/homer/work/buff-em-debug
+#BUFFEM   = /home/homer/work/buff-em-debug
+BUFFEM   = /home/homer/work/buff-em-installation
 
 ##################################################
 ##################################################
