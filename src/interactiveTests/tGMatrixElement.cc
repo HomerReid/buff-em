@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
   int nfa=-1;
   int nfb=-1;
   int ncv=-1;
-  int rPower=-1;
+  int rPower=0;
   int MaxBFEvals=100000;
   double RelTol=1.0e-6;
   bool ForceBF=false;
@@ -165,8 +165,16 @@ int main(int argc, char *argv[])
   Data->k=Omega;
   Data->rPower=rPower;
   cdouble GBF[7], Error[7];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+  TetTetInt(O, O->Faces[nfa]->iPTet, O->Faces[nfa]->PIndex, 1.0, 
+            O, O->Faces[nfb]->iPTet, O->Faces[nfb]->PIndex, 1.0, 
+            GBFIntegrand, (void *)Data,
+            14, (double *)GBF, (double *)Error, 0, MaxBFEvals, RelTol);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*
   BFBFInt(O, nfa, O, nfb, GBFIntegrand, (void *)Data,
           14, (double *)GBF, (double *)Error, 0, MaxBFEvals, RelTol);
+*/
 
   /***************************************************************/
   /***************************************************************/

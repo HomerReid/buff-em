@@ -1,14 +1,14 @@
 ##################################################
 ##################################################
 ##################################################
-#SCUFFEM  = /home/homer/work/scuff-em-installation
-SCUFFEM  = /home/homer/work/scuff-em-debug
-LIBDIR   = $(SCUFFEM)/lib
+SCUFFEM  = /home/homer/work/scuff-em-installation
+SCUFFINC = /home/homer/work/scuff-em/src/libs/libscuff
 
-BUFFLIBDIR = /home/homer/work/buff-em-installation/lib
-#BUFFLIBDIR = /home/homer/work/buff-em-debug/lib
-BUFFINCDIR = /home/homer/work/buff-em-installation/include/buff-em
+BUFFEM   = /home/homer/work/buff-em-debug
 
+##################################################
+##################################################
+##################################################
 MU=/home/homer/work/scuff-em-sandbox/MoreUtils_20141022
 CPPFLAGS+=-I$(MU)/
 MUOBJS=$(MU)/MoreUtils.o
@@ -16,14 +16,17 @@ MUOBJS=$(MU)/MoreUtils.o
 ##################################################
 ##################################################
 ##################################################
-CPPFLAGS += -I$(SCUFFEM)/include/scuff-em -I$(HOME)/include -I. -fopenmp
-CPPFLAGS += -I/home/homer/work/scuff-em/src/libs/libscuff
-CPPFLAGS += -I$(BUFFINCDIR)
+CPPFLAGS += -I$(SCUFFEM)/include/scuff-em -I$(SCUFFINC) 
+CPPFLAGS += -I$(BUFFEM)/include/buff-em
+CPPFLAGS += -I$(HOME)/include -I. -fopenmp
 CPPFLAGS += -I$(MU)
-LDFLAGS += -L$(LIBDIR) -Wl,-rpath,$(LIBDIR)
-LDFLAGS += -L$(HOME)/codes/lib -L$(HOME)/lib -L$(BUFFLIBDIR) -L.
+
 CXXFLAGS += -O3 
 #CXXFLAGS = -ggdb -O0
+
+LDFLAGS += -L$(SCUFFEM)/lib -Wl,-rpath,$(SCUFFEM)/lib
+LDFLAGS += -L$(BUFFEM)/lib -Wl,-rpath,$(BUFFEM)/lib
+LDFLAGS += -L$(HOME)/codes/lib -L$(HOME)/lib -L.h
 
 HR_LIBS=-lbuff -lscuff
 #HR_LIBS=-lscuff

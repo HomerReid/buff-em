@@ -86,6 +86,9 @@ void GMEIntegrand(double *xA, double *bA, double DivbA,
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   cdouble PolyFac = DotProduct - DivbA*DivbB/(k*k);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+PolyFac=DivbA*DivbB/9.0;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   cdouble IKR = II*k*r;
   cdouble Phi= exp(IKR)/(4.0*M_PI*r);
@@ -192,18 +195,27 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
   TTaylorDuffy(Args);
 
   // assemble results into output quantities
-  cdouble FOK2=4.0/(k*k);
-  TTI[0] = TDI[0] - FOK2*TDI[1];
+  cdouble NOK2=9.0/(k*k);
+  TTI[0] = TDI[0] - NOK2*TDI[1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+TTI[0] = TDI[1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   if (NeedDerivatives)
    { int npk=2;
      for(int Mu=0; Mu<3; Mu++)
       { if (NeedDerivatives[Mu])
-        { TTI[1 + Mu] = TDI[npk+0] - FOK2*TDI[npk+1];
+        { TTI[1 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+TTI[1 + Mu] = TDI[npk+1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
           npk+=2;
         };
        if (NeedDerivatives[3+Mu])
-        { TTI[4 + Mu] = TDI[npk+0] - FOK2*TDI[npk+1];
+        { TTI[4 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+TTI[4 + Mu] = TDI[npk+1];
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
           npk+=2;
         };
       };
@@ -264,6 +276,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   /***************************************************************/
   SWGFace *FA = VA->Faces[nfA];
   SWGFace *FB = VB->Faces[nfB];
+  double AreaFactor=FA->Area * FB->Area;
   for(int ASign=0; ASign<2; ASign++)
    for(int BSign=0; BSign<2; BSign++)
     { 
@@ -289,8 +302,10 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
       else
        { 
          GetGMETTI_TaylorDuffy(VA, OVIA, iQA, VB, OVIB, iQB,
-                               Omega, ncv, NeedDerivatives, 
+                               Omega, ncv, NeedDerivatives,
                                rPower, TTI);
+         for(int nf=0; nf<fdim; nf++)
+          TTI[nf]*=AreaFactor;
 
        }; // if (ncv<=1 ... else )
 

@@ -107,8 +107,6 @@ typedef struct TTDWorkspace
    bool NeedP[NUMPS];
    bool NeedK[NUMKS];
 
-   int RegionOnly;
-
    int nCalls;
 
  } TTDWorkspace;
@@ -142,7 +140,6 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   int NumPKs        = TDW->NumPKs;
   int *PIndex       = TDW->PIndex;
   int *KIndex       = TDW->KIndex;
-  int RegionOnly    = TDW->RegionOnly;
   cdouble *KParam   = TDW->KParam;
   TDW->nCalls++;
 
@@ -237,7 +234,6 @@ void TTaylorDuffy(TTDArgStruct *Args)
   TDW->PIndex    = PIndex;
   TDW->KIndex    = KIndex;
   TDW->KParam    = KParam;
-  TDW->RegionOnly= Args->RegionOnly;
 
   memset(TDW->NeedP, 0, NUMPS*sizeof(bool));
   memset(TDW->NeedK, 0, NUMKS*sizeof(bool));
@@ -318,11 +314,6 @@ void GetuXiAndJPrime(double w, const double *yVector,
 
   double w1My1     = w*(1.0-y1);
   double wy11My2   = w*y1*(1.0-y2);
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-for(int d=0; d<NUMREGIONS; d++)
- memset(uXi[d],0,6*sizeof(double));
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   /***************************************************************/
   /***************************************************************/
@@ -436,9 +427,6 @@ void GetXAndJPrime(TTDWorkspace *TDW, const double *yVector,
   for(int m=0; m<uXiDim; m++)
    for(int n=m; n<uXiDim; n++)
     for(int d=0; d<NUMREGIONS; d++)
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-if (TDW->RegionOnly==-1 || TDW->RegionOnly==d)
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
      X[d] += uXi[d][m] * TDW->RMatrix[m][n] * uXi[d][n];
 
   for(int d=0; d<NUMREGIONS; d++)
