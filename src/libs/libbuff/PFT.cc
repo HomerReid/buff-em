@@ -225,13 +225,13 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          Tx += Factor*imag( JJ * dG[3] );
          Ty += Factor*imag( JJ * dG[4] );
          Tz += Factor*imag( JJ * dG[5] );
-       }; 
-   
+       };  // end of multithreaded loop
+    
       /*--------------------------------------------------------------*/
       /*- accumulate PFT contributions for this pair of objects       */
       /*--------------------------------------------------------------*/
       PFTMatrix->AddEntry(noA, 0, P  );
-      if (noB!=noA)
+      if (noB>noA)
        PFTMatrix->AddEntry(noB, 0, P );
    
       PFTMatrix->AddEntry(noA, 1, Fx );

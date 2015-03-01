@@ -8,7 +8,7 @@ NumRegions=18;
 (*************************************************************)
 (*************************************************************)
 (*************************************************************)
-GetUpsilon[NCV_, PFunction_, Name_]:=Module[
+GetUpsilon[NCV_, PFunction_, Name_, dMin_, dMax_]:=Module[
 (***)
  {OutFile, d},
 (***)
@@ -22,7 +22,7 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
   
  Shape=Switch[NCV, 4, "Tet_", 3, "Triangle_", 2, "Edge_"];
  OutFile=OpenWrite[ StringJoin["Upsilon_Common",Shape,Name,".cc"] ];
- For[ d=0, d<NumRegions, d++,
+ For[ d=dMin, d<=dMax, d++,
 
       Print["Region ",d,"..."];
 
@@ -77,7 +77,7 @@ GetUpsilon[NCV_, PFunction_, Name_]:=Module[
           If [ NCV==3,
              MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L2PMP1->L2MP1,
                                                                         L1PMP2->L1MP2, L2PMP2->L2MP2},
-                                                  {L1MP1, L2MP1, L3MP1, L3PMP1, V0mXTorqueMP1, 
+                                                  {L1MP1, L2MP1, L3MP1, L3PMP1, V0mXTorqueMP1,
                                                    L1MP2, L2MP2, L3MP2, L3PMP2, V0mXTorqueMP2}
                                                 ]
                                        ]
