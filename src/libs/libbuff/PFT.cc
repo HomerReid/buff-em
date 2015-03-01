@@ -183,8 +183,10 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       /*- multithreaded loop over basis functions on OA, OB-----------*/
       /*--------------------------------------------------------------*/
       double P=0.0, Fx=0.0, Fy=0.0, Fz=0.0, Tx=0.0, Ty=0.0, Tz=0.0;
+      Log("Computing PFT (%i,%i)...",noA,noB);
 #ifdef USE_OPENMP
 int NumThreads = GetNumThreads();
+Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
                          num_threads(NumThreads),  \
                          reduction(+:P, Fx, Fy, Fz, Tx, Ty, Tz)
@@ -200,6 +202,9 @@ int NumThreads = GetNumThreads();
           { nbfA      = nbfp / NBFB;
             nbfB      = nbfp % NBFB;
           };
+
+         if(nbfB==0)
+          LogPercent(nbfA,NBFA,100);
    
          cdouble G, dG[6];
          G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, NeedQuantity, dG);

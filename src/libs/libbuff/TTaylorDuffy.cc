@@ -201,7 +201,7 @@ void InitTTDArgs(TTDArgStruct *Args)
   Args->Q=0;
   Args->QP=0;  
   Args->AbsTol=0.0;
-  Args->RelTol=1.0e-10;
+  Args->RelTol=1.0e-6;
   Args->MaxEval=10000;
   Args->XTorque[0]=Args->XTorque[1]=Args->XTorque[2]=0.0;
 }
