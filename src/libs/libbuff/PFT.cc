@@ -174,6 +174,13 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
    
       int NBFPairs;
       bool UseSymmetry = false;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+if (getenv("BUFF_SYMMETRY"))
+ { UseSymmetry=true;
+   Log("Using symmetry foryaf.");
+ };
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+   
       if (UseSymmetry)
        NBFPairs = OA==OB ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
       else 
