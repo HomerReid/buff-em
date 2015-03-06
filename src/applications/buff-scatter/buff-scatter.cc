@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
   char *EPFiles[MAXEPF];             int nEPFiles;
   char *JPlotFile=0;
   char *PFTFile=0;
+  bool NeedQuantity[6]={false, false, false, false, false, false};
   char *MomentFile=0;
   int ExportMatrix=0;
   /* name               type    #args  max_instances  storage           count         description*/
@@ -93,6 +94,12 @@ int main(int argc, char *argv[])
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
      {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,             "name of PFT output file"},
+     {"XForce",         PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[0])), 0,  "compute x-directed force"},
+     {"YForce",         PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[1])), 0,  "compute y-directed force"},
+     {"ZForce",         PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[2])), 0,  "compute z-directed force"},
+     {"XTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[3])), 0,  "compute x-directed torque"},
+     {"YTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[4])), 0,  "compute y-directed torque"},
+     {"ZTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedQuantity[5])), 0,  "compute z-directed torque"},
 /**/
      {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "name of J-plot file"},
      {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,             "name of induced-dipole-moment output file"},
@@ -265,7 +272,7 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (PFTFile)
-      WritePFTFile(BSD, PFTFile);
+      WritePFTFile(BSD, PFTFile, NeedQuantity);
 
      if (MomentFile)
       WriteMomentFile(BSD, MomentFile);

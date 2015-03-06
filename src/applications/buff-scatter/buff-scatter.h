@@ -53,7 +53,7 @@ typedef struct BSData
 /* scattered fields in various ways.                           */
 /***************************************************************/
 //void GetMoments(BSData *BSD, char *MomentFile);
-void WritePFTFile(BSData *SSD, char *PFTFile);
+void WritePFTFile(BSData *SSD, char *PFTFile, bool NeedQuantity[6]);
 void ProcessEPFile(BSData *BSData, char *EPFileName);
 void WriteMomentFile(BSData *BSD, char *FileName);
 

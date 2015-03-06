@@ -114,7 +114,7 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
 /***************************************************************/
 /* compute power, force, and torque                            */
 /***************************************************************/
-void WritePFTFile(BSData *BSD, char *PFTFile)
+void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
 { 
   SWGGeometry *G = BSD->G;
 
@@ -133,8 +133,14 @@ void WritePFTFile(BSData *BSD, char *PFTFile)
   delete PFTMatrix;
 #endif
 
-  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega);
-  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega);
+  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega, 0, NeedQuantity);
+  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity);
+
+  for(int nq=0; nq<6; nq++)
+   if (!NeedQuantity[nq])
+    { PFTMatrix1->SetEntries(":",1+nq,0.0);
+      PFTMatrix2->SetEntries(":",1+nq,0.0);
+    };
 
   FILE *f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)
