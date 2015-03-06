@@ -147,6 +147,9 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
                              cdouble Omega, HMatrix *PFTMatrix,
                              bool *NeedQuantity)
 { 
+  bool DefaultNeedQuantity[6]={true, true, true, true, true, true};
+  if (NeedQuantity==0) NeedQuantity=DefaultNeedQuantity;
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
