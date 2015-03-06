@@ -126,6 +126,14 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
                            int rPower, cdouble TTI[7])
 {
   /*-----------------------------------------------------------*/
+  /*- derivatives vanish identically for the common-tet case  -*/
+  /*-----------------------------------------------------------*/
+  if (ncv==4)
+   { if (NeedDerivatives) memset(TTI+1,0,6*sizeof(cdouble));
+     NeedDerivatives=0;
+   };
+
+  /*-----------------------------------------------------------*/
   /* initialize Taylor-Duffy argument structure                */
   /*-----------------------------------------------------------*/
   TTDArgStruct MyArgs, *Args=&MyArgs;
@@ -220,11 +228,9 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
 /* if rPower!=-10, then the usual helmholtz kernel is replaced */
 /* with r^rPower.                                              */
 /***************************************************************/
-cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
-                          SWGVolume *VB, int nfB,
-                          cdouble Omega, 
-                          bool *NeedDerivatives,
-                          cdouble *dG, int rPower, bool ForceBF)
+cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
+                          cdouble Omega, bool *NeedDerivatives, cdouble *dG,
+                          int rPower, bool ForceBF)
 {
   cdouble Result[7], Error[7];
 
@@ -239,7 +245,6 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
   Data->NeedDerivatives = (NeedDerivatives == 0) ? false : true;
   Data->rPower=rPower;
   int fdim = Data->NeedDerivatives ? 7 : 1;
-
 
   if (NeedDerivatives) 
    { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
@@ -261,6 +266,7 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
              (double *)Result, (double *)Error, NumPts, 0, 0.0);
     
      if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
+     
      return Result[0];
    };
 
@@ -311,8 +317,11 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 
     }; // for(int ASign...for(int BSign...)
 
-  if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
-  return Result[0];
+  cdouble PreFac = II*Omega*ZVAC;
+  if (dG) 
+   for(int Mu=0; Mu<6; Mu++)
+    dG[Mu] = PreFac * Result[Mu+1];
+  return PreFac * Result[0];
 
 }
 

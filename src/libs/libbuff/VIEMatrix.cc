@@ -326,7 +326,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
    M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 
   for(int noa=0; noa<NumObjects; noa++)
-   for(int nob=0/*noa*/; nob<NumObjects; nob++)
+   for(int nob=noa; nob<NumObjects; nob++)
     { 
       AssembleGBlock(noa, nob, Omega, M,
                      BFIndexOffset[noa], BFIndexOffset[nob]);
@@ -335,11 +335,9 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
        AssembleVInvBlock(noa, Omega, 0, 0, M, BFIndexOffset[noa]);
     };
 
-#if 0
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
     M->SetEntry(nr, nc, M->GetEntry(nc,nr));
-#endif
 
   return M;
 
