@@ -34,25 +34,13 @@
 
 #include <libhrutil.h>
 #include <libscuff.h>
+#include <rwlock.h>
 
 void InitTaskTiming(const char **pTaskNames);
 void ResetTaskTiming();
 void AddTaskTiming(int WhichTask, double Elapsed);
 void LogTaskTiming();
 
-namespace scuff {
-
-class rwlock {
-public:
-  rwlock();
-  ~rwlock();
-
-  void read_lock();
-  void read_unlock();
-  void write_lock();
-  void write_unlock();
-             };
-}
 using namespace scuff;
 
 namespace buff {
@@ -65,7 +53,7 @@ static int *TaskCounts=0;
 static double *TaskTimes=0;
 static double *TaskTimes2=0;
 static char **TaskNames=0;
-static rwlock *TaskLock=0;
+static rwlock TaskLock;
 void InitTaskTiming(const char **pTaskNames)
 {
   if (TaskCounts)  free(TaskCounts);
@@ -89,9 +77,6 @@ void InitTaskTiming(const char **pTaskNames)
   for(int nt=0; nt<NumTasks; nt++)
    TaskNames[nt]=strdup(pTaskNames[nt]);
 
-  if (TaskLock==0)
-   TaskLock=new rwlock();
-
 }
 
 void ResetTaskTiming()
@@ -104,12 +89,14 @@ void ResetTaskTiming()
 void AddTaskTiming(int WhichTask, double Elapsed)
 {
   if (WhichTask>=NumTasks)
-   Warn("%s:%i: internal error (%i>%i)",__FILE__,__LINE__,WhichTask,NumTasks);  
-  TaskLock->write_lock();
+   { Warn("%s:%i: internal error (%i>%i)",__FILE__,__LINE__,WhichTask,NumTasks);  
+     return;
+   }
+  TaskLock.write_lock();
   TaskCounts[WhichTask]++;
   TaskTimes[WhichTask]+=Elapsed;
   TaskTimes2[WhichTask]+=Elapsed*Elapsed;
-  TaskLock->write_unlock();
+  TaskLock.write_unlock();
 }
 
 void LogTaskTiming(const char *Title)

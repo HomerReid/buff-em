@@ -30,6 +30,7 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#include <fenv.h>
 
 #include <libhrutil.h>
 
@@ -199,7 +200,14 @@ InitTaskTiming( TaskNames );
       /*--------------------------------------------------------------*/
       double P=0.0, Fx=0.0, Fy=0.0, Fz=0.0, Tx=0.0, Ty=0.0, Tz=0.0;
       Log("Computing PFT (%i,%i)...",noA,noB);
-#ifdef USE_OPENMP
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+feenableexcept(FE_INVALID | FE_OVERFLOW);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+
+//#ifdef USE_OPENMP
+#if 0
 int NumThreads = GetNumThreads();
 Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
