@@ -222,8 +222,8 @@ class SWGGeometry
    // directories within which to search for mesh files
    static int NumMeshDirs;
    static char **MeshDirs;
-   static int MaxTDEvals;
-   static int TDNCVThreshold;
+   static int TaylorDuffyTolerance;
+   static int MaxTaylorDuffyEvals;
 
 //  private:
 

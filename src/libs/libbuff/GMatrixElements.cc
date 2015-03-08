@@ -192,8 +192,10 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
   Args->QP     = VB->Vertices + 3*iQB;
 
   cdouble TDI[14], Error[14];
-  Args->Result = TDI;
-  Args->Error  = Error;
+  Args->Result  = TDI;
+  Args->Error   = Error;
+  Args->RelTol  = SWGGeometry::TaylorDuffyTolerance;
+  Args->MaxEval = SWGGeometry::MaxTaylorDuffyEvals;
 
   // calculate taylor-duffy integrals
   TTaylorDuffy(Args);

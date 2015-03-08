@@ -46,8 +46,8 @@ namespace buff{
 /***************************************************************/
 int SWGGeometry::NumMeshDirs=0;
 char **SWGGeometry::MeshDirs=0;
-int SWGGeometry::TDNCVThreshold=3;
-int SWGGeometry::MaxTDEvals=100000;
+int SWGGeometry::TaylorDuffyTolerance=1.0e-6;
+int SWGGeometry::MaxTaylorDuffyEvals=10000;
 
 /***********************************************************************/
 /* parser subroutine for OBJECT...ENDOBJECT section in file ************/
@@ -190,18 +190,14 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   char *s;
-  if ( (s=getenv("BUFF_MAXTDEVALS")) )
-   { sscanf(s,"%i",&MaxTDEvals);
-     Log("Setting MaxTDEvals=%i.",MaxTDEvals);
+  if ( (s=getenv("BUFF_TAYLORDUFFY_EVALS")) )
+   { sscanf(s,"%i",&MaxTaylorDuffyEvals);
+     Log("Setting max TaylorDuffy evals=%i.",MaxTaylorDuffyEvals);
    };
-  if ( (s=getenv("BUFF_TDNCVTHRESHOLD")) )
-   { sscanf(s,"%i",&TDNCVThreshold);
-     Log("Setting TDNCVThreshold=%i.",TDNCVThreshold);
+  if ( (s=getenv("BUFF_TAYLORDUFFY_TOLERANCE")) )
+   { sscanf(s,"%le",&TaylorDuffyTolerance);
+     Log("Setting TaylorDuffy tolerance=%e.",TaylorDuffyTolerance);
    };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
 
   /***************************************************************/
   /* try to open input file **************************************/
