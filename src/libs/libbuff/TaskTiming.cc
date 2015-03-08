@@ -103,8 +103,11 @@ void LogTaskTiming(const char *Title)
 {
   if (Title) Log("Task tally for %s: ",Title);
   for(int nt=0; nt<NumTasks; nt++)
-   { double Avg  = TaskTimes[nt]  / TaskCounts[nt];
-     double Avg2 = TaskTimes2[nt] / TaskCounts[nt];
+   { 
+     int N = TaskCounts[nt];
+     if (N==0) N=1;
+     double Avg    = TaskTimes[nt]  / N;
+     double Avg2   = TaskTimes2[nt] / N;
      double StdDev = sqrt(Avg2 - Avg*Avg);
      Log("Task %s: (Count, Total, Mean, StdDev)={%8i,%.2e,%.2e,%.2e}",
           TaskNames[nt], TaskCounts[nt], TaskTimes[nt], Avg, StdDev);
