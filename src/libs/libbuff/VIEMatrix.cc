@@ -326,7 +326,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
    M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-const char *TaskNames[]={"NCV0", "NCV1", "NCV2", "NCV3", "NCV4" };
+const char *TaskNames[]={"NCV0", "NCV1", "NCV2", "NCV3", "NCV4", 0 };
 InitTaskTiming( TaskNames );
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 

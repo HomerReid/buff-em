@@ -55,6 +55,7 @@ public:
 }
 using namespace scuff;
 
+namespace buff {
 
 /***************************************************************/
 /***************************************************************/
@@ -113,8 +114,7 @@ void AddTaskTiming(int WhichTask, double Elapsed)
 
 void LogTaskTiming(const char *Title)
 {
-  if (Title)
-   Log("Task tally for %s: ",Title);
+  if (Title) Log("Task tally for %s: ",Title);
   for(int nt=0; nt<NumTasks; nt++)
    { double Avg  = TaskTimes[nt]  / TaskCounts[nt];
      double Avg2 = TaskTimes2[nt] / TaskCounts[nt];
@@ -124,3 +124,5 @@ void LogTaskTiming(const char *Title)
    };
   
 }
+
+} // namespace buff

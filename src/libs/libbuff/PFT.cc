@@ -190,7 +190,7 @@ if (getenv("BUFF_SYMMETRY"))
        NBFPairs = NBFA*NBFB;
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-const char *TaskNames[]={ "NCV0", "NCV1", "NCV2", "NCV3", "NCV4","IF  "};
+const char *TaskNames[]={ "NCV0", "NCV1", "NCV2", "NCV3", "NCV4","IF  ",0};
 InitTaskTiming( TaskNames );
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
    
