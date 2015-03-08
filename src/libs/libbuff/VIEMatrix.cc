@@ -325,6 +325,11 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   if (!M)
    M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+const char *TaskNames={ {"NCV0"}, {"NCV1"}, {"NCV2"}, {"NCV3"}, {"NCV4"} };
+InitTaskTiming( TaskNames );
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     { 
@@ -338,6 +343,10 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
     M->SetEntry(nr, nc, M->GetEntry(nc,nr));
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+LogTaskTiming("GMatrix assembly");
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   return M;
 

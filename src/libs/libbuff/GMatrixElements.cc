@@ -229,24 +229,24 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
 /* with r^rPower.                                              */
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
-                          cdouble Omega, bool *NeedDerivatives, cdouble *dG,
+                          cdouble Omega, bool *NeedQuantity, cdouble *dG,
                           int rPower, bool ForceBF)
 {
   cdouble Result[7], Error[7];
 
   // derivatives vanish identically for diagonal matrix elements
-  if (VA==VB && nfA==nfB && NeedDerivatives)
+  if (VA==VB && nfA==nfB && NeedQuantity )
    { if (dG) memset(dG, 0, 6*sizeof(cdouble));
-     NeedDerivatives=false; 
+     NeedQuantity=0;
    };
 
   GMEData MyData, *Data=&MyData;
   Data->k=Omega;
-  Data->NeedDerivatives = (NeedDerivatives == 0) ? false : true;
+  Data->NeedDerivatives = (NeedQuantity == 0) ? false : true;
   Data->rPower=rPower;
   int fdim = Data->NeedDerivatives ? 7 : 1;
 
-  if (NeedDerivatives) 
+  if (Data->NeedDerivatives) 
    { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
      if (VA->OTGT) VA->OTGT->Apply(Data->XTorque);
      if (VA->GT)   VA->GT->Apply(Data->XTorque);
@@ -262,8 +262,11 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
      /* supports of both basis functions                            */
      /***************************************************************/
      int NumPts=4;
+     double Elapsed=Secs();
      BFBFInt(VA, nfA, VB, nfB, GMEIntegrand, (void *)Data, 2*fdim,
              (double *)Result, (double *)Error, NumPts, 0, 0.0);
+     Elapsed=Secs()-Elapsed;
+     AddTaskTiming(0,Elapsed);
     
      if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
      
@@ -295,17 +298,22 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
          int NumPts=16;
          int iQA = (ASign==0) ? FA->PIndex : FA->MIndex;
          int iQB = (BSign==0) ? FB->PIndex : FB->MIndex;
+         double Elapsed=Secs();
          TetTetInt(VA, ntA, iQA, 1.0, VB, ntB, iQB, 1.0,
                    GMEIntegrand, (void *)Data, 2*fdim,
                    (double *)TTI, (double *)Error, NumPts, 0, 0);
+         Elapsed=Secs()-Elapsed;
+         AddTaskTiming(1,Elapsed);
        }
       else
        { 
          int iQA = (ASign==0) ? FA->iQP   : FA->iQM;
          int iQB = (BSign==0) ? FB->iQP   : FB->iQM;
+         double Elapsed=Secs();
          GetGMETTI_TaylorDuffy(VA, OVIA, iQA, VB, OVIB, iQB,
-                               Omega, ncv, NeedDerivatives,
-                               rPower, TTI);
+                               Omega, ncv, NeedQuantity, rPower, TTI);
+         Elapsed=Secs()-Elapsed;
+         AddTaskTiming(ncv,Elapsed);
          for(int nf=0; nf<fdim; nf++)
           TTI[nf] *= 4.0*AreaFactor;
 

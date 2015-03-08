@@ -334,6 +334,12 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
 
 double *GetTetCR(int NumPts);
 
+void InitTaskTiming(const char **pTaskNames);
+void ResetTaskTiming();
+void AddTaskTiming(int WhichTask, double Elapsed);
+void LogTaskTiming(const char *Title);
+
+
 } // namespace buff 
 
 #endif // #ifndef LIBBUFF_H

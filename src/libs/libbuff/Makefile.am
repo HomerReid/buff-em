@@ -11,6 +11,7 @@ libbuff_la_SOURCES = 	\
  RHSVector.cc    	\
  SWGGeometry.cc  	\
  SWGVolume.cc    	\
+ TaskTiming.cc		\
  TetCR.cc     		\
  TTaylorDuffy.cc      	\
  VIEMatrix.cc		\
