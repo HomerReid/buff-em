@@ -162,6 +162,9 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
    PFTMatrix= new HMatrix(NumObjects, NUMPFTQS);
   PFTMatrix->Zero();
 
+  cdouble IZ = II*ZVAC;
+  cdouble IKZ = Omega*IZ;
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -238,16 +241,13 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          if (noA==noB && nbfB > nbfA && UseSymmetry)
           Factor = 1.0;
    
-         P  += Factor * real( JJ * G );
-
-         Factor/= real(Omega);
-
-         Fx += Factor*imag( JJ * dG[0] );
-         Fy += Factor*imag( JJ * dG[1] );
-         Fz += Factor*imag( JJ * dG[2] );
-         Tx += Factor*imag( JJ * dG[3] );
-         Ty += Factor*imag( JJ * dG[4] );
-         Tz += Factor*imag( JJ * dG[5] );
+         P  += Factor * real ( JJ * IKZ * G    );
+         Fx += Factor * imag ( JJ * IZ * dG[0] );
+         Fy += Factor * imag ( JJ * IZ * dG[1] );
+         Fz += Factor * imag ( JJ * IZ * dG[2] );
+         Tx += Factor * imag ( JJ * IZ * dG[3] );
+         Ty += Factor * imag ( JJ * IZ * dG[4] );
+         Tz += Factor * imag ( JJ * IZ * dG[5] );
        };  // end of multithreaded loop
     
       /*--------------------------------------------------------------*/

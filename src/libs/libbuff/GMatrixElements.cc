@@ -327,11 +327,9 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
 
     }; // for(int ASign...for(int BSign...)
 
-  cdouble PreFac = II*Omega*ZVAC;
   if (dG) 
-   for(int Mu=0; Mu<6; Mu++)
-    dG[Mu] = PreFac * Result[Mu+1];
-  return PreFac * Result[0];
+   memcpy(dG, Result+1, 6*sizeof(cdouble));
+  return Result[0];
 
 }
 
