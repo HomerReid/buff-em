@@ -92,13 +92,17 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
   IF->GetFields(x, EH);
   for(int Mu=0; Mu<3; Mu++)
    { 
+     double xTweaked[3];
+     xTweaked[0]=x[0];
+     xTweaked[1]=x[1];
+     xTweaked[2]=x[2];
      double Delta = 1.0e-4 / abs(k);
 
-     x[Mu] += Delta;
-     IF->GetFields(x, EHP);
-     x[Mu] -= 2.0*Delta;
-     IF->GetFields(x, EHM);
-     x[Mu] += Delta;
+     xTweaked[Mu] += Delta;
+     IF->GetFields(xTweaked, EHP);
+     xTweaked[Mu] -= 2.0*Delta;
+     IF->GetFields(xTweaked, EHM);
+     xTweaked[Mu] += Delta;
 
      for(int Nu=0; Nu<6; Nu++)
       dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
@@ -208,9 +212,7 @@ InitTaskTiming( TaskNames );
 feenableexcept(FE_INVALID | FE_OVERFLOW);
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
-
-//#ifdef USE_OPENMP
-#if 0
+#ifdef USE_OPENMP
 int NumThreads = GetNumThreads();
 Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
@@ -221,15 +223,19 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
        { 
          int nbfA, nbfB;
          if (UseSymmetry)
-          { nbfA      = nbfp / NBFB;
-            nbfB      = nbfp % NBFB;
+          { //FIXME FIXME
+            for(nbfA=0; nbfA<NBFB; nbfA++)
+             for(nbfB=nbfA; nbfB<NBFB; nbfB++)
+              { int PairIndex=nbfA*NBFB + nbfA*(nbfA-1)/2 + (nbfB-nbfA);
+                if (PairIndex==nbfp) break;
+              }
           }
          else
           { nbfA      = nbfp / NBFB;
             nbfB      = nbfp % NBFB;
           };
 
-         if(nbfB==0)
+         if( (UseSymmetry && nbfB==nbfA) || (!UseSymmetry && nbfB==0) )
           LogPercent(nbfA,NBFA,100);
    
          cdouble G, dG[6];
@@ -248,6 +254,7 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          Tx += Factor * imag ( JJ * IZ * dG[3] );
          Ty += Factor * imag ( JJ * IZ * dG[4] );
          Tz += Factor * imag ( JJ * IZ * dG[5] );
+
        };  // end of multithreaded loop
     
       /*--------------------------------------------------------------*/
