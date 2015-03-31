@@ -225,10 +225,11 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          if (UseSymmetry)
           { 
             //FIXME FIXME
-            for(nbfA=0; nbfA<NBFB; nbfA++)
+            for(nbfA=0; nbfA<NBFA; nbfA++)
              for(nbfB=nbfA; nbfB<NBFB; nbfB++)
               { int PairIndex=nbfA*NBFB + nbfA*(nbfA-1)/2 + (nbfB-nbfA);
                 if (PairIndex==nbfp) break;
+Log("%i -> (%i,%i) (%i,%i)",nbfp,nbfA,nbfB,NBFA,NBFB);
               }
           }
          else
