@@ -1,13 +1,13 @@
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
- * This file is part of SCUFF-EM.
+ * This file is part of BUFF-EM.
  *
- * SCUFF-EM is free software; you can redistribute it and/or modify
+ * BUFF-EM is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
- * SCUFF-EM is distributed in the hope that it will be useful,
+ * BUFF-EM is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
@@ -173,9 +173,9 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( NumMeshDirs==0 && getenv("SCUFF_MESH_PATH") )
+  if ( NumMeshDirs==0 && getenv("BUFF_MESH_PATH") )
    { char MeshPathCopy[1000];
-     strncpy(MeshPathCopy, getenv("SCUFF_MESH_PATH"), 1000);
+     strncpy(MeshPathCopy, getenv("BUFF_MESH_PATH"), 1000);
      char *Tokens[10];
      int NumTokens=Tokenize(MeshPathCopy, Tokens, 10, ":");
      NumMeshDirs=NumTokens;
@@ -247,6 +247,7 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
         NumObjects++;
         Objects=(SWGVolume **)realloc(Objects, NumObjects*sizeof(SWGVolume *) );
         Objects[NumObjects-1]=O;
+        O->Index=NumObjects-1;
       }
      else 
       { 

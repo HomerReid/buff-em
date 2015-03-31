@@ -53,15 +53,13 @@ namespace buff {
 #define TTD_RXUNITY              2
 #define TTD_RYUNITY              3
 #define TTD_RZUNITY              4
+#define TTD_TXUNITY              5
+#define TTD_TYUNITY              6
+#define TTD_TZUNITY              7
 
-#define TTD_RXBDOTBP             5
-#define TTD_RYBDOTBP             6
-#define TTD_RZBDOTBP             7
-
-#define TTD_TXUNITY              8
-#define TTD_TYUNITY              9
-#define TTD_TZUNITY             10
-
+#define TTD_RXBDOTBP             8
+#define TTD_RYBDOTBP             9
+#define TTD_RZBDOTBP            10
 #define TTD_TXBDOTBP            11
 #define TTD_TYBDOTBP            12
 #define TTD_TZBDOTBP            13

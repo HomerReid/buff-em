@@ -150,7 +150,7 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
                              cdouble Omega, HMatrix *PFTMatrix,
-                             bool *NeedQuantity)
+                             bool *NeedQuantity, void *opTable)
 { 
   bool DefaultNeedQuantity[6]={true, true, true, true, true, true};
   if (NeedQuantity==0) NeedQuantity=DefaultNeedQuantity;
@@ -184,11 +184,11 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       int NBFB      = OB->NumInteriorFaces;
    
       int NBFPairs;
-      bool UseSymmetry = false;
+      bool UseSymmetry = true;
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-if (getenv("BUFF_SYMMETRY"))
- { UseSymmetry=true;
-   Log("Using symmetry foryaf.");
+if (getenv("BUFF_NO_SYMMETRY"))
+ { UseSymmetry=false;
+   Log("Ignoring symmetry.");
  };
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
    
@@ -221,9 +221,10 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
 #endif
       for(int nbfp=0; nbfp<NBFPairs; nbfp++)
        { 
-         int nbfA, nbfB;
+         int nbfA=0, nbfB=0;
          if (UseSymmetry)
-          { //FIXME FIXME
+          { 
+            //FIXME FIXME
             for(nbfA=0; nbfA<NBFB; nbfA++)
              for(nbfB=nbfA; nbfB<NBFB; nbfB++)
               { int PairIndex=nbfA*NBFB + nbfA*(nbfA-1)/2 + (nbfB-nbfA);
@@ -239,7 +240,7 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
           LogPercent(nbfA,NBFA,100);
    
          cdouble G, dG[6];
-         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, NeedQuantity, dG);
+         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, opTable, dG, NeedQuantity);
          cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
                           *( JVector->GetEntry(OffsetB + nbfB) );
    

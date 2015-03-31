@@ -125,6 +125,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
    Label=strdup(MeshFileName);
   else
    Label=strdup(pLabel);
+  Index=0;
 
   if (pMatFileName==0)
    { MatFileName=0;

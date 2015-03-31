@@ -89,7 +89,7 @@ void ResetTaskTiming()
 void AddTaskTiming(int WhichTask, double Elapsed)
 {
   if (WhichTask>=NumTasks)
-   { Warn("%s:%i: internal error (%i>%i)",__FILE__,__LINE__,WhichTask,NumTasks);  
+   { //Warn("%s:%i: internal error (%i>%i)",__FILE__,__LINE__,WhichTask,NumTasks);  
      return;
    }
   TaskLock.write_lock();

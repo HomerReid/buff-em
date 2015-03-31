@@ -32,6 +32,7 @@
 
 #include "libSGJC.h"
 #include "libscuff.h"
+#include "rwlock.h"
 #include "libbuff.h"
 #include "TTaylorDuffy.h"
 
@@ -43,73 +44,257 @@
 #endif
 
 using namespace scuff;
-
 namespace buff {
 
 #define II cdouble(0.0,1.0)
 
+#define KERNEL_HELMHOLTZ 0
+#define KERNEL_DESINGULARIZED 1
+#define KERNEL_STATIC    2
+
+typedef struct FIBBITable
+ { 
+   int NumDerivatives;
+   bool NeedDerivative[6];
+
+   int NumObjects;
+   double ***Entries;
+
+   //rwlock *Lock;
+ } FIBBITable;
+
+static rwlock TheLock, *Lock=&TheLock;
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void *CreateFIBBITable(SWGGeometry *G, bool *NeedDerivative)
+{
+  FIBBITable *Table = (FIBBITable *)mallocEC(sizeof(FIBBITable));
+
+  int NumDerivatives=0;
+  if (NeedDerivative)
+   { memcpy(Table->NeedDerivative, NeedDerivative, 6*sizeof(bool));
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative[Mu]) NumDerivatives++;
+   }
+  else
+   memset(Table->NeedDerivative, 0, 6*sizeof(bool));
+  Table->NumDerivatives=NumDerivatives;
+
+  // ridiculously inefficient storage scheme; FIXME
+  int NO = Table->NumObjects = G->NumObjects;
+  Table->Entries=(double ***)mallocEC(NO*NO*sizeof(double **));
+  for(int no=0; no<NO; no++)
+   for(int nop=no; nop<NO; nop++)
+    { int NF1=G->Objects[no]->NumInteriorFaces;
+      int NF2=G->Objects[nop]->NumInteriorFaces;
+      Table->Entries[no*NO + nop] = (double **)mallocEC(NF1*NF2*sizeof(double *));
+    };
+   
+  return (void *)Table;
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+#if 0
+void EmptyFIBBITable(void *opTable)
+{
+  FIBBITable *Table = (FIBBITable *)opTable;
+  int NFA=Table->OA->NumInteriorFaces;
+  int NFB=Table->OB->NumInteriorFaces;
+  for(int nfa=0; nfa<NFA; nfa++)
+   for(int nfb=0; nfb<NFB; nfb++)
+    { int Index = nfa*(NFB) + nfb;
+      if (Table->Entries[Index])
+       { free(Table->Entries[Index]);
+         Table->Entries[Index]=0;
+       };
+    };
+}
+#endif
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void DestroyFIBBITable(void *opTable)
+{ (void)opTable; 
+  // not implemented yet 
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+#define EXPRELTOL  1.0e-8
+#define EXPRELTOL2 EXPRELTOL*EXPRELTOL  
+void GetExpRelTable(cdouble x, int nMin, int nMax, cdouble *ExpRelTable)
+{
+  // Note: the comments below assume nMin=4, nMax=7 just for concreteness
+
+  int n;
+  cdouble Term, Sum;
+
+  // compute (but do not sum) the 0th, 1st, ... 3rd terms in the 
+  // series expansion of exp(x)
+  for(Term=1.0, n=1; n<nMin; n++)
+   Term*=x/((double)n);
+  
+  // set ExpRelTable[0] = x^4/4!
+  //     ExpRelTable[1] = x^5/25
+  // ...
+  //     ExpRelTable[3] = x^7/7!
+  for(n=nMin; n<=nMax; n++)
+   { Term*=x/((double)n);
+     ExpRelTable[n-nMin]=Term;
+   };
+
+  // compute Sum = \sum_{n=8}^\infty x^n/n!
+  for(Sum=0.0 ; n<100; n++)
+   { Term*=x/((double)n);
+     Sum+=Term;
+     double mag2Term=norm(Term), mag2Sum=norm(Sum);
+     if ( mag2Term < EXPRELTOL2*mag2Sum )
+      break;
+   };
+  
+  // 
+  ExpRelTable[nMax-nMin]+=Sum;
+  for(n=nMax-1; n>=nMin; n--)
+   ExpRelTable[n-nMin] += ExpRelTable[n-nMin+1];
+} 
+
 /***************************************************************/
 /* integrand routine and user data structure for computing     */
-/* G matrix elements using TetTetInt                           */
+/* G matrix elements using BFBFInt or TetTetInt                */
 /***************************************************************/
 typedef struct GMEData
  {
    cdouble k;
-   bool NeedDerivatives;
+   bool *NeedDerivative;
+   int NumDerivatives;
    double XTorque[3];
-   int rPower;
+   int WhichKernel;
  } GMEData;
  
-void GMEIntegrand(double *xA, double *bA, double DivbA,
+static void GMEIntegrand(double *xA, double *bA, double DivbA,
                   double *xB, double *bB, double DivbB,
                   void *UserData, double *I)
 {
   GMEData *Data        = (GMEData *)UserData;
-  bool NeedDerivatives = Data->NeedDerivatives;
   cdouble k            = Data->k;
-  int rPower           = Data->rPower;
-  cdouble *zI          = (cdouble *)I;
+  bool *NeedDerivative = Data->NeedDerivative;
+  int NumDerivatives   = Data->NumDerivatives;
+  int WhichKernel      = Data->WhichKernel;
 
+  // fdim is the length of the output array in units of cdoubles
+  int fdim;
+  if (WhichKernel==KERNEL_STATIC)
+   fdim = 3 + 4*NumDerivatives;
+  else 
+   fdim = 1 + NumDerivatives;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   double R[3]; 
   R[0] = (xA[0] - xB[0]);
   R[1] = (xA[1] - xB[1]);
   R[2] = (xA[2] - xB[2]);
-
   double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] );
   if ( r < 1.0e-12 )
-   { if (Data->NeedDerivatives)
-      memset(zI,0,7*sizeof(double)); 
-     else
-      zI[0]=0.0;
+   { memset(I, 0, 2*fdim*sizeof(double));
      return;
    };
 
-  double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
-  cdouble PEFIE = DotProduct - DivbA*DivbB/(k*k);
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+  double ScalarProduct = DivbA*DivbB;
+  cdouble PEFIE = DotProduct - ScalarProduct/(k*k);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  int nf=0;
+  cdouble Phi, ExpFac[2], *zI = (cdouble *)I;
+
   cdouble IKR = II*k*r;
-  cdouble Phi= exp(IKR)/(4.0*M_PI*r);
-
-  if (rPower!=-10) Phi=pow(r,rPower);
-
-  zI[0] = PEFIE*Phi;
-
-  if (NeedDerivatives)
+  if (WhichKernel==KERNEL_HELMHOLTZ)
+   { Phi = exp(II*k*r) / (4.0*M_PI*r);
+     zI[nf++] = PEFIE*Phi;
+   }
+  else if (WhichKernel==KERNEL_DESINGULARIZED)
    { 
-     cdouble Psi = (IKR-1.0) * Phi / (r*r);
-     if (rPower!=-10) Psi=pow(r,rPower);
-     zI[1] = R[0]*PEFIE*Psi;
-     zI[2] = R[1]*PEFIE*Psi;
-     zI[3] = R[2]*PEFIE*Psi;
+     GetExpRelTable(IKR, 3, 4, ExpFac);
+     Phi = ExpFac[0] / (4.0*M_PI*r);
+     zI[nf++] = PEFIE*Phi;
+   }
+  else // (WhichKernel==KERNEL_STATIC)
+   {
+     double rPower[3];
+     rPower[0] = 1.0/(4.0*M_PI*r);
+     rPower[1] = 1.0/(4.0*M_PI);
+     rPower[2] =   r/(8.0*M_PI);
+     I[nf++] = rPower[0]*DotProduct;
+     I[nf++] = rPower[0]*ScalarProduct;
+     I[nf++] = rPower[1]*DotProduct;
+     I[nf++] = rPower[1]*ScalarProduct;
+     I[nf++] = rPower[2]*DotProduct;
+     I[nf++] = rPower[2]*ScalarProduct;
+   };
 
-     double XmXTorque[3];
-     XmXTorque[0] = xA[0] - (Data->XTorque[0]);
-     XmXTorque[1] = xA[1] - (Data->XTorque[1]);
-     XmXTorque[2] = xA[2] - (Data->XTorque[2]);
-     for(int Mu=0; Mu<3; Mu++)
-      { int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
-        zI[4 + Mu]
-         = (XmXTorque[MP1]*R[MP2]-XmXTorque[MP2]*R[MP1])*PEFIE*Psi;
-      };
+  if (!NeedDerivative)
+   return;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  double RFactor[6];
+  RFactor[0]=R[0];
+  RFactor[1]=R[1];
+  RFactor[2]=R[2];
+
+  // compute Tau = (X-XTorque) \cross R
+  double XmXTorque[3];
+  double *XTorque = Data->XTorque;
+  XmXTorque[0] = xA[0] - XTorque[0];
+  XmXTorque[1] = xA[1] - XTorque[1];
+  XmXTorque[2] = xA[2] - XTorque[2];
+  RFactor[3] = XmXTorque[1]*R[2]-XmXTorque[2]*R[1];
+  RFactor[4] = XmXTorque[2]*R[0]-XmXTorque[0]*R[2];
+  RFactor[5] = XmXTorque[0]*R[1]-XmXTorque[1]*R[0];
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (WhichKernel==KERNEL_STATIC)
+   {
+     double rPower[4];
+     rPower[0] = -1.0/(4.0*M_PI*r*r*r);
+     rPower[1] =  1.0/(8.0*M_PI*r);
+     rPower[2] =  1.0/(12.0*M_PI);
+     rPower[3] =    r/(24.0*M_PI);
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative[Mu])
+       for(int nrPower=0; nrPower<4; nrPower++)
+        {
+          I[nf++] = RFactor[Mu]*DotProduct*rPower[nrPower];
+          I[nf++] = RFactor[Mu]*ScalarProduct*rPower[nrPower];
+        };
+   }
+  else 
+   { cdouble Psi;
+     if (WhichKernel==KERNEL_HELMHOLTZ)
+      Psi=(IKR-1.0) * Phi / (r*r);
+     else if (WhichKernel==KERNEL_DESINGULARIZED)
+      Psi=(IKR-1.0)*ExpFac[1]/(4.0*M_PI*r*r*r);
+
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative[Mu])
+       zI[nf++] = RFactor[Mu]*PEFIE*Psi;
    };
 
 }
@@ -117,20 +302,20 @@ void GMEIntegrand(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /* Use the Taylor-Duffy method to compute the contribution of  */
 /* a single tetrahedron-tetrahedron pair to the matrix         */
-/* element of G and possible its derivatives.                  */
+/* element of G and possibly its derivatives.                  */
 /* GMETTI stands for 'G matrix element tet-tet integral.'      */
 /***************************************************************/
-void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
-                           SWGVolume *VB, int OVIB[4], int iQB,
-                           cdouble k, int ncv, bool *NeedDerivatives,
-                           int rPower, cdouble TTI[7])
+static void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
+                           SWGVolume *OB, int OVIB[4], int iQB,
+                           int WhichKernel, bool *NeedDerivative,
+                           cdouble k, int ncv, cdouble *TTI)
 {
   /*-----------------------------------------------------------*/
   /*- derivatives vanish identically for the common-tet case  -*/
   /*-----------------------------------------------------------*/
-  if (ncv==4)
-   { if (NeedDerivatives) memset(TTI+1,0,6*sizeof(cdouble));
-     NeedDerivatives=0;
+  if (ncv==4 && NeedDerivative)
+   { memset(TTI+1,0,6*sizeof(cdouble));
+     NeedDerivative=0;
    };
 
   /*-----------------------------------------------------------*/
@@ -139,85 +324,273 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
   TTDArgStruct MyArgs, *Args=&MyArgs;
   InitTTDArgs(Args);
 
-  if (VA->OTGT) VA->OTGT->Apply(Args->XTorque);
-  if (VA->GT) VA->GT->Apply(Args->XTorque);
-
-  int PIndex[14], KIndex[14];
-  cdouble KParam[14];
-  PIndex[0] = TTD_BDOTBP;
-  KIndex[0] = TTD_HELMHOLTZ;
-  PIndex[1] = TTD_UNITY;
-  KIndex[1] = TTD_HELMHOLTZ;
-  int NumPKs = 2;
-  for(int Mu=0; Mu<3; Mu++)
-   { if (NeedDerivatives && NeedDerivatives[Mu])
-      { PIndex[NumPKs]   = TTD_RXBDOTBP + Mu;
-        PIndex[NumPKs+1] = TTD_RXUNITY  + Mu;
-        KIndex[NumPKs]   = TTD_GRADHELMHOLTZ;
-        KIndex[NumPKs+1] = TTD_GRADHELMHOLTZ;
-        NumPKs+=2;
-      };
-     if (NeedDerivatives && NeedDerivatives[3+Mu])
-      { PIndex[NumPKs]   = TTD_TXBDOTBP + Mu;
-        PIndex[NumPKs+1] = TTD_TXUNITY  + Mu;
-        KIndex[NumPKs]   = TTD_GRADHELMHOLTZ;
-        KIndex[NumPKs+1] = TTD_GRADHELMHOLTZ;
-        NumPKs+=2;
-      };
-   };
-  for(int npk=0; npk<NumPKs; npk++)
-   KParam[npk] = k;
- 
-  if (rPower!=-10)
-   { for(int npk=0; npk<NumPKs; npk++)
-      { KIndex[npk]=TTD_RP;
-        KParam[npk]=rPower;
-      };
-   };
-
-  Args->NumPKs = NumPKs;
-  Args->PIndex = PIndex;
-  Args->KIndex = KIndex;
-  Args->KParam = KParam;
-            
+  /***************************************************************/
+  /* specify tetrahedra geometry *********************************/
+  /***************************************************************/
   Args->WhichCase=ncv;
-  Args->V1     = VA->Vertices             + 3*OVIA[0];
-  Args->V2     = Args->V2P = VA->Vertices + 3*OVIA[1];
-  Args->V3     = Args->V3P = VA->Vertices + 3*OVIA[2];
-  Args->V4     = Args->V4P = VA->Vertices + 3*OVIA[3];
-  if (ncv<4)     Args->V4P = VB->Vertices + 3*OVIB[3];
-  if (ncv<3)     Args->V3P = VB->Vertices + 3*OVIB[2];
-  if (ncv<2)     Args->V2P = VB->Vertices + 3*OVIB[1];
-  Args->Q      = VA->Vertices + 3*iQA;
-  Args->QP     = VB->Vertices + 3*iQB;
-
-  cdouble TDI[14], Error[14];
+  Args->V1     = OA->Vertices             + 3*OVIA[0];
+  Args->V2     = Args->V2P = OA->Vertices + 3*OVIA[1];
+  Args->V3     = Args->V3P = OA->Vertices + 3*OVIA[2];
+  Args->V4     = Args->V4P = OA->Vertices + 3*OVIA[3];
+  if (ncv<4)     Args->V4P = OB->Vertices + 3*OVIB[3];
+  if (ncv<3)     Args->V3P = OB->Vertices + 3*OVIB[2];
+  if (ncv<2)     Args->V2P = OB->Vertices + 3*OVIB[1];
+  Args->Q      = OA->Vertices + 3*iQA;
+  Args->QP     = OB->Vertices + 3*iQB;
+  if (OA->OTGT) OA->OTGT->Apply(Args->XTorque);
+  if (OA->GT) OA->GT->Apply(Args->XTorque);
+ 
+  /***************************************************************/
+  /* specify the components of the Taylor-Duffy integrand vector */
+  /***************************************************************/
+  int PIndex[54], KIndex[54];
+  cdouble KParam[54], TDI[54], Error[54];
+  int NumPKs;
+  Args->PIndex  = PIndex;
+  Args->KIndex  = KIndex;
+  Args->KParam  = KParam;
   Args->Result  = TDI;
   Args->Error   = Error;
   Args->RelTol  = SWGGeometry::TaylorDuffyTolerance;
   Args->MaxEval = SWGGeometry::MaxTaylorDuffyEvals;
 
-  // calculate taylor-duffy integrals
-  TTaylorDuffy(Args);
-
-  // assemble results into output quantities
-  cdouble NOK2=9.0/(k*k);
-  TTI[0] = TDI[0] - NOK2*TDI[1];
-
-  if (NeedDerivatives)
-   { int npk=2;
-     for(int Mu=0; Mu<3; Mu++)
-      { if (NeedDerivatives[Mu])
-        { TTI[1 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
-          npk+=2;
+  if (WhichKernel==KERNEL_HELMHOLTZ)
+   { 
+     int npk=0;
+     PIndex[npk] = TTD_BDOTBP; KIndex[npk] = TTD_HELMHOLTZ;  npk++;
+     PIndex[npk] = TTD_UNITY;  KIndex[npk] = TTD_HELMHOLTZ;  npk++;
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative && NeedDerivative[Mu])
+       { PIndex[npk] = TTD_RXBDOTBP + Mu;   KIndex[npk] = TTD_GRADHELMHOLTZ;  npk++;
+         PIndex[npk] = TTD_RXUNITY  + Mu;   KIndex[npk] = TTD_GRADHELMHOLTZ;  npk++;
+       };
+     NumPKs=npk;
+     for(int nnpk=0; nnpk<NumPKs; nnpk++)
+      KParam[nnpk] = k;
+   }
+  else
+   { 
+     int npk=0;
+     int rPowers[4]={-3,-1,0,1};
+     for(int nrPower=1; nrPower<4; nrPower++)
+      { PIndex[npk] = TTD_BDOTBP; KParam[npk] = rPowers[nrPower]; npk++;
+        PIndex[npk] = TTD_UNITY;  KParam[npk] = rPowers[nrPower]; npk++;
+      }
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative && NeedDerivative[Mu])
+       for(int nrPower=0; nrPower<4; nrPower++)
+        { PIndex[npk] = TTD_RXBDOTBP + Mu;  KParam[npk] = rPowers[nrPower]; npk++;
+          PIndex[npk] = TTD_RXUNITY  + Mu;  KParam[npk] = rPowers[nrPower]; npk++;
         };
-       if (NeedDerivatives[3+Mu])
-        { TTI[4 + Mu] = TDI[npk+0] - NOK2*TDI[npk+1];
-          npk+=2;
-        };
-      };
+     NumPKs=npk;
+     for(int nnpk=0; nnpk<NumPKs; nnpk++)
+      KIndex[nnpk] = TTD_RP;
    };
 
+  /***************************************************************/
+  /* calculate taylor-duffy integrals                            */
+  /***************************************************************/
+  Args->NumPKs  = NumPKs;
+  TTaylorDuffy(Args);
+
+  /***************************************************************/
+  /* assemble results into output quantities                     */
+  /***************************************************************/
+  if (WhichKernel==KERNEL_HELMHOLTZ)
+   { 
+     cdouble NOK2=9.0/(k*k);
+     TTI[0] = TDI[0] - NOK2*TDI[1];
+     if (NeedDerivative)
+      for(int Mu=0, nME=1, npk=2; Mu<6; Mu++)
+       if (NeedDerivative[Mu])
+        { TTI[nME++] = TDI[npk] - NOK2*TDI[npk+1];
+          npk+=2;
+        };
+   }
+  else
+   { 
+     double *dTTI = (double *)TTI;
+     int npk=0;
+
+     double GPreFactor[3]={1.0/(4.0*M_PI), 1.0/(4.0*M_PI), 1.0/(8.0*M_PI)};
+     for(int nrPower=0; nrPower<3; nrPower++)
+      { dTTI[npk] = GPreFactor[nrPower]*real(TDI[npk]);      npk++;
+        dTTI[npk] = 9.0*GPreFactor[nrPower]*real(TDI[npk]);  npk++;
+      };
+
+     double dGPreFactor[4]={-1.0/(4.0*M_PI), 1.0/(8.0*M_PI), 1.0/(12.0*M_PI), 1.0/(24.0*M_PI)};
+     for(int Mu=0; Mu<6; Mu++)
+      if (NeedDerivative && NeedDerivative[Mu])
+       for(int nrPower=0; nrPower<4; nrPower++)
+        { dTTI[npk] = dGPreFactor[nrPower]*real(TDI[npk]);      npk++;
+          dTTI[npk] = 9.0*dGPreFactor[nrPower]*real(TDI[npk]);  npk++;
+        };
+   };
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+static void GetBFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+                int WhichKernel, int NumDerivatives, bool *NeedDerivative,
+                cdouble Omega, cdouble *Result)
+{
+  GMEData MyData, *Data = &MyData;
+  Data->k               = Omega;
+  Data->WhichKernel     = WhichKernel;
+  Data->NumDerivatives  = NumDerivatives;
+  Data->NeedDerivative  = NeedDerivative;
+
+  if (Data->NeedDerivative) 
+   { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
+     if (OA->OTGT) OA->OTGT->Apply(Data->XTorque);
+     if (OA->GT)   OA->GT->Apply(Data->XTorque);
+   };
+
+  int fdim;
+  if (WhichKernel==KERNEL_STATIC)
+   fdim = 3 + 4*NumDerivatives;
+  else 
+   fdim = 1 + NumDerivatives;
+  memset(Result, 0, 2*fdim*sizeof(double));
+
+  int NumPts=4;
+  cdouble Error[27];
+  double Elapsed=Secs();
+  BFBFInt(OA, nfA, OB, nfB, GMEIntegrand, (void *)Data, 2*fdim,
+          (double *)Result, (double *)Error, NumPts, 0, 0.0);
+  Elapsed=Secs()-Elapsed;
+  AddTaskTiming(0,Elapsed);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+static void SumTetTetInts(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+                   int WhichKernel, int NumDerivatives, bool *NeedDerivative,
+                   cdouble Omega, cdouble *Result)
+{
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  GMEData MyData, *Data = &MyData;
+  Data->k               = Omega;
+  Data->WhichKernel     = WhichKernel;
+
+  if (NumDerivatives>=0) 
+   { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
+     if (OA->OTGT) OA->OTGT->Apply(Data->XTorque);
+     if (OA->GT)   OA->GT->Apply(Data->XTorque);
+   };
+
+  int fdim;
+  if (WhichKernel==KERNEL_STATIC)
+   fdim = 3 + 4*NumDerivatives;
+  else 
+   fdim = 1 + NumDerivatives;
+
+  memset(Result, 0, 2*fdim*sizeof(double));
+
+  bool ForceBF=false;
+
+  /***************************************************************/
+  /* do 4 6D cubatures to compute individual tet-tet contributions.*/
+  /***************************************************************/
+  SWGFace *FA = OA->Faces[nfA];
+  SWGFace *FB = OB->Faces[nfB];
+  cdouble TTI[27], Error[27];
+  double AreaFactor=FA->Area * FB->Area;
+  for(int ASign=0; ASign<2; ASign++)
+   for(int BSign=0; BSign<2; BSign++)
+    { 
+      int ntA = (ASign==0) ? FA->iPTet : FA->iMTet;
+      int ntB = (BSign==0) ? FB->iPTet : FB->iMTet;
+      int OVIA[4], OVIB[4];
+      int ncv=CompareTets(OA, ntA, OB, ntB, OVIA, OVIB);
+  
+      /***************************************************************/
+      /* compute the tet--tet integral using brute-force cubature or */
+      /* taylor-duffy                                                */
+      /***************************************************************/
+      if (ncv<=1 || ForceBF || WhichKernel==KERNEL_DESINGULARIZED)
+       { 
+         int NumPts=16;
+         int iQA = (ASign==0) ? FA->PIndex : FA->MIndex;
+         int iQB = (BSign==0) ? FB->PIndex : FB->MIndex;
+         double Elapsed=Secs();
+         Data->NumDerivatives = ( (ncv==4) ? 0 : NumDerivatives );
+         Data->NeedDerivative = ( (ncv==4) ? 0 : NeedDerivative );
+         memset(TTI, 0, 27*sizeof(cdouble));
+         TetTetInt(OA, ntA, iQA, 1.0, OB, ntB, iQB, 1.0,
+                   GMEIntegrand, (void *)Data, 2*fdim,
+                   (double *)TTI, (double *)Error, NumPts, 0, 0);
+         Elapsed=Secs()-Elapsed;
+         AddTaskTiming(1,Elapsed);
+       }
+      else
+       { 
+         int iQA = (ASign==0) ? FA->iQP : FA->iQM;
+         int iQB = (BSign==0) ? FB->iQP : FB->iQM;
+         double Elapsed=Secs();
+         memset(TTI,0,27*sizeof(cdouble));
+         GetGMETTI_TaylorDuffy(OA, OVIA, iQA, OB, OVIB, iQB,
+                               WhichKernel, NeedDerivative,
+                               Omega, ncv, TTI);
+         Elapsed=Secs()-Elapsed;
+         AddTaskTiming(ncv,Elapsed);
+         for(int nf=0; nf<fdim; nf++)
+          TTI[nf] *= 4.0*AreaFactor;
+  
+       }; // if (ncv<=1 ... else )
+  
+      double Sign = (ASign==BSign) ? 1.0 : -1.0;
+      for(int nf=0; nf<fdim; nf++)
+       Result[nf] += Sign*TTI[nf];
+
+    }; // for(int ASign...for(int BSign...)
+
+} // void SumTetTetInts(...)
+
+/***************************************************************/
+/* Ip[0..2] = coefficients of (IK)^p (p=0,1,2) in the          */
+/*            small-r expansion of G_0(r)                      */
+/* Ip[2 + 4*Mu + 0,1,2,3] = coefficients of (IK)^p (p=-3,-1,0,1)*/
+/*            small-r expansion of d_\Mu G_0(r)                */
+/***************************************************************/
+double *GetFIBBIData(FIBBITable *Table, SWGVolume *OA, int nfA, SWGVolume *OB, int nfB)
+{ 
+  int noA = OA->Index;
+  int noB = OB->Index;
+
+  int NO  = Table->NumObjects;
+  int NFB = OB->NumInteriorFaces;
+  
+  int Index1 = noA*NO  + noB;
+  int Index2 = nfA*NFB + nfB;
+
+  //Table->Lock->read_lock();
+  Lock->read_lock();
+  double *Data=Table->Entries[ Index1 ][ Index2 ];
+  //Table->Lock->read_unlock();
+  Lock->read_unlock();
+  if (Data) return Data;
+
+  int NumDerivatives=Table->NumDerivatives;
+  int DataSize = 6 + 8*NumDerivatives;
+  Data = (double *)mallocEC(DataSize*sizeof(double));
+  
+  bool *NeedDerivative=Table->NeedDerivative;
+  SumTetTetInts(OA, nfA, OB, nfB, KERNEL_STATIC,
+                NumDerivatives, NeedDerivative, 0.0, (cdouble *)Data);
+
+  //Table->Lock->write_lock();
+  Lock->write_lock();
+  Table->Entries[ Index1 ][ Index2 ]=Data;
+  Lock->write_unlock();
+  //Table->Lock->write_unlock();
+  
+  return Data;
 }
 
 /***************************************************************/
@@ -226,110 +599,86 @@ void GetGMETTI_TaylorDuffy(SWGVolume *VA, int OVIA[4], int iQA,
 /* following significance:                                     */
 /*  Mu=0,1,2 -->  d/dx, d/dy, d/dz                             */
 /*  Mu=3,4,5 -->  d/dTheta_x, d/dTheta_y, d/dTheta_z           */
-/*                                                             */
-/* if rPower!=-10, then the usual helmholtz kernel is replaced */
-/* with r^rPower.                                              */
 /***************************************************************/
-cdouble GetGMatrixElement(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
-                          cdouble Omega, bool *NeedQuantity, cdouble *dG,
-                          int rPower, bool ForceBF)
+cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
+                          SWGVolume *OB, int nfB,
+                          cdouble Omega, void *opTable,
+                          cdouble *dG, bool *NeedDerivative)
 {
-  cdouble Result[7], Error[7];
 
-  // derivatives vanish identically for diagonal matrix elements
-  if (VA==VB && nfA==nfB && NeedQuantity )
+  FIBBITable *Table = (FIBBITable *)opTable;
+
+  /*--------------------------------------------------------------*/
+  /* derivatives vanish identically for diagonal matrix elements  */
+  /*--------------------------------------------------------------*/
+  if (dG==0) NeedDerivative=0;
+  if ( (OA==OB && nfA==nfB && NeedDerivative ) )
    { if (dG) memset(dG, 0, 6*sizeof(cdouble));
-     NeedQuantity=0;
+     NeedDerivative=0;
    };
 
-  GMEData MyData, *Data=&MyData;
-  Data->k=Omega;
-  Data->NeedDerivatives = (NeedQuantity == 0) ? false : true;
-  Data->rPower=rPower;
-  int fdim = Data->NeedDerivatives ? 7 : 1;
-
-  if (Data->NeedDerivatives) 
-   { Data->XTorque[0]=Data->XTorque[1]=Data->XTorque[2]=0.0;
-     if (VA->OTGT) VA->OTGT->Apply(Data->XTorque);
-     if (VA->GT)   VA->GT->Apply(Data->XTorque);
-   };
-
+  int NumDerivatives=0;
+  if (NeedDerivative)
+   for(int n=0; n<6; n++) 
+    if (NeedDerivative[n])
+     NumDerivatives++;
+   
   double rRel;
-  int ncv = CompareBFs(VA, nfA, VB, nfB, &rRel);
+  int ncv = CompareBFs(OA, nfA, OB, nfB, &rRel);
 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  cdouble GMEs[7]={0.0,0.0,0.0,0.0,0.0,0.0,0.0};
   if ( ncv==0 )
+   {
+     GetBFBFInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ, 
+                NumDerivatives, NeedDerivative, Omega, GMEs);
+   }
+  else if (Table==0)
+   { 
+     SumTetTetInts(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ,
+                   NumDerivatives, NeedDerivative, Omega, GMEs);
+
+   }
+  else
    { 
      /***************************************************************/
-     /* no common vertices; do a single 6D cubature over the        */
-     /* supports of both basis functions                            */
      /***************************************************************/
-     int NumPts=4;
-     double Elapsed=Secs();
-     BFBFInt(VA, nfA, VB, nfB, GMEIntegrand, (void *)Data, 2*fdim,
-             (double *)Result, (double *)Error, NumPts, 0, 0.0);
-     Elapsed=Secs()-Elapsed;
-     AddTaskTiming(0,Elapsed);
-    
-     if (dG) memcpy(dG, Result+1, 6*sizeof(cdouble));
-     
-     return Result[0];
+     /***************************************************************/
+     GetBFBFInt(OA, nfA, OB, nfB, KERNEL_DESINGULARIZED,
+                NumDerivatives, NeedDerivative, Omega, GMEs);
+
+     /***************************************************************/
+     /* now look up or compute the desingularized contributions     */
+     /* and add those in.                                           */
+     /***************************************************************/
+     double *Ip=GetFIBBIData(Table, OA, nfA, OB, nfB);
+     cdouble IK=II*Omega, IK2=IK*IK, IK3=IK2*IK, IK4=IK3*IK;
+     cdouble k2=Omega*Omega;
+     GMEs[0] += (Ip[0]-Ip[1]/k2) + IK*(Ip[2]-Ip[3]/k2) + IK2*(Ip[4]-Ip[5]/k2);
+     int nip=6;
+     int nME=1;
+     if (NeedDerivative && dG)
+      for(int Mu=0; Mu<6; Mu++)
+       if ( NeedDerivative[Mu] )
+        { GMEs[nME] +=         (Ip[nip+0] - Ip[nip+1]/k2)
+                         + IK2*(Ip[nip+2] - Ip[nip+3]/k2)
+                         + IK3*(Ip[nip+4] - Ip[nip+5]/k2)
+                         + IK4*(Ip[nip+6] - Ip[nip+7]/k2);
+          nip+=8;
+          nME+=1;
+        };
    };
 
   /***************************************************************/
-  /* one or more common vertices; compute the four tet-tet       */
-  /* integrals separately                                        */
   /***************************************************************/
-  SWGFace *FA = VA->Faces[nfA];
-  SWGFace *FB = VB->Faces[nfB];
-  double AreaFactor=FA->Area * FB->Area;
-  for(int ASign=0; ASign<2; ASign++)
-   for(int BSign=0; BSign<2; BSign++)
-    { 
-      int ntA = (ASign==0) ? FA->iPTet : FA->iMTet;
-      int ntB = (BSign==0) ? FB->iPTet : FB->iMTet;
-      int OVIA[4], OVIB[4];
-      ncv=CompareTets(VA, ntA, VB, ntB, OVIA, OVIB);
-
-      /***************************************************************/
-      /* compute the tet--tet integral using brute-force cubature or */
-      /* taylor-duffy                                                */
-      /***************************************************************/
-      cdouble TTI[7]; // tetrahedron-tetrahedron integral
-      if (ncv<=1 || ForceBF)
-       { 
-         int NumPts=16;
-         int iQA = (ASign==0) ? FA->PIndex : FA->MIndex;
-         int iQB = (BSign==0) ? FB->PIndex : FB->MIndex;
-         double Elapsed=Secs();
-         TetTetInt(VA, ntA, iQA, 1.0, VB, ntB, iQB, 1.0,
-                   GMEIntegrand, (void *)Data, 2*fdim,
-                   (double *)TTI, (double *)Error, NumPts, 0, 0);
-         Elapsed=Secs()-Elapsed;
-         AddTaskTiming(1,Elapsed);
-       }
-      else
-       { 
-         int iQA = (ASign==0) ? FA->iQP   : FA->iQM;
-         int iQB = (BSign==0) ? FB->iQP   : FB->iQM;
-         double Elapsed=Secs();
-         GetGMETTI_TaylorDuffy(VA, OVIA, iQA, VB, OVIB, iQB,
-                               Omega, ncv, NeedQuantity, rPower, TTI);
-         Elapsed=Secs()-Elapsed;
-         AddTaskTiming(ncv,Elapsed);
-         for(int nf=0; nf<fdim; nf++)
-          TTI[nf] *= 4.0*AreaFactor;
-
-       }; // if (ncv<=1 ... else )
-
-      double Sign = (ASign==BSign) ? 1.0 : -1.0;
-      for(int nf=0; nf<fdim; nf++)
-       Result[nf] += Sign*TTI[nf];
-
-    }; // for(int ASign...for(int BSign...)
-
-  if (dG) 
-   memcpy(dG, Result+1, 6*sizeof(cdouble));
-  return Result[0];
+  /***************************************************************/
+  if (NeedDerivative && dG)
+   for(int Mu=0, nME=1; Mu<6; Mu++)
+    if ( NeedDerivative[Mu] )
+     dG[Mu] = GMEs[nME++];
+  return GMEs[0];
 
 }
 

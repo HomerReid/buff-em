@@ -149,6 +149,8 @@ class SWGVolume
    char *MatFileName;              /* saved name of material property file */
    IHAIMatProp *MP;                /* material property */
 
+   int Index;                      /* index of this volume in the SWGGeometry */
+
    /* GT encodes any transformation that has been carried out since */
    /* the object was read from its mesh file (not including a       */
    /* possible one-time GTransformation that may have been specified*/
@@ -199,18 +201,18 @@ class SWGGeometry
 
    // scattering API
    HMatrix *AllocateVIEMatrix(bool PureImagFreq=false);
-   HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M);
+   HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M, void *opTable=0);
    HVector *AllocateRHSVector();
    HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V);
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetPFT(IncField *IF, HVector *JVector,
-                   cdouble Omega, HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
+   HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
+                   HMatrix *PFTMatrix=0, bool *NeedQuantity=0, void *opTable=0);
 
    // compute individual matrix blocks
    void AssembleGBlock(int noa, int nob, cdouble Omega,
-                       HMatrix *G,
+                       HMatrix *G, void *opTable,
                        int RowOffset=0, int ColOffset=0);
    void AssembleVInvBlock(int no, cdouble Omega,
                           SMatrix *VInv, SMatrix *ImEps,
@@ -262,12 +264,12 @@ void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
 /* routine to compute matrix elements of the dyadic GF and its */
 /* derivatives                                                 */
 /***************************************************************/
+void *CreateFIBBITable(SWGGeometry *G, bool *NeedDerivative=0);
+
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega,
-                          bool *NeedDerivatives=0,
-                          cdouble *dG=0,
-                          int rPower=-10, bool ForceBF=false);
+                          cdouble Omega, void *opTable=0,
+                          cdouble *dG=0, bool *NeedDerivative=0);
 
 /***************************************************************/
 /* routines for integrating over tetrahedra and faces          */
