@@ -146,6 +146,21 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 }
 
 /***************************************************************/
+/* Return n1, n2 such that nPair = n1*N1 + n1*(n1-1)/2 + (n2-n1)*/
+/***************************************************************/
+void GetPairIndices(int nPair, int N, int *pn1, int *pn2)
+{
+  int n1=nPair/N;
+  int nDelta = nPair- n1*N - n1*(n1-1)/2;
+  while (nDelta<0)
+   { n1--;
+     nDelta = nPair- n1*N - n1*(n1-1)/2;
+   };
+  *pn1=n1; 
+  *pn2=n1+nDelta;
+}
+
+/***************************************************************/
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
@@ -183,19 +198,7 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
    
-      int NBFPairs;
-      bool UseSymmetry = true;
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-if (getenv("BUFF_NO_SYMMETRY"))
- { UseSymmetry=false;
-   Log("Ignoring symmetry.");
- };
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-   
-      if (UseSymmetry)
-       NBFPairs = OA==OB ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
-      else 
-       NBFPairs = NBFA*NBFB;
+      int NPairs    = (OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 const char *TaskNames[]={ "NCV0", "NCV1", "NCV2", "NCV3", "NCV4","IF  ",0};
@@ -219,27 +222,20 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
                          num_threads(NumThreads),  \
                          reduction(+:P, Fx, Fy, Fz, Tx, Ty, Tz)
 #endif
-      for(int nbfp=0; nbfp<NBFPairs; nbfp++)
+      for(int nPair=0; nPair<NPairs; nPair++)
        { 
          int nbfA=0, nbfB=0;
-         if (UseSymmetry)
-          { 
-            //FIXME FIXME
-            bool Searching=true;
-            for(nbfA=0; Searching && nbfA<NBFA; nbfA++)
-             for(nbfB=nbfA; Searching && nbfB<NBFB; nbfB++)
-              { int PairIndex=nbfA*NBFB + nbfA*(nbfA-1)/2 + (nbfB-nbfA);
-                if (PairIndex==nbfp) Searching=false;
-Log("%i -> (%i,%i) (%i,%i)",nbfp,nbfA,nbfB,NBFA,NBFB);
-              }
-          }
+         if (OA==OB)
+          GetPairIndices(nPair, NBFA, &nbfA, &nbfB);
          else
-          { nbfA      = nbfp / NBFB;
-            nbfB      = nbfp % NBFB;
+          { nbfA      = nPair / NBFB;
+            nbfB      = nPair % NBFB;
           };
 
-         if( (UseSymmetry && nbfB==nbfA) || (!UseSymmetry && nbfB==0) )
-          LogPercent(nbfA,NBFA,100);
+         if(OA==OB && nbfB==nbfA)
+          LogPercent(nPair,NPairs,10);
+         else if (OA!=OB && nbfB==0)
+          LogPercent(nbfA,NBFA,10);
    
          cdouble G, dG[6];
          G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, opTable, dG, NeedQuantity);
@@ -247,8 +243,8 @@ Log("%i -> (%i,%i) (%i,%i)",nbfp,nbfA,nbfB,NBFA,NBFB);
                           *( JVector->GetEntry(OffsetB + nbfB) );
    
          double Factor = 0.5;
-         if (noA==noB && nbfB > nbfA && UseSymmetry)
-          Factor = 1.0;
+         if (noA==noB && nbfB > nbfA)
+          Factor *= 2.0;
    
          P  += Factor * real ( JJ * IKZ * G    );
          Fx += Factor * imag ( JJ * IZ * dG[0] );
@@ -264,9 +260,6 @@ Log("%i -> (%i,%i) (%i,%i)",nbfp,nbfA,nbfB,NBFA,NBFB);
       /*- accumulate PFT contributions for this pair of objects       */
       /*--------------------------------------------------------------*/
       PFTMatrix->AddEntry(noA, 0, P  );
-      if (noB>noA)
-       PFTMatrix->AddEntry(noB, 0, P );
-   
       PFTMatrix->AddEntry(noA, 1, Fx );
       PFTMatrix->AddEntry(noA, 2, Fy );
       PFTMatrix->AddEntry(noA, 3, Fz );
@@ -274,7 +267,8 @@ Log("%i -> (%i,%i) (%i,%i)",nbfp,nbfA,nbfB,NBFA,NBFB);
       PFTMatrix->AddEntry(noA, 5, Ty );
       PFTMatrix->AddEntry(noA, 6, Tz );
       if (noB>noA)
-       { PFTMatrix->AddEntry(noB, 1, -1.0 * Fx );
+       { PFTMatrix->AddEntry(noB, 0, P );
+         PFTMatrix->AddEntry(noB, 1, -1.0 * Fx );
          PFTMatrix->AddEntry(noB, 2, -1.0 * Fy );
          PFTMatrix->AddEntry(noB, 3, -1.0 * Fz );
          PFTMatrix->AddEntry(noB, 4, -1.0 * Tx );
