@@ -146,18 +146,19 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 }
 
 /***************************************************************/
-/* Return n1, n2 such that nPair = n1*N1 + n1*(n1-1)/2 + (n2-n1)*/
+/* Return n1, n2 such that nPair = n1*N1 - n1*(n1-1)/2 + (n2-n1)*/
 /***************************************************************/
 void GetPairIndices(int nPair, int N, int *pn1, int *pn2)
 {
   int n1=nPair/N;
-  int nDelta = nPair- n1*N - n1*(n1-1)/2;
-  while (nDelta<0)
-   { n1--;
-     nDelta = nPair- n1*N - n1*(n1-1)/2;
+  int nDelta = nPair - n1*N + n1*(n1-1)/2;
+  while ( (n1+nDelta) >= N )
+   { n1++;
+     nDelta = nPair - n1*N + n1*(n1-1)/2;
    };
   *pn1=n1; 
   *pn2=n1+nDelta;
+
 }
 
 /***************************************************************/
