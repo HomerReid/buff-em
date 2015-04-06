@@ -188,6 +188,15 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  bool UseSymmetry=true;
+  if (getenv("BUFF_NO_SYMMETRY"))
+   { UseSymmetry=false;
+     Log("Disabling PFT symmetry.");
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   for(int noA=0; noA<NumObjects; noA++)
    for(int noB=noA; noB<NumObjects; noB++)
     { 
@@ -199,7 +208,8 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
    
-      int NPairs    = (OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
+      
+      int NPairs    = (UseSymmetry && OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 const char *TaskNames[]={ "NCV0", "NCV1", "NCV2", "NCV3", "NCV4","IF  ",0};
@@ -226,16 +236,16 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
       for(int nPair=0; nPair<NPairs; nPair++)
        { 
          int nbfA=0, nbfB=0;
-         if (OA==OB)
+         if (UseSymmetry && OA==OB)
           GetPairIndices(nPair, NBFA, &nbfA, &nbfB);
          else
           { nbfA      = nPair / NBFB;
             nbfB      = nPair % NBFB;
           };
 
-         if(OA==OB && nbfB==nbfA)
+         if(UseSymmetry && OA==OB && nbfB==nbfA)
           LogPercent(nPair,NPairs,10);
-         else if (OA!=OB && nbfB==0)
+         else if ( (!UseSymmetry || OA!=OB) && nbfB==0)
           LogPercent(nbfA,NBFA,10);
    
          cdouble G, dG[6];
@@ -244,7 +254,7 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
                           *( JVector->GetEntry(OffsetB + nbfB) );
    
          double Factor = 0.5;
-         if (noA==noB && nbfB > nbfA)
+         if ( UseSymmetry && OA==OB && nbfB > nbfA )
           Factor *= 2.0;
    
          P  += Factor * real ( JJ * IKZ * G    );
