@@ -213,23 +213,24 @@ static void GMEIntegrand(double *xA, double *bA, double DivbA,
   /***************************************************************/
   double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   double ScalarProduct = DivbA*DivbB;
-  cdouble PEFIE = DotProduct - ScalarProduct/(k*k);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   int nf=0;
-  cdouble Phi, ExpFac[2], *zI = (cdouble *)I;
+  cdouble PEFIE=0.0, Phi, ExpFac[2], *zI = (cdouble *)I;
 
   cdouble IKR = II*k*r;
   if (WhichKernel==KERNEL_HELMHOLTZ)
    { Phi = exp(II*k*r) / (4.0*M_PI*r);
+     PEFIE = DotProduct - ScalarProduct/(k*k);
      zI[nf++] = PEFIE*Phi;
    }
   else if (WhichKernel==KERNEL_DESINGULARIZED)
    { 
      GetExpRelTable(IKR, 3, 4, ExpFac);
      Phi = ExpFac[0] / (4.0*M_PI*r);
+     PEFIE = DotProduct - ScalarProduct/(k*k);
      zI[nf++] = PEFIE*Phi;
    }
   else // (WhichKernel==KERNEL_STATIC)
