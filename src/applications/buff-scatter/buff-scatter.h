@@ -45,7 +45,6 @@ typedef struct BSData
    HVector *RHS, *J;
    cdouble Omega;
    IncField *IF;
-   void *opTable;
  } BSData;
  
 

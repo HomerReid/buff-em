@@ -198,9 +198,6 @@ int main(int argc, char *argv[])
   HVector *J     = BSD->J =G->AllocateRHSVector();
   BSD->IF        = IFList;
 
-  void *opTable  = CreateFIBBITable(G,NeedQuantity);
-  BSD->opTable   = opTable;
-
   char GeoFileBase[MAXSTR];
   strncpy(GeoFileBase, GetFileBase(GeoFile), MAXSTR);
 
@@ -219,7 +216,7 @@ int main(int argc, char *argv[])
      /*******************************************************************/
      /* assemble the VIE matrix at this frequency                       */
      /*******************************************************************/
-     G->AssembleVIEMatrix(Omega, M, opTable);
+     G->AssembleVIEMatrix(Omega, M);
 
      /*******************************************************************/
      /* export VIE matrix to a binary file if that was requested        */
