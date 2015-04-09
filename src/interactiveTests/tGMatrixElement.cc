@@ -91,9 +91,6 @@ void GBFIntegrand(double *xA, double *bA, double DivbA,
   zI[5] = (XmXT[2]*R[0] - XmXT[0]*R[2]) * PEFIE * Psi;
   zI[6] = (XmXT[0]*R[1] - XmXT[1]*R[0]) * PEFIE * Psi;
 
-zI[0] = fabs(DivbA*DivbB/9.0);
-zI[1] = 1.0;
-
 }
 
 /***************************************************************/
@@ -159,16 +156,36 @@ int main(int argc, char *argv[])
   /***************************************************************/
   cdouble GHRWO[7];
   bool NeedDerivatives[6]={true, true, true, true, true, true};
+  Tic();
   GHRWO[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, 0,
                              GHRWO+1, NeedDerivatives);
+  double HRW0Time=Toc();
+  printf("HRW0Time=%.0e us\n",HRW0Time*1.0e6);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   cdouble GHRW[7];
-  void *opTable=CreateFIBBITable(G,NeedDerivatives);
-  GHRW[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, opTable,
+  Tic();
+  GHRW[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, G->Cache,
                             GHRW+1, NeedDerivatives);
+  double HRWTime=Toc();
+  printf("HRWTime=%.0e us  \n",HRWTime*1.0e6);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  cdouble GHRW2[7];
+  Tic();
+#define NTIMES 10
+  for (int NTimes=0; NTimes<NTIMES; NTimes++)
+   {
+      GHRW2[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, G->Cache,
+                                 GHRW2+1, NeedDerivatives);
+   };
+  double HRWTime2=Toc() / NTIMES;
+  printf("HRWTime2=%.0e us \n",HRWTime);
+  Compare(GHRWO, GHRW, GHRW2, 7, "HRW0", "HRW1", "HRW2");
 
   /***************************************************************/
   /***************************************************************/
