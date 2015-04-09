@@ -91,6 +91,9 @@ void GBFIntegrand(double *xA, double *bA, double DivbA,
   zI[5] = (XmXT[2]*R[0] - XmXT[0]*R[2]) * PEFIE * Psi;
   zI[6] = (XmXT[0]*R[1] - XmXT[1]*R[0]) * PEFIE * Psi;
 
+zI[0] = fabs(DivbA*DivbB/9.0);
+zI[1] = 1.0;
+
 }
 
 /***************************************************************/
@@ -106,10 +109,11 @@ int main(int argc, char *argv[])
   int nfa=-1;
   int nfb=-1;
   int ncv=-1;
-  int rPower=0;
+  int rPower=-10;
   int MaxBFEvals=100000;
   double RelTol=1.0e-6;
   bool ForceBF=false;
+  int BFOrder=33;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING,  1, 1, (void *)&GeoFile,        0, "mesh file"},
@@ -120,7 +124,7 @@ int main(int argc, char *argv[])
      {"rPower",             PA_INT,     1, 1, (void *)&rPower,         0, "rPower"},
      {"MaxBFEvals",         PA_INT,     1, 1, (void *)&MaxBFEvals,     0, "max integrand evaluations for BF integration"},
      {"RelTol",             PA_DOUBLE,  1, 1, (void *)&RelTol,         0, "relative tolerance for BF integration"},
-     {"ForceBF",            PA_BOOL,    0, 1, (void *)&ForceBF,        0, "force BF"},
+     {"BFOrder",            PA_INT,     1, 1, (void *)&BFOrder,        0, "BF order"},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -153,11 +157,18 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  cdouble GHR[7];
+  cdouble GHRWO[7];
   bool NeedDerivatives[6]={true, true, true, true, true, true};
-  GHR[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, NeedDerivatives,
-                           GHR+1, rPower, ForceBF);
-printf("Survived THAT ok...\n");
+  GHRWO[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, 0,
+                             GHRWO+1, NeedDerivatives);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  cdouble GHRW[7];
+  void *opTable=CreateFIBBITable(G,NeedDerivatives);
+  GHRW[0]=GetGMatrixElement(O, nfa, O, nfb, Omega, opTable,
+                            GHRW+1, NeedDerivatives);
 
   /***************************************************************/
   /***************************************************************/
@@ -167,11 +178,11 @@ printf("Survived THAT ok...\n");
   Data->rPower=rPower;
   cdouble GBF[7], Error[7];
   BFBFInt(O, nfa, O, nfb, GBFIntegrand, (void *)Data,
-          14, (double *)GBF, (double *)Error, 0, MaxBFEvals, RelTol);
+          14, (double *)GBF, (double *)Error, BFOrder, MaxBFEvals, RelTol);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  Compare(GBF, GHR, 7, "BF", "HR");
+  Compare(GBF, GHRW, GHRWO, 7, "BF", "HRW", "HRW0");
 
 }

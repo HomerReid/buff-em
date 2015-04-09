@@ -30,9 +30,7 @@
 #include <unistd.h>
 #include <libhrutil.h>
 
-#include "libSGJC.h"
 #include "libscuff.h"
-#include "rwlock.h"
 #include "libbuff.h"
 #include "TTaylorDuffy.h"
 
@@ -51,78 +49,6 @@ namespace buff {
 #define KERNEL_HELMHOLTZ 0
 #define KERNEL_DESINGULARIZED 1
 #define KERNEL_STATIC    2
-
-typedef struct FIBBITable
- { 
-   int NumDerivatives;
-   bool NeedDerivative[6];
-
-   int NumObjects;
-   double ***Entries;
-
-   //rwlock *Lock;
- } FIBBITable;
-
-static rwlock TheLock, *Lock=&TheLock;
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void *CreateFIBBITable(SWGGeometry *G, bool *NeedDerivative)
-{
-  FIBBITable *Table = (FIBBITable *)mallocEC(sizeof(FIBBITable));
-
-  int NumDerivatives=0;
-  if (NeedDerivative)
-   { memcpy(Table->NeedDerivative, NeedDerivative, 6*sizeof(bool));
-     for(int Mu=0; Mu<6; Mu++)
-      if (NeedDerivative[Mu]) NumDerivatives++;
-   }
-  else
-   memset(Table->NeedDerivative, 0, 6*sizeof(bool));
-  Table->NumDerivatives=NumDerivatives;
-
-  // ridiculously inefficient storage scheme; FIXME
-  int NO = Table->NumObjects = G->NumObjects;
-  Table->Entries=(double ***)mallocEC(NO*NO*sizeof(double **));
-  for(int no=0; no<NO; no++)
-   for(int nop=no; nop<NO; nop++)
-    { int NF1=G->Objects[no]->NumInteriorFaces;
-      int NF2=G->Objects[nop]->NumInteriorFaces;
-      Table->Entries[no*NO + nop] = (double **)mallocEC(NF1*NF2*sizeof(double *));
-    };
-   
-  return (void *)Table;
-
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-#if 0
-void EmptyFIBBITable(void *opTable)
-{
-  FIBBITable *Table = (FIBBITable *)opTable;
-  int NFA=Table->OA->NumInteriorFaces;
-  int NFB=Table->OB->NumInteriorFaces;
-  for(int nfa=0; nfa<NFA; nfa++)
-   for(int nfb=0; nfb<NFB; nfb++)
-    { int Index = nfa*(NFB) + nfb;
-      if (Table->Entries[Index])
-       { free(Table->Entries[Index]);
-         Table->Entries[Index]=0;
-       };
-    };
-}
-#endif
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void DestroyFIBBITable(void *opTable)
-{ (void)opTable; 
-  // not implemented yet 
-}
 
 /***************************************************************/
 /***************************************************************/
@@ -178,7 +104,7 @@ typedef struct GMEData
    int WhichKernel;
  } GMEData;
  
-static void GMEIntegrand(double *xA, double *bA, double DivbA,
+void GMEIntegrand(double *xA, double *bA, double DivbA,
                   double *xB, double *bB, double DivbB,
                   void *UserData, double *I)
 {
@@ -218,11 +144,13 @@ static void GMEIntegrand(double *xA, double *bA, double DivbA,
   /***************************************************************/
   /***************************************************************/
   int nf=0;
-  cdouble PEFIE=0.0, Phi, ExpFac[2], *zI = (cdouble *)I;
+  cdouble PEFIE=0.0, Phi=0.0, ExpFac[2], *zI = (cdouble *)I;
 
   cdouble IKR = II*k*r;
   if (WhichKernel==KERNEL_HELMHOLTZ)
-   { Phi = exp(II*k*r) / (4.0*M_PI*r);
+   { 
+     Phi = exp(II*k*r) / (4.0*M_PI*r);
+     PEFIE= DotProduct - ScalarProduct/(k*k);
      PEFIE = DotProduct - ScalarProduct/(k*k);
      zI[nf++] = PEFIE*Phi;
    }
@@ -306,7 +234,7 @@ static void GMEIntegrand(double *xA, double *bA, double DivbA,
 /* element of G and possibly its derivatives.                  */
 /* GMETTI stands for 'G matrix element tet-tet integral.'      */
 /***************************************************************/
-static void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
+void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
                            SWGVolume *OB, int OVIB[4], int iQB,
                            int WhichKernel, bool *NeedDerivative,
                            cdouble k, int ncv, cdouble *TTI)
@@ -431,11 +359,14 @@ static void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
 }
 
 /***************************************************************/
+/* Get 'G' matrix elements via BF-BF integration, i.e.         */
+/* by a single 6-dimensional integration over the full         */
+/* supports of each basis function                             */
 /***************************************************************/
-/***************************************************************/
-static void GetBFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
-                int WhichKernel, int NumDerivatives, bool *NeedDerivative,
-                cdouble Omega, cdouble *Result)
+void GetGME_BFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+                    int WhichKernel, int NumDerivatives, 
+                    bool *NeedDerivative,
+                     cdouble Omega, cdouble *Result)
 {
   GMEData MyData, *Data = &MyData;
   Data->k               = Omega;
@@ -466,11 +397,13 @@ static void GetBFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 }
 
 /***************************************************************/
+/* Get 'G' matrix elements via Tetrahedron-Tetrahedron         */
+/* integration, i.e. by 4 6-dimensional cubatures over pairs   */
+/* of individual tetrahedra                                    */
 /***************************************************************/
-/***************************************************************/
-static void SumTetTetInts(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
-                   int WhichKernel, int NumDerivatives, bool *NeedDerivative,
-                   cdouble Omega, cdouble *Result)
+void GetGME_TetTetInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
+                      int WhichKernel, int NumDerivatives, bool *NeedDerivative,
+                      cdouble Omega, cdouble *Result)
 {
   /***************************************************************/
   /***************************************************************/
@@ -493,8 +426,6 @@ static void SumTetTetInts(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 
   memset(Result, 0, 2*fdim*sizeof(double));
 
-  bool ForceBF=false;
-
   /***************************************************************/
   /* do 4 6D cubatures to compute individual tet-tet contributions.*/
   /***************************************************************/
@@ -514,7 +445,7 @@ static void SumTetTetInts(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
       /* compute the tet--tet integral using brute-force cubature or */
       /* taylor-duffy                                                */
       /***************************************************************/
-      if (ncv<=1 || ForceBF || WhichKernel==KERNEL_DESINGULARIZED)
+      if (ncv<=1 || WhichKernel==KERNEL_DESINGULARIZED)
        { 
          int NumPts=16;
          int iQA = (ASign==0) ? FA->PIndex : FA->MIndex;
@@ -554,44 +485,17 @@ static void SumTetTetInts(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 } // void SumTetTetInts(...)
 
 /***************************************************************/
-/* Ip[0..2] = coefficients of (IK)^p (p=0,1,2) in the          */
-/*            small-r expansion of G_0(r)                      */
-/* Ip[2 + 4*Mu + 0,1,2,3] = coefficients of (IK)^p (p=-3,-1,0,1)*/
-/*            small-r expansion of d_\Mu G_0(r)                */
 /***************************************************************/
-double *GetFIBBIData(FIBBITable *Table, SWGVolume *OA, int nfA, SWGVolume *OB, int nfB)
-{ 
-  int noA = OA->Index;
-  int noB = OB->Index;
-
-  int NO  = Table->NumObjects;
-  int NFB = OB->NumInteriorFaces;
-  
-  int Index1 = noA*NO  + noB;
-  int Index2 = nfA*NFB + nfB;
-
-  //Table->Lock->read_lock();
-  Lock->read_lock();
-  double *Data=Table->Entries[ Index1 ][ Index2 ];
-  //Table->Lock->read_unlock();
-  Lock->read_unlock();
-  if (Data) return Data;
-
-  int NumDerivatives=Table->NumDerivatives;
-  int DataSize = 6 + 8*NumDerivatives;
-  Data = (double *)mallocEC(DataSize*sizeof(double));
-  
-  bool *NeedDerivative=Table->NeedDerivative;
-  SumTetTetInts(OA, nfA, OB, nfB, KERNEL_STATIC,
-                NumDerivatives, NeedDerivative, 0.0, (cdouble *)Data);
-
-  //Table->Lock->write_lock();
-  Lock->write_lock();
-  Table->Entries[ Index1 ][ Index2 ]=Data;
-  Lock->write_unlock();
-  //Table->Lock->write_unlock();
-  
-  return Data;
+/***************************************************************/
+void ComputeFIBBIData(SWGVolume *OA, int nfA,
+                      SWGVolume *OB, int nfB,
+                      FIBBIData *Data)
+{  
+  bool NeedDerivative[6]={true, true, true, true, true, true};
+  int NumDerivatives=6;
+  GetGME_TetTetInt(OA, nfA, OB, nfB, KERNEL_STATIC,
+                   NumDerivatives, NeedDerivative, 0.0,
+                   (cdouble *)(Data->GFI));
 }
 
 /***************************************************************/
@@ -603,12 +507,9 @@ double *GetFIBBIData(FIBBITable *Table, SWGVolume *OA, int nfA, SWGVolume *OB, i
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
                           SWGVolume *OB, int nfB,
-                          cdouble Omega, void *opTable,
+                          cdouble Omega, FIBBICache *Cache,
                           cdouble *dG, bool *NeedDerivative)
 {
-
-  FIBBITable *Table = (FIBBITable *)opTable;
-
   /*--------------------------------------------------------------*/
   /* derivatives vanish identically for diagonal matrix elements  */
   /*--------------------------------------------------------------*/
@@ -624,6 +525,9 @@ cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
     if (NeedDerivative[n])
      NumDerivatives++;
    
+  /*--------------------------------------------------------------*/
+  /*- count common vertices  -------------------------------------*/
+  /*--------------------------------------------------------------*/
   double rRel;
   int ncv = CompareBFs(OA, nfA, OB, nfB, &rRel);
 
@@ -633,13 +537,13 @@ cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
   cdouble GMEs[7]={0.0,0.0,0.0,0.0,0.0,0.0,0.0};
   if ( ncv==0 )
    {
-     GetBFBFInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ, 
-                NumDerivatives, NeedDerivative, Omega, GMEs);
+     GetGME_BFBFInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ, 
+                    NumDerivatives, NeedDerivative, Omega, GMEs);
    }
-  else if (Table==0)
+  else if (Cache==0)
    { 
-     SumTetTetInts(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ,
-                   NumDerivatives, NeedDerivative, Omega, GMEs);
+     GetGME_TetTetInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ,
+                      NumDerivatives, NeedDerivative, Omega, GMEs);
 
    }
   else
@@ -647,16 +551,17 @@ cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
      /***************************************************************/
      /***************************************************************/
      /***************************************************************/
-     GetBFBFInt(OA, nfA, OB, nfB, KERNEL_DESINGULARIZED,
-                NumDerivatives, NeedDerivative, Omega, GMEs);
+     GetGME_BFBFInt(OA, nfA, OB, nfB, KERNEL_DESINGULARIZED,
+                    NumDerivatives, NeedDerivative, Omega, GMEs);
 
      /***************************************************************/
      /* now look up or compute the desingularized contributions     */
      /* and add those in.                                           */
      /***************************************************************/
-     double *Ip=GetFIBBIData(Table, OA, nfA, OB, nfB);
-     cdouble IK=II*Omega, IK2=IK*IK, IK3=IK2*IK, IK4=IK3*IK;
+     FIBBIData *Data=Cache->GetFIBBIData(OA, nfA, OB, nfB);
+     double *Ip= (double *)Data;
      cdouble k2=Omega*Omega;
+     cdouble IK=II*Omega, IK2=IK*IK, IK3=IK2*IK, IK4=IK3*IK;
      GMEs[0] += (Ip[0]-Ip[1]/k2) + IK*(Ip[2]-Ip[3]/k2) + IK2*(Ip[4]-Ip[5]/k2);
      int nip=6;
      int nME=1;

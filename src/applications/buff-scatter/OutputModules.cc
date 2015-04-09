@@ -117,7 +117,6 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
 void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
 { 
   SWGGeometry *G = BSD->G;
-  void *opTable  = BSD->opTable;
 
 #if 0
   HMatrix *PFTMatrix=G->GetPFT(BSD->IF, BSD->J, BSD->Omega);
@@ -134,8 +133,8 @@ void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
   delete PFTMatrix;
 #endif
 
-  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega, 0, NeedQuantity, opTable);
-  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity, opTable);
+  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega, 0, NeedQuantity);
+  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity);
 
   for(int nq=0; nq<6; nq++)
    if (!NeedQuantity[nq])

@@ -39,13 +39,9 @@
 using namespace scuff;
 
 namespace scuff {
-
 void GetScriptK(int WhichK, cdouble KParam, double X,
                 int nMin, int nMax, cdouble KVector[7]);
-
                 } 
-
-namespace buff {
 
 #define DEFABSTOL 0.0
 #define DEFRELTOL 1.0e-10
@@ -884,5 +880,3 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
     }; //  if ( TDW->NeedP[WhichP] )
 
 } // GetGeometricParameters routine
-
-} // namespace buff 

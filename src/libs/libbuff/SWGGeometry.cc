@@ -46,7 +46,7 @@ namespace buff{
 /***************************************************************/
 int SWGGeometry::NumMeshDirs=0;
 char **SWGGeometry::MeshDirs=0;
-int SWGGeometry::TaylorDuffyTolerance=1.0e-6;
+double SWGGeometry::TaylorDuffyTolerance=1.0e-6;
 int SWGGeometry::MaxTaylorDuffyEvals=10000;
 
 /***********************************************************************/
@@ -169,13 +169,15 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   GeoFileName=strdup(pGeoFileName);
   NumObjects=0;
   Objects=0;
+  AutoCache=true;
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( NumMeshDirs==0 && getenv("BUFF_MESH_PATH") )
+  char *s=getenv("BUFF_MESH_PATH");
+  if ( NumMeshDirs==0 && s!=0 )
    { char MeshPathCopy[1000];
-     strncpy(MeshPathCopy, getenv("BUFF_MESH_PATH"), 1000);
+     strncpy(MeshPathCopy, s, 1000);
      char *Tokens[10];
      int NumTokens=Tokenize(MeshPathCopy, Tokens, 10, ":");
      NumMeshDirs=NumTokens;
@@ -189,7 +191,6 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  char *s;
   if ( (s=getenv("BUFF_TAYLORDUFFY_EVALS")) )
    { sscanf(s,"%i",&MaxTaylorDuffyEvals);
      Log("Setting max TaylorDuffy evals=%i.",MaxTaylorDuffyEvals);
@@ -198,6 +199,13 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
    { sscanf(s,"%le",&TaylorDuffyTolerance);
      Log("Setting TaylorDuffy tolerance=%e.",TaylorDuffyTolerance);
    };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  s=getenv("BUFF_DISABLE_AUTOCACHE");
+  if (s && s[0]=='1')
+   AutoCache=false;
 
   /***************************************************************/
   /* try to open input file **************************************/
@@ -301,6 +309,20 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
            Log("Noting that object %i (%s) is a duplicate of object %i (%s)...",
                 no,O->Label,nop,OP->Label);
          };
+      };
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  Cache=new FIBBICache();
+  if (AutoCache)
+   { f=vfopen("%s.cache","r",GetFileBase(GeoFileName));
+     if (f)
+      { fclose(f);
+        char FileName[100];
+        snprintf(FileName,100,"%s.cache",GetFileBase(GeoFileName));
+        Cache->PreLoad(FileName);
       };
    };
 

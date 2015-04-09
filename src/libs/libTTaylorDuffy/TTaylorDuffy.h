@@ -38,8 +38,6 @@
 
 using namespace scuff;
 
-namespace buff { 
-
 //values for the WhichK parameter
 #define TTD_RP                   0
 #define TTD_HELMHOLTZ            1
@@ -106,7 +104,5 @@ typedef struct TTDArgStruct
 /***************************************************************/
 void TTaylorDuffy(TTDArgStruct *Args);
 void InitTTDArgs(TTDArgStruct *Args);
-
-} // namespace buff { 
 
 #endif // TTAYLORDUFFY_H

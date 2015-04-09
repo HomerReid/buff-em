@@ -39,6 +39,7 @@
 
 #include "GTransformation.h"
 #include "IHAIMatProp.h"
+#include "FIBBICache.h"
 
 using namespace scuff;
 
@@ -201,18 +202,16 @@ class SWGGeometry
 
    // scattering API
    HMatrix *AllocateVIEMatrix(bool PureImagFreq=false);
-   HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M, void *opTable=0);
+   HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M);
    HVector *AllocateRHSVector();
    HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V);
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
    HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
-                   HMatrix *PFTMatrix=0, bool *NeedQuantity=0, void *opTable=0);
+                   HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
 
-   // compute individual matrix blocks
-   void AssembleGBlock(int noa, int nob, cdouble Omega,
-                       HMatrix *G, void *opTable,
+   void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);
    void AssembleVInvBlock(int no, cdouble Omega,
                           SMatrix *VInv, SMatrix *ImEps,
@@ -224,22 +223,23 @@ class SWGGeometry
    // directories within which to search for mesh files
    static int NumMeshDirs;
    static char **MeshDirs;
-   static int TaylorDuffyTolerance;
+   static double TaylorDuffyTolerance;
    static int MaxTaylorDuffyEvals;
 
 //  private:
-
    /*--------------------------------------------------------------*/
    /*- private data fields  ---------------------------------------*/
    /*--------------------------------------------------------------*/
    int NumObjects;
    SWGVolume **Objects;
-
    int TotalBFs, *BFIndexOffset;
 
    int *Mate;
 
    char *GeoFileName;
+
+   FIBBICache *Cache;
+   bool AutoCache;
 
  }; // class SWGGeometry
 
@@ -264,11 +264,9 @@ void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
 /* routine to compute matrix elements of the dyadic GF and its */
 /* derivatives                                                 */
 /***************************************************************/
-void *CreateFIBBITable(SWGGeometry *G, bool *NeedDerivative=0);
-
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega, void *opTable=0,
+                          cdouble Omega, FIBBICache *Cache=0,
                           cdouble *dG=0, bool *NeedDerivative=0);
 
 /***************************************************************/
@@ -336,6 +334,9 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
 
 double *GetTetCR(int NumPts);
 
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 void InitTaskTiming(const char **pTaskNames);
 void ResetTaskTiming();
 void AddTaskTiming(int WhichTask, double Elapsed);

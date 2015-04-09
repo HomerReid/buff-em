@@ -244,7 +244,7 @@ int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G, void *opTable, int RowOffset, int ColOffset)
+                                 HMatrix *G, int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -272,7 +272,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 
       int Row=RowOffset + nfa;
       int Col=ColOffset + nfb;
-      cdouble GAB=GetGMatrixElement(OA, nfa, OB, nfb, Omega, opTable);
+      cdouble GAB=GetGMatrixElement(OA, nfa, OB, nfb, Omega, Cache);
       G->SetEntry(Row, Col, GAB);
       if (SameObject && nfb>nfa)
        G->SetEntry(Col, Row, GAB);
@@ -315,7 +315,7 @@ void SWGGeometry::AssembleVInvBlock(int no, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M, void *opTable)
+HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 {
   if ( M && ( (M->NR!=TotalBFs) || (M->NR != M->NC) ) )
    { Warn("wrong-size M-matrix passed to AssembleVIEMatrix (reallocating...)");
@@ -333,7 +333,7 @@ InitTaskTiming( TaskNames );
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     { 
-      AssembleGBlock(noa, nob, Omega, M, opTable,
+      AssembleGBlock(noa, nob, Omega, M, 
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)
@@ -343,6 +343,15 @@ InitTaskTiming( TaskNames );
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
     M->SetEntry(nr, nc, M->GetEntry(nc,nr));
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  if (AutoCache)
+   { char FileName[100];
+     snprintf(FileName,100,"%s.cache",GetFileBase(GeoFileName));
+     Cache->Store(FileName);
+   };
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 LogTaskTiming("GMatrix assembly");

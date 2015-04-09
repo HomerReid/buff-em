@@ -166,7 +166,7 @@ void GetPairIndices(int nPair, int N, int *pn1, int *pn2)
 /***************************************************************/
 HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
                              cdouble Omega, HMatrix *PFTMatrix,
-                             bool *NeedQuantity, void *opTable)
+                             bool *NeedQuantity)
 { 
   bool DefaultNeedQuantity[6]={true, true, true, true, true, true};
   if (NeedQuantity==0) NeedQuantity=DefaultNeedQuantity;
@@ -188,15 +188,6 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  bool UseSymmetry=true;
-  if (getenv("BUFF_NO_SYMMETRY"))
-   { UseSymmetry=false;
-     Log("Disabling PFT symmetry.");
-   };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
   for(int noA=0; noA<NumObjects; noA++)
    for(int noB=noA; noB<NumObjects; noB++)
     { 
@@ -208,7 +199,7 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
    
-      
+      bool UseSymmetry=false;
       int NPairs    = (UseSymmetry && OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -249,7 +240,7 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
           LogPercent(nbfA,NBFA,10);
    
          cdouble G, dG[6];
-         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, opTable, dG, NeedQuantity);
+         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, Cache, dG, NeedQuantity);
          cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
                           *( JVector->GetEntry(OffsetB + nbfB) );
    

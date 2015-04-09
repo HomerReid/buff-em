@@ -1,1 +1,1 @@
-SUBDIRS = libbuff
+SUBDIRS = libTTaylorDuffy libbuff
