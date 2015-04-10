@@ -43,6 +43,10 @@ LIBS = $(HR_LIBS) $(OTHER_LIBS)
 ##################################################
 ##################################################
 TGME= tGMatrixElement.o
+TTTI= tTetTetInt.o
+
+tTetTetInt:     	$(TTTI) $(MUOBJS)
+			$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 tGMatrixElement:	$(TGME) $(MUOBJS)
 			$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
