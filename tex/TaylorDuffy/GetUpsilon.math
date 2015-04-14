@@ -18,7 +18,7 @@ GetUpsilon[NCV_, PFunction_, Name_, dMin_, dMax_]:=Module[
  RepRules=Switch[NCV,
   4, {L1PMu->L1Mu, L2PMu->L2Mu, L3PMu->L3Mu},
   3, {L1PMu->L1Mu, L2PMu->L2Mu},
-  4, {L1PMu->L1Mu}];
+  2, {L1PMu->L1Mu}];
   
  Shape=Switch[NCV, 4, "Tet_", 3, "Triangle_", 2, "Edge_"];
  OutFile=OpenWrite[ StringJoin["Upsilon_Common",Shape,Name,".cc"] ];
@@ -84,12 +84,12 @@ GetUpsilon[NCV_, PFunction_, Name_, dMin_, dMax_]:=Module[
              ];
 
           If [ NCV==2,
-             MyCoefficient=FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L1PMP2->L1MP2},
+             MyCoefficient=Expand[FullSimplify[ Collect[ Rules[[nRules,2]] /. {L1PMP1->L1MP1, L1PMP2->L1MP2},
                                                   {L1MP1, L2MP1, L3MP1, L3PMP1, L2PMP1, V0mXTorqueMP1,
                                                    L1MP2, L2MP2, L3MP2, L3PMP2, L2PMP2, V0mXTorqueMP2}
                                                 ]
                                        ]
-             ];
+             ]];
 
 
           WriteString[OutFile,"Upsilon[",d,"]"];

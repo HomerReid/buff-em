@@ -74,7 +74,7 @@ void GBFIntegrand(double *xA, double *bA, double DivbA,
   else
    { 
      Phi = exp(II*k*r)/(4.0*M_PI*r);
-     Psi = (II*k - 1.0) * Phi / (r*r);
+     Psi = (II*k*r - 1.0) * Phi / (r*r);
    };
 
   double DotProduct = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];

@@ -45,6 +45,7 @@ typedef struct IntegrandData
    cdouble k;
    double rPower;
    double xTorque[3];
+   double Eta;
 
  } IntegrandData;
 
@@ -60,12 +61,13 @@ void Integrand(double *xA, double *bA, double DivbA,
   cdouble k       = Data->k;
   double rPower   = Data->rPower;
   double *xTorque = Data->xTorque;
+  double Eta      = Data->Eta;
 
   double R[3];
   R[0] = xA[0] - xB[0];
   R[1] = xA[1] - xB[1];
   R[2] = xA[2] - xB[2];
-  double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] );
+  double r = sqrt( R[0]*R[0] + R[1]*R[1] + R[2]*R[2] + Eta*Eta );
 
   double Tau[3];
   Tau[0] = (xA[1] - xTorque[1])*R[2] - (xA[2] - xTorque[2])*R[1];
@@ -75,7 +77,7 @@ void Integrand(double *xA, double *bA, double DivbA,
   double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   double ScalarProduct = DivbA*DivbB/9.0;
 
-  cdouble K, Phi, Psi;
+  cdouble Phi, Psi;
   if (WhichKernel==TTD_HELMHOLTZ)
    { cdouble ikr=II*k*r;
      Phi = exp(ikr) / (4.0*M_PI*r);
@@ -160,6 +162,9 @@ void GetTetTetInt_TaylorDuffy(SWGVolume *O, int OVIA[4], int OVIB[4],
    { Args->KIndex[npk] = WhichKernel;
      Args->KParam[npk] = kParam;
    };
+  if (WhichKernel==TTD_HELMHOLTZ)
+   for(int npk=2; npk<14; npk++)
+    Args->KIndex[npk] = TTD_GRADHELMHOLTZ;
   Args->NumPKs=14;
   
   cdouble Error[14];
@@ -194,6 +199,7 @@ int main(int argc, char *argv[])
   int MaxTDEvals=100000;
   double RelTolBF=1.0e-6;
   double RelTolTD=1.0e-6;
+  double Eta=0.0;
   
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
@@ -210,6 +216,7 @@ int main(int argc, char *argv[])
      {"MaxTDEvals", PA_INT,     1, 1, (void *)&MaxTDEvals, 0, ""},
      {"RelTolBF",   PA_DOUBLE,  1, 1, (void *)&RelTolBF,   0, ""},
      {"RelTolTD",   PA_DOUBLE,  1, 1, (void *)&RelTolTD,   0, ""},
+     {"Eta",        PA_DOUBLE,  1, 1, (void *)&Eta,        0, ""},
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -229,8 +236,8 @@ int main(int argc, char *argv[])
   if (ntB==-1) ntB = lrand48() % O->NumTets;
   if (iQB==-1) iQB = lrand48() % 4;
 
-  if (ncv!=-1) 
-   { if (ncv==4) 
+  if (ncv!=-1)
+   { if (ncv==4)
       ntB=ntA;
      else
       for (ntB=ntA+1; ntB!=ntA; ntB = (ntB+1)%NT)
@@ -282,11 +289,12 @@ int main(int argc, char *argv[])
   Data->WhichKernel = WhichKernel;
   Data->k = k;
   Data->rPower=rPower;
+  Data->Eta = Eta;
   memset(Data->xTorque,0,3*sizeof(double));
   if (O->OTGT) O->OTGT->Apply(Data->xTorque);
   if (O->GT)   O->GT  ->Apply(Data->xTorque);
   TetTetInt(O, ntA, iQA, 1.0, O, ntB, iQB, 1.0,
-            Integrand, (void *)&Omega,
+            Integrand, (void *)Data,
             2*NFUN, (double *)IBF, (double *)EBF,
             BFOrder, MaxBFEvals, RelTolBF);
 

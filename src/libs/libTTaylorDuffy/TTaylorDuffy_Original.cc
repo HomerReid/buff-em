@@ -123,28 +123,6 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetUpsilon_CommonTet_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
                  unsigned nfun, double *f)
 {
@@ -672,9 +650,6 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   double DdL3P = VecDot(D, L3P);
   double DdDP  = VecDot(D, DP);
 
-  double V0mXTorque[3];
-  VecSub(V1, Args->XTorque, V0mXTorque);
-
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -832,8 +807,8 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
        double L1PMP1=L1P[MP1], L2PMP1=L2P[MP1], L3PMP1=L3P[MP1];
        double L1PMP2=L1P[MP2], L2PMP2=L2P[MP2], L3PMP2=L3P[MP2];
 
-       double V0mXTorqueMP1 = V0mXTorque[MP1];
-       double V0mXTorqueMP2 = V0mXTorque[MP2];
+       double V0mXTorqueMP1 = V1[MP1] - (Args->XTorque[MP1]);
+       double V0mXTorqueMP2 = V1[MP2] - (Args->XTorque[MP2]);
 
      if (WhichCase==TTD_COMMONTET) 
       { 
@@ -864,57 +839,34 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   /***************************************************************/
   for(int WhichP=TTD_TXBDOTBP; WhichP<=TTD_TZBDOTBP; WhichP++)
    if ( TDW->NeedP[WhichP] )
-    {
-       int Mu=WhichP-TTD_TXBDOTBP;
+    {  
        ZeroUpsilonVector(&Upsilon);
-       if (WhichCase==TTD_COMMONTET)
-        { 
-          MinwPower=0;
-          MaxwPower=7;
-          MaxyPower[0]=4;
-          MaxyPower[1]=2;
-          MaxyPower[2]=0;
-          MaxyPower[3]=0;
-           
-          GetUpsilon_CommonTet_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-        }
-       else if (WhichCase==TTD_COMMONTRIANGLE)
-        { 
-          MinwPower=0;
-          MaxwPower=6;
-          MaxyPower[0]=4;
-          MaxyPower[1]=4;
-          MaxyPower[2]=2;
-          MaxyPower[3]=0;
-          
-          GetUpsilon_CommonTriangle_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-        }
-       else if (WhichCase==TTD_COMMONEDGE )
-        { 
-          MinwPower=0;
-          MaxwPower=5;
-          MaxyPower[0]=4;
-          MaxyPower[1]=4;
-          MaxyPower[2]=4;
-          MaxyPower[3]=2;
 
-          GetUpsilon_CommonEdge_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-        };
+       int Mu=WhichP - TTD_TXBDOTBP; // Mu=0, 1, or 2 
+       int MP1=(Mu+1)%3;
+       int MP2=(Mu+2)%3;
+
+       double L1MP1=L1[MP1], L2MP1=L2[MP1], L3MP1=L3[MP1]; 
+       double L1MP2=L1[MP2], L2MP2=L2[MP2], L3MP2=L3[MP2]; 
+
+       double L1PMP1=L1P[MP1], L2PMP1=L2P[MP1], L3PMP1=L3P[MP1];
+       double L1PMP2=L1P[MP2], L2PMP2=L2P[MP2], L3PMP2=L3P[MP2];
+
+       double V0mXTorqueMP1 = V1[MP1] - (Args->XTorque[MP1]);
+       double V0mXTorqueMP2 = V1[MP2] - (Args->XTorque[MP2]);
+
+     if (WhichCase==TTD_COMMONTET) 
+      { 
+//#include "UpsilonFiles/Upsilon_CommonTet_TMuBDotBP.cc"
+      }
+     else if (WhichCase==TTD_COMMONTRIANGLE) 
+      { 
+//#include "UpsilonFiles/Upsilon_CommonTriangle_TMuBDotBP.cc"
+      }
+     else if (WhichCase==TTD_COMMONEDGE)
+      { 
+//#include "UpsilonFiles/Upsilon_CommonEdge_TMuBDotBP.cc"
+      };
 
        TDW->MinwPower[WhichP]=MinwPower;
        TDW->MaxwPower[WhichP]=MaxwPower;
@@ -922,10 +874,9 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
        TDW->MaxyPower[WhichP][1]=MaxyPower[1];
        TDW->MaxyPower[WhichP][2]=MaxyPower[2];
        TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-
-       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower,
+       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
                                      MaxyPower, &(TDW->NumCRs[WhichP]));
 
-    };
+    }; //  if ( TDW->NeedP[WhichP] )
 
 } // GetGeometricParameters routine
