@@ -118,43 +118,22 @@ void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
 { 
   SWGGeometry *G = BSD->G;
 
-#if 0
-  HMatrix *PFTMatrix=G->GetPFT(BSD->IF, BSD->J, BSD->Omega);
+  HMatrix *DensePFT=G->GetDensePFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity);
+
+  HMatrix *SparsePFT=G->GetSparsePFT(BSD->J, BSD->Omega);
 
   FILE *f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)
    { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
      for(int n=0; n<7; n++)
-      fprintf(f,"%e ",PFTMatrix->GetEntryD(no,n));
+      fprintf(f,"%e ",DensePFT->GetEntryD(no,n));
+     fprintf(f,"%e ",SparsePFT->GetEntryD(no,0));
      fprintf(f,"\n");
    };
   fclose(f);
 
-  delete PFTMatrix;
-#endif
-
-  HMatrix *PFTMatrix1=G->GetPFT(0,       BSD->J, BSD->Omega, 0, NeedQuantity);
-  HMatrix *PFTMatrix2=G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity);
-
-  for(int nq=0; nq<6; nq++)
-   if (!NeedQuantity[nq])
-    { PFTMatrix1->SetEntries(":",1+nq,0.0);
-      PFTMatrix2->SetEntries(":",1+nq,0.0);
-    };
-
-  FILE *f=fopen(PFTFile,"a");
-  for(int no=0; no<G->NumObjects; no++)
-   { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
-     for(int n=0; n<7; n++)
-      fprintf(f,"%e ",PFTMatrix1->GetEntryD(no,n));
-     for(int n=0; n<7; n++)
-      fprintf(f,"%e ",PFTMatrix2->GetEntryD(no,n));
-     fprintf(f,"\n");
-   };
-  fclose(f);
-
-  delete PFTMatrix1;
-  delete PFTMatrix2;
+  delete DensePFT;
+  delete SparsePFT;
 
 }
 

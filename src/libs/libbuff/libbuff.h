@@ -208,8 +208,10 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
-                   HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
+   HMatrix *GetDensePFT(IncField *IF, HVector *JVector, cdouble Omega,
+                        HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
+   HMatrix *GetSparsePFT(HVector *JVector, cdouble Omega,
+                         HMatrix *PFTMatrix=0);
 
    void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);

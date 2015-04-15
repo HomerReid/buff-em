@@ -1395,6 +1395,82 @@ replaced by their derivatives. These are
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
+\section{PFT symmetries}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{align*}
+ P\sups{abs} 
+   &= \frac{1}{2}\text{Re }\int \vb j^* \cdot \vb E\sups{tot} dV 
+\\
+   &= \underbrace{\frac{1}{2}\text{Re }\int \vb j^* \cdot \vb E\sups{scat} dV}
+                _{P_1} 
+     \,+\,
+      \underbrace{\frac{1}{2}\text{Re }\int \vb j^* \cdot \vb E\sups{inc} dV}
+                _{P_2} 
+\\
+P_1
+  &= \frac{1}{2}\text{Re }\int \vb j^* \cdot \vb E\sups{scat} dV 
+\\ 
+  &= \frac{1}{2}\text{Re }\sum_{\alpha,\beta=1}^{N\subt{BF}}
+     \Big[ j_\alpha^* j_\beta \cdot i\omega \mu_0 G_{\alpha\beta}\Big],
+     \qquad
+     G_{\alpha\beta}\equiv \exptwoB{\vb b_\alpha}{\vb G}{\vb b_\beta}
+\\
+  &= \frac{1}{2}\text{Re }\sum_{\alpha}
+     \Big[ i\omega \mu_0 |j_\alpha|^2 G_{\alpha\alpha} \Big]
+    +\frac{1}{2}\text{Re }\sum_{\beta > \alpha}
+     \Big[ i\omega \mu_0
+           \big( j_\alpha^* j_\beta + j_\alpha j^*_\beta\big)
+           G_{\alpha\beta}
+     \Big]
+\intertext{(where I used $G_{\alpha\beta}=G_{\beta\alpha}$)}
+  &= -\omega \mu_0
+      \primedsum_{\beta \ge \alpha}
+        \Big[ \text{Re }\big(j^*_\alpha j_\beta \big)
+              \cdot \text{Im } G_{\alpha\beta}
+        \Big]
+\end{align*}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+where the primed sum means the $\beta=\alpha$ term is to 
+be weighted with a factor of 1/2.
+
+Next,
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{align*}
+ F_i
+   &= \frac{1}{2\omega}\text{Im }\int \vb j^* \cdot \partial_i \vb E\sups{tot} dV 
+\\
+   &= \underbrace{\frac{1}{2\omega}\text{Im }\int \vb j^* \cdot \partial_i \vb E\sups{scat} dV}
+                _{F_1} 
+     \,+\,
+      \underbrace{\frac{1}{2\omega}\text{Im }\int \vb j^* \cdot \partial_i \vb E\sups{inc} dV}
+                _{F_2} 
+\\
+F_1
+  &= \frac{1}{2\omega}\text{Im }\int \vb j^* \cdot \partial_i \vb E\sups{scat} dV 
+\\ 
+  &= \frac{1}{2\omega}\text{Im }\sum_{\alpha,\beta=1}^{N\subt{BF}}
+     \Big[ j_\alpha^* j_\beta \cdot i\omega \mu_0 (\partial_i G)_{\alpha\beta}\Big],
+     \qquad
+     (\partial_i G)_{\alpha\beta}
+    \equiv \exptwoB{\vb b_\alpha}{\partial_i \vb G}{\vb b_\beta}
+\\
+  &= \frac{1}{2\omega}\text{Im }\sum_{\beta>\alpha}
+     \Big[ i\omega \mu_0 (j_\alpha^* j_\beta - j_\alpha j_\beta^*) 
+           (\partial_i G)_{\alpha\beta}\Big],
+     \qquad
+\intertext{[where I used $(\partial_i G)_{\alpha\alpha}=0$ and $(\partial_i G)_{\alpha\beta}=-(\partial_i G)_{\beta\alpha}$]}
+  &= -\mu_0 \sum_{\beta >\alpha}
+        \Big[ \text{Im }\big(j^*_\alpha j_\beta \big)
+              \cdot \text{Im } (\partial_i G)_{\alpha\beta}
+        \Big]
+\end{align*}
+The expression for the torque is the similar.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
 \section{Fields of Individual SWG Basis Functions}
 
 Once we have obtained the solution vector $\vb j$ to the 

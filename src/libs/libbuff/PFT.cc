@@ -142,7 +142,7 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   cdouble Error[NUMPFTIS];
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
         2*NUMPFTIS, (double *)IPFT, (double *)Error,
-        16, 0, 0);
+        33, 0, 0);
 }
 
 /***************************************************************/
@@ -162,11 +162,72 @@ void GetPairIndices(int nPair, int N, int *pn1, int *pn2)
 }
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
+                                   cdouble Omega, HMatrix *PFTMatrix)
+{ 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFTQS) )
+   { delete PFTMatrix;
+     PFTMatrix=0;
+   };
+  if (PFTMatrix==0)
+   PFTMatrix= new HMatrix(NumObjects, NUMPFTQS);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  PFTMatrix->Zero();
+  for(int no=0; no<NumObjects; no++)
+   { 
+     SWGVolume *O = Objects[no];
+     int Offset   = BFIndexOffset[no];
+     int NBF      = O->NumInteriorFaces;
+
+     double P2=0.0;
+     for(int nbfA=0; nbfA<NBF; nbfA++)
+      { 
+        int nbfBList[7];
+        cdouble VInvList[7];
+        double ImEpsList[7];
+        int NNZ=GetVInvAndImEpsEntries(O, nbfA, Omega, nbfBList,
+                                       VInvList, ImEpsList);
+
+        for(int nnz=0; nnz<NNZ; nnz++)
+         { 
+           int nbfB = nbfBList[nnz];
+           cdouble JJ = conj ( JVector->GetEntry(Offset + nbfA) )
+                            *( JVector->GetEntry(Offset + nbfB) );
+           cdouble IKZVInv = II*Omega*ZVAC*VInvList[nnz];
+           P2 -= 0.5*real( JJ * IKZVInv );
+         }; // for(int nnz=0; nnz<NNZ; nnz++)
+
+      }; // for(int nbfA=0; nbfA<NBF; nbfA++)
+     PFTMatrix->SetEntry(no, 0, P2);
+
+   }; // for(int no=0; no<NumObjects; no++)
+
+  /***************************************************************/
+  /* convert force/torque values to units of nanoNewtons         */
+  /***************************************************************/
+  #define TENTHIRDS (10.0/3.0)
+  for(int no=0; no<NumObjects; no++)
+   for(int Mu=1; Mu<=6; Mu++)
+    PFTMatrix->SetEntry(no,Mu, TENTHIRDS*PFTMatrix->GetEntry(no,Mu) );
+
+  return PFTMatrix;
+
+}
+
+/***************************************************************/
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
-HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
-                             cdouble Omega, HMatrix *PFTMatrix,
-                             bool *NeedQuantity)
+HMatrix *SWGGeometry::GetDensePFT(IncField *IF, HVector *JVector,
+                                  cdouble Omega, HMatrix *PFTMatrix,
+                                  bool *NeedQuantity)
 { 
   bool DefaultNeedQuantity[6]={true, true, true, true, true, true};
   if (NeedQuantity==0) NeedQuantity=DefaultNeedQuantity;
@@ -182,9 +243,6 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
    PFTMatrix= new HMatrix(NumObjects, NUMPFTQS);
   PFTMatrix->Zero();
 
-  cdouble IZ = II*ZVAC;
-  cdouble IKZ = Omega*IZ;
-
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -199,7 +257,7 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
    
-      bool UseSymmetry=false;
+      bool UseSymmetry=true;
       int NPairs    = (UseSymmetry && OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -238,25 +296,34 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
           LogPercent(nPair,NPairs,10);
          else if ( (!UseSymmetry || OA!=OB) && nbfB==0)
           LogPercent(nbfA,NBFA,10);
+
+         cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
+                          *( JVector->GetEntry(OffsetB + nbfB) );
+         if (JJ==0.0) continue;
    
          cdouble G, dG[6];
          G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, Cache, dG, NeedQuantity);
-         cdouble JJ = conj ( JVector->GetEntry(OffsetA + nbfA) )
-                          *( JVector->GetEntry(OffsetB + nbfB) );
    
-         double Factor = 0.5;
-         if ( UseSymmetry && OA==OB && nbfB > nbfA )
-          Factor *= 2.0;
+         double Factor = 1.0;
+         if ( UseSymmetry && OA==OB && nbfB == nbfA )
+          Factor *= 0.5;
    
-         P  += Factor * real ( JJ * IKZ * G    );
-         Fx += Factor * imag ( JJ * IZ * dG[0] );
-         Fy += Factor * imag ( JJ * IZ * dG[1] );
-         Fz += Factor * imag ( JJ * IZ * dG[2] );
-         Tx += Factor * imag ( JJ * IZ * dG[3] );
-         Ty += Factor * imag ( JJ * IZ * dG[4] );
-         Tz += Factor * imag ( JJ * IZ * dG[5] );
+         P  -= Factor * real ( JJ ) * imag(G);
+         Fx -= imag(JJ) * imag(dG[0]);
+         Fy -= imag(JJ) * imag(dG[1]);
+         Fz -= imag(JJ) * imag(dG[2]);
+         Tx -= imag(JJ) * imag(dG[3]);
+         Ty -= imag(JJ) * imag(dG[4]);
+         Tz -= imag(JJ) * imag(dG[5]);
 
        };  // end of multithreaded loop
+      P  *= ZVAC*real(Omega);
+      Fx *= ZVAC;
+      Fy *= ZVAC;
+      Fz *= ZVAC;
+      Tx *= ZVAC;
+      Ty *= ZVAC;
+      Tz *= ZVAC;
     
       /*--------------------------------------------------------------*/
       /*- accumulate PFT contributions for this pair of objects       */
@@ -335,50 +402,17 @@ int NumThreads = GetNumThreads();
   AddTaskTiming(5,Elapsed);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+LogTaskTiming("DensePFT");
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+  /***************************************************************/
+  /* convert force/torque values to units of nanoNewtons         */
+  /***************************************************************/
+  #define TENTHIRDS (10.0/3.0)
   for(int no=0; no<NumObjects; no++)
-   { 
-     SWGVolume *O = Objects[no];
-     int Offset   = BFIndexOffset[no];
-     int NBF      = O->NumInteriorFaces;
+   for(int Mu=1; Mu<=6; Mu++)
+    PFTMatrix->SetEntry(no,Mu, TENTHIRDS*PFTMatrix->GetEntry(no,Mu) );
 
-     double P2=0.0;
-     for(int nbfA=0; nbfA<NBF; nbfA++)
-      { 
-        int nbfBList[7];
-        cdouble VInvList[7];
-        double ImEpsList[7];
-        int NNZ=GetVInvAndImEpsEntries(O, nbfA, Omega, nbfBList,
-                                       VInvList, ImEpsList);
-
-        for(int nnz=0; nnz<NNZ; nnz++)
-         { 
-           int nbfB = nbfBList[nnz];
-
-           cdouble JJ = conj ( JVector->GetEntry(Offset + nbfA) )
-                            *( JVector->GetEntry(Offset + nbfB) );
-  
-           cdouble IKZVInv = II*Omega*ZVAC*VInvList[nnz];
-
-           P2 += 0.5*real( JJ * IKZVInv );
-         }; // for(int nnz=0; nnz<NNZ; nnz++)
-
-      }; // for(int nbfA=0; nbfA<NBF; nbfA++)
-     PFTMatrix->SetEntry(no, 4, P2);
-
-   }; // for(int no=0; no<NumObjects; no++)
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-LogTaskTiming("PFT");
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
   return PFTMatrix;
 
 }
