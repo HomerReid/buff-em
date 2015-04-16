@@ -320,9 +320,9 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
             Fx += 0.5 * imag ( II*JJ*dG[0] );
             Fy += 0.5 * imag ( II*JJ*dG[1] );
             Fz += 0.5 * imag ( II*JJ*dG[2] );
-            Fx += 0.5 * imag ( II*JJ*dG[3] );
-            Fy += 0.5 * imag ( II*JJ*dG[4] );
-            Fz += 0.5 * imag ( II*JJ*dG[5] );
+            Tx += 0.5 * imag ( II*JJ*dG[3] );
+            Ty += 0.5 * imag ( II*JJ*dG[4] );
+            Tz += 0.5 * imag ( II*JJ*dG[5] );
           };
 
        };  // end of multithreaded loop
