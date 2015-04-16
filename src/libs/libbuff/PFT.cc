@@ -257,7 +257,7 @@ HMatrix *SWGGeometry::GetDensePFT(IncField *IF, HVector *JVector,
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
    
-      bool UseSymmetry=true;
+      bool UseSymmetry=false;
       int NPairs    = (UseSymmetry && OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -304,17 +304,26 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          cdouble G, dG[6];
          G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, Cache, dG, NeedQuantity);
    
-         double Factor = 1.0;
-         if ( UseSymmetry && OA==OB && nbfB == nbfA )
-          Factor *= 0.5;
-   
-         P  -= Factor * real ( JJ ) * imag(G);
-         Fx -= imag(JJ) * imag(dG[0]);
-         Fy -= imag(JJ) * imag(dG[1]);
-         Fz -= imag(JJ) * imag(dG[2]);
-         Tx -= imag(JJ) * imag(dG[3]);
-         Ty -= imag(JJ) * imag(dG[4]);
-         Tz -= imag(JJ) * imag(dG[5]);
+         if (UseSymmetry)
+          { 
+            double Factor = ( OA==OB && nbfB == nbfA ) ? 0.5 : 1.0;
+            P  -= Factor * real ( JJ ) * imag(G);
+            Fx -= imag(JJ) * imag(dG[0]);
+            Fy -= imag(JJ) * imag(dG[1]);
+            Fz -= imag(JJ) * imag(dG[2]);
+            Tx -= imag(JJ) * imag(dG[3]);
+            Ty -= imag(JJ) * imag(dG[4]);
+            Tz -= imag(JJ) * imag(dG[5]);
+          }
+         else
+          { P  += 0.5 * real ( II*JJ*G     );
+            Fx += 0.5 * imag ( II*JJ*dG[0] );
+            Fy += 0.5 * imag ( II*JJ*dG[1] );
+            Fz += 0.5 * imag ( II*JJ*dG[2] );
+            Fx += 0.5 * imag ( II*JJ*dG[3] );
+            Fy += 0.5 * imag ( II*JJ*dG[4] );
+            Fz += 0.5 * imag ( II*JJ*dG[5] );
+          };
 
        };  // end of multithreaded loop
       P  *= ZVAC*real(Omega);
