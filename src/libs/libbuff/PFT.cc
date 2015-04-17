@@ -427,6 +427,14 @@ HMatrix *SWGGeometry::GetDensePFT(IncField *IF, HVector *JVector,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  bool UseSymmetry=false;
+  char *s=getenv("BUFF_PFT_SYMMETRY");
+  if (s && s[0]=='1')
+   UseSymmetry=true;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   for(int noA=0; noA<NumObjects; noA++)
    for(int noB=noA; noB<NumObjects; noB++)
     { 
@@ -437,8 +445,7 @@ HMatrix *SWGGeometry::GetDensePFT(IncField *IF, HVector *JVector,
       SWGVolume *OB = Objects[noB];
       int OffsetB   = BFIndexOffset[noB];
       int NBFB      = OB->NumInteriorFaces;
-   
-      bool UseSymmetry=false;
+
       int NPairs    = (UseSymmetry && OA==OB) ? (NBFA*(NBFA+1)/2) : (NBFA*NBFB);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
