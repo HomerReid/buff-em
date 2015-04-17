@@ -62,6 +62,169 @@ int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
                            cdouble VInvEntries[7],
                            double ImEpsEntries[7]);
 
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3]);
+
+typedef struct VII2Data
+ { 
+   double *QA;
+   double PreFacA;
+   double *QB;
+   double PreFacB;
+   cdouble Omega;
+   IHAIMatProp *MP;
+
+ } VII2Data;
+
+void VIntegrand2(double *x, double *b, double DivB, 
+                  void *UserData, double *I)
+{
+  (void) DivB;
+  (void) b;
+
+  VII2Data *Data   = (VII2Data *)UserData;
+  double *QA      = Data->QA;
+  double PreFacA  = Data->PreFacA;
+  double *QB      = Data->QB;
+  double PreFacB  = Data->PreFacB;
+  cdouble Omega   = Data->Omega;
+  IHAIMatProp *MP = Data->MP;
+
+  cdouble Eps[3][3], Y[3][3];
+  MP->GetEps( Omega, x, Eps );
+
+  Eps[0][0] -= 1.0;
+  Eps[1][1] -= 1.0;
+  Eps[2][2] -= 1.0;
+  Invert3x3Matrix(Eps, Y);
+
+  double FA[3], FB[3];
+  FA[0] = PreFacA * (x[0] - QA[0]);
+  FA[1] = PreFacA * (x[1] - QA[1]);
+  FA[2] = PreFacA * (x[2] - QA[2]);
+  FB[0] = PreFacB * (x[0] - QB[0]);
+  FB[1] = PreFacB * (x[1] - QB[1]);
+  FB[2] = PreFacB * (x[2] - QB[2]);
+
+  cdouble YFB[3];
+  cdouble Omega2=Omega*Omega;
+  YFB[0] = -(Y[0][0]*FB[0] + Y[0][1]*FB[1] + Y[0][2]*FB[2]) / Omega2;
+  YFB[1] = -(Y[1][0]*FB[0] + Y[1][1]*FB[1] + Y[1][2]*FB[2]) / Omega2;
+  YFB[2] = -(Y[2][0]*FB[0] + Y[2][1]*FB[1] + Y[2][2]*FB[2]) / Omega2;
+
+  cdouble *zI=(cdouble *)I;
+  zI[0] = FA[1]*YFB[2] - FA[2]*YFB[1];
+  zI[1] = FA[2]*YFB[0] - FA[0]*YFB[2];
+  zI[2] = FA[0]*YFB[1] - FA[1]*YFB[0];
+  
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+int GetBxImVB(SWGVolume *V, int nfA, cdouble Omega,
+              int Indices[7], cdouble BxImVB[7][3])
+{
+  Indices[0]=nfA;
+  int NNZ=1;
+
+  SWGFace *FA = V->Faces[nfA];
+  VII2Data MyVII2Data, *Data=&MyVII2Data;
+  Data->Omega = Omega;
+  Data->MP    = V->MP;
+
+  /*--------------------------------------------------------------*/
+  /* handle interactions between bfs #nfA and #nfB, where         */
+  /* nfB runs over the 4 faces of the positive tetrahedron of nfA */
+  /*--------------------------------------------------------------*/
+  int nt        = FA->iPTet;
+  SWGTet *T     = V->Tets[nt];
+  Data->QA      = V->Vertices + 3*(FA->iQP);
+  Data->PreFacA = FA->Area / (3.0*T->Volume);
+  for(int ifB=0; ifB<4; ifB++)
+   { 
+     int nfB = T->FI[ifB];
+     if (nfB >= V->NumInteriorFaces) continue;
+
+     SWGFace *FB = V->Faces[nfB];
+     if ( FB->iPTet == nt )
+      { Data->QB      = V->Vertices + 3*(FB->iQP);
+        Data->PreFacB = FB->Area / (3.0*T->Volume);
+      }
+     else
+      { Data->QB      = V->Vertices + 3*(FB->iQM);
+        Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
+      };
+
+     cdouble I[3], E[3];
+     TetInt(V, nt, 0, 1.0, VIntegrand2, (void *)Data,
+            6, (double *)I, (double *)E, 33, 0, 1.0e-4);
+
+     if (nfB==nfA)
+      { BxImVB[0][0] = I[0];
+        BxImVB[0][1] = I[1];
+        BxImVB[0][2] = I[2];
+      }
+     else
+      { BxImVB[NNZ][0] = I[0];
+        BxImVB[NNZ][1] = I[1];
+        BxImVB[NNZ][2] = I[2];
+        Indices[NNZ]    = nfB;
+        NNZ++;
+      };
+
+   };
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  nt            = FA->iMTet;
+  T             = V->Tets[nt];
+  Data->QA      = V->Vertices + 3*(FA->iQM);
+  Data->PreFacA = -1.0*FA->Area / (3.0*T->Volume);
+  for(int ifB=0; ifB<4; ifB++)
+   { 
+     int nfB = T->FI[ifB];
+     if (nfB >= V->NumInteriorFaces) continue;
+
+     SWGFace *FB = V->Faces[nfB];
+     if ( FB->iPTet == nt )
+      { Data->QB      = V->Vertices + 3*(FB->iQP);
+        Data->PreFacB = FB->Area / (3.0*T->Volume);
+      }
+     else
+      { Data->QB      = V->Vertices + 3*(FB->iQM);
+        Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
+      };
+
+     cdouble I[3], E[3];
+     TetInt(V, nt, 0, 1.0, VIntegrand2, (void *)Data,
+            6, (double *)I, (double *)E, 33, 0, 0);
+
+     if (nfB==nfA)
+      { BxImVB[0][0] += I[0];
+        BxImVB[0][1] += I[1];
+        BxImVB[0][2] += I[2];
+      }
+     else
+      { BxImVB[NNZ][0] = I[0];
+        BxImVB[NNZ][1] = I[1];
+        BxImVB[NNZ][2] = I[2];
+        Indices[NNZ]   = nfB;
+        NNZ++;
+      };
+
+   }; // for(int ifB=0; ifB<4; ifB++)
+
+  return NNZ;
+
+} // GetBxImVB
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
@@ -188,6 +351,7 @@ HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
      int NBF      = O->NumInteriorFaces;
 
      double P2=0.0;
+     double T[3]={0.0, 0.0, 0.0};
      for(int nbfA=0; nbfA<NBF; nbfA++)
       { 
         int nbfBList[7];
@@ -205,8 +369,25 @@ HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
            P2 -= 0.5*real( JJ * IKZVInv );
          }; // for(int nnz=0; nnz<NNZ; nnz++)
 
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+        cdouble BxImVB[7][3];
+        NNZ=GetBxImVB(O, nbfA, Omega, nbfBList, BxImVB);
+        for(int nnz=0; nnz<NNZ; nnz++)
+         { 
+           int nbfB = nbfBList[nnz];
+           cdouble JJ = conj ( JVector->GetEntry(Offset + nbfA) )
+                            *( JVector->GetEntry(Offset + nbfB) );
+           T[0] += 0.5*ZVAC*real(JJ*BxImVB[nnz][0]);
+           T[1] += 0.5*ZVAC*real(JJ*BxImVB[nnz][1]);
+           T[2] += 0.5*ZVAC*real(JJ*BxImVB[nnz][2]);
+         }
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
       }; // for(int nbfA=0; nbfA<NBF; nbfA++)
      PFTMatrix->SetEntry(no, 0, P2);
+     PFTMatrix->SetEntry(no, 1, T[0]);
+     PFTMatrix->SetEntry(no, 2, T[1]);
+     PFTMatrix->SetEntry(no, 3, T[2]);
 
    }; // for(int no=0; no<NumObjects; no++)
 

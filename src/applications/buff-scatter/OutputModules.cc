@@ -128,6 +128,9 @@ void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
      for(int n=0; n<7; n++)
       fprintf(f,"%e ",DensePFT->GetEntryD(no,n));
      fprintf(f,"%e ",SparsePFT->GetEntryD(no,0));
+     fprintf(f,"%e ",SparsePFT->GetEntryD(no,1));
+     fprintf(f,"%e ",SparsePFT->GetEntryD(no,2));
+     fprintf(f,"%e ",SparsePFT->GetEntryD(no,3));
      fprintf(f,"\n");
    };
   fclose(f);
