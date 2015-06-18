@@ -36,6 +36,8 @@
 #include <libhrutil.h>
 #include <libscuff.h>
 
+#include <config.h>
+
 using namespace scuff;
 
 //values for the WhichK parameter

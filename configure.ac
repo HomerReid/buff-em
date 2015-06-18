@@ -98,6 +98,15 @@ AC_CHECK_HEADERS([libscuff.h], [],
 AC_LANG_POP
 
 ##################################################
+# flags to enable/disable buff-em specific features
+##################################################
+AC_ARG_ENABLE([torque-integrals],
+              [AS_HELP_STRING([--enable-torque-integrals],
+                              [enable Taylor-Duffy torque integrals])],
+              [AC_DEFINE([WITH_TORQUE_INTEGRALS], [], [enable Taylor-Duffy torque integrals])])
+
+
+##################################################
 ##################################################
 ##################################################
 AC_CONFIG_FILES([

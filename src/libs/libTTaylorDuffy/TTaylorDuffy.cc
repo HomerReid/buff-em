@@ -875,7 +875,7 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
           MaxyPower[1]=2;
           MaxyPower[2]=0;
           MaxyPower[3]=0;
-           
+
           GetUpsilon_CommonTet_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
           GetUpsilon_CommonTet_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
           GetUpsilon_CommonTet_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
@@ -891,7 +891,7 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
           MaxyPower[1]=4;
           MaxyPower[2]=2;
           MaxyPower[3]=0;
-          
+
           GetUpsilon_CommonTriangle_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
           GetUpsilon_CommonTriangle_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
           GetUpsilon_CommonTriangle_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);

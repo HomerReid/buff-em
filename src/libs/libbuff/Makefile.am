@@ -18,6 +18,7 @@ libbuff_la_SOURCES = 	\
  Visualize.cc		\
  IHAIMatProp.h		\
  FIBBICache.h		\
+ rwlock.h    		\
  libbuff.h
 
 # combine all auxiliary libraries into a single library 
