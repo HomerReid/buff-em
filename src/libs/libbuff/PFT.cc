@@ -608,7 +608,7 @@ LogTaskTiming("DensePFT");
   #define TENTHIRDS (10.0/3.0)
   for(int no=0; no<NumObjects; no++)
    for(int Mu=1; Mu<=6; Mu++)
-    PFTMatrix->SetEntry(no,Mu, TENTHIRDS*PFTMatrix->GetEntry(no,Mu) );
+    PFTMatrix->SetEntry(no, Mu, TENTHIRDS*PFTMatrix->GetEntry(no,Mu) );
 
   return PFTMatrix;
 

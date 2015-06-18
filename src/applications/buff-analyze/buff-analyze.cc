@@ -124,10 +124,28 @@ void AnalyzeVolume(SWGVolume *V)
 int main(int argc, char *argv[])
 {
   /***************************************************************/
-  /* process options *********************************************/
+  /* convenience shortcuts that allow the code to be invoked as  */
+  /*  % buff-analyze File.vmsh                                   */
+  /* or                                                          */
+  /*  % buff-analyze File.buffgeo                                */
   /***************************************************************/
   char *GeoFile=0;
   char *MeshFile=0;
+  if (argc>=2)
+   { char *Ext = GetFileExtension(argv[1]);
+     if (Ext && !StrCaseCmp(Ext,"buffgeo"))
+      { GeoFile=strdup(argv[1]); 
+        argv[1]=0; 
+      }
+     else if (Ext && (!StrCaseCmp(Ext,"msh") || !StrCaseCmp(Ext,"vmsh") ) )
+      { MeshFile=strdup(argv[1]);
+        argv[1]=0; 
+      };
+   };
+
+  /***************************************************************/
+  /* process options *********************************************/
+  /***************************************************************/
   char *TransFile=0;
   bool WriteGMSHFiles=false;
   bool PlotPermittivity=false;
