@@ -30,6 +30,8 @@
 
 #define MAXCONSTANTS 25
 
+#include <libMatProp.h>
+
 /***************************************************************/
 /* MatProp class definition ************************************/
 /***************************************************************/
@@ -67,7 +69,8 @@ class IHAIMatProp
    /* class data **************************************************/
    /***************************************************************/
    char *Name;
-   cdouble ConstEps; // =0.0 for parsed materials 
+   cdouble ConstEps; // =0.0 for parsed materials
+   MatProp *MP;      // =0   for non-isotropic materials
 
    // opaque pointers to cmatheval parsed expressions for
    // components of epsilon and mu

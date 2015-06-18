@@ -47,7 +47,7 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
     for(int ny=0; ny<3; ny++)
      EpsExpression[nx][ny]=MuExpression[nx][ny]=0;
    ConstEps=0.0;
-   
+   MP=0;
 
    /*--------------------------------------------------------------*/
    /*- detect filenames of the form CONST_EPS_xx-------------------*/
@@ -61,6 +61,18 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
       Log("Created constant-epsilon material with Eps=%s",z2s(ConstEps));
       return;
     };
+
+   /*--------------------------------------------------------------*/
+   /*--------------------------------------------------------------*/
+   /*--------------------------------------------------------------*/
+   MP=new MatProp(Name);
+   if (MP->ErrMsg == 0 )
+    { 
+      Log("Created isotropic material with MatProp=%s",MP->Name);
+      return;
+    };
+   delete MP;
+   MP=0;
  
    /*--------------------------------------------------------------*/
    /*- try to open the file ---------------------------------------*/
@@ -201,6 +213,9 @@ IHAIMatProp::~IHAIMatProp()
        cevaluator_destroy(MuExpression[nx][ny]);
     };
 
+  if (MP)
+   delete MP;
+
   for(int nc=0; nc<NumConstants; nc++)
    free(ConstantNames[nc]);
 
@@ -220,6 +235,20 @@ void IHAIMatProp::GetEpsMu(cdouble Omega, double x[3],
       for(int ny=0; ny<3; ny++)
        { Eps[nx][ny] = (nx==ny) ? ConstEps : 0.0;
           Mu[nx][ny] = (nx==ny) ? 1.0      : 0.0;
+       };
+     return;
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (MP)
+   { cdouble EpsMP, MuMP;
+     MP->GetEpsMu(Omega, &EpsMP, &MuMP);
+      for(int nx=0; nx<3; nx++)
+      for(int ny=0; ny<3; ny++)
+       { Eps[nx][ny] = (nx==ny) ? EpsMP : 0.0;
+          Mu[nx][ny] = (nx==ny) ? MuMP  : 0.0;
        };
      return;
    };

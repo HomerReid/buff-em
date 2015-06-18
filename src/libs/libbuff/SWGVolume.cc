@@ -105,10 +105,10 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   MeshFileName=strdup(pMeshFileName);
   FILE *MeshFile=fopen(MeshFileName,"r");
   if (!MeshFile)
-   { for(int nmd=0; MeshFile==0 && nmd<RWGGeometry::NumMeshDirs; nmd++)
-      { MeshFile=vfopen("%s/%s","r",RWGGeometry::MeshDirs[nmd],MeshFileName);
+   { for(int nmd=0; MeshFile==0 && nmd<SWGGeometry::NumMeshDirs; nmd++)
+      { MeshFile=vfopen("%s/%s","r",SWGGeometry::MeshDirs[nmd],MeshFileName);
         if (MeshFile) 
-         Log("Found mesh file %s/%s",RWGGeometry::MeshDirs[nmd],MeshFileName);
+         Log("Found mesh file %s/%s",SWGGeometry::MeshDirs[nmd],MeshFileName);
       };
    };
   if (!MeshFile)
