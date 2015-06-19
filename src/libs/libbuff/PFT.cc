@@ -53,14 +53,10 @@ using namespace scuff;
 /***************************************************************/
 namespace buff {
 
-// numbers of PFT quantities and integrals
-#define NUMPFTQS 7
-#define NUMPFTIS 7
-
 int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
-                           cdouble Omega, int Indices[7],
-                           cdouble VInvEntries[7],
-                           double ImEpsEntries[7]);
+                           cdouble Omega, int Indices[MAXOVERLAP],
+                           cdouble VInvEntries[MAXOVERLAP],
+                           double ImEpsEntries[MAXOVERLAP]);
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
@@ -265,7 +261,6 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
      IF->GetFields(xTweaked, EHP);
      xTweaked[Mu] -= 2.0*Delta;
      IF->GetFields(xTweaked, EHM);
-     xTweaked[Mu] += Delta;
 
      for(int Nu=0; Nu<6; Nu++)
       dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
@@ -327,18 +322,18 @@ void GetPairIndices(int nPair, int N, int *pn1, int *pn2)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
+HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector, 
                                    cdouble Omega, HMatrix *PFTMatrix)
 { 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFTQS) )
+  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFT) )
    { delete PFTMatrix;
      PFTMatrix=0;
    };
   if (PFTMatrix==0)
-   PFTMatrix= new HMatrix(NumObjects, NUMPFTQS);
+   PFTMatrix= new HMatrix(NumObjects, NUMPFT);
 
   /***************************************************************/
   /***************************************************************/
@@ -354,9 +349,9 @@ HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
      double T[3]={0.0, 0.0, 0.0};
      for(int nbfA=0; nbfA<NBF; nbfA++)
       { 
-        int nbfBList[7];
-        cdouble VInvList[7];
-        double ImEpsList[7];
+        int nbfBList[MAXOVERLAP];
+        cdouble VInvList[MAXOVERLAP];
+        double ImEpsList[MAXOVERLAP];
         int NNZ=GetVInvAndImEpsEntries(O, nbfA, Omega, nbfBList,
                                        VInvList, ImEpsList);
 
@@ -370,7 +365,7 @@ HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
          }; // for(int nnz=0; nnz<NNZ; nnz++)
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-        cdouble BxImVB[7][3];
+        cdouble BxImVB[MAXOVERLAP][3];
         NNZ=GetBxImVB(O, nbfA, Omega, nbfBList, BxImVB);
         for(int nnz=0; nnz<NNZ; nnz++)
          { 
@@ -406,31 +401,44 @@ HMatrix *SWGGeometry::GetSparsePFT(HVector *JVector,
 /***************************************************************/
 /* PFT[no][nq] = nqth PFT quantity for noth object             */
 /***************************************************************/
-HMatrix *SWGGeometry::GetDensePFT(IncField *IF, HVector *JVector,
+HMatrix *SWGGeometry::GetDensePFT(IncField *IF,
+                                  HVector *JVector, HVector *RHSVector,
                                   cdouble Omega, HMatrix *PFTMatrix,
-                                  bool *NeedQuantity)
+                                  bool *NeedFT)
 { 
-  bool DefaultNeedQuantity[6]={true, true, true, true, true, true};
-  if (NeedQuantity==0) NeedQuantity=DefaultNeedQuantity;
+  bool DefaultNeedFT[6]={true, true, true, true, true, true};
+  if (NeedFT==0) NeedFT=DefaultNeedFT;
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFTQS) )
+  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFT) )
    { delete PFTMatrix;
      PFTMatrix=0;
    };
   if (PFTMatrix==0)
-   PFTMatrix= new HMatrix(NumObjects, NUMPFTQS);
+   PFTMatrix= new HMatrix(NumObjects, NUMPFT);
   PFTMatrix->Zero();
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  bool UseSymmetry=false;
-  char *s=getenv("BUFF_PFT_SYMMETRY");
+  if (RHSVector)
+   for(int no=0, nbf=0; no<NumObjects; no++)
+    for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
+     {
+       cdouble EAlpha=RHSVector->GetEntry(nbf);
+       cdouble jAlpha=JVector->GetEntry(nbf);
+       PFTMatrix->AddEntry(no, 1, 0.5*real( conj(jAlpha) * EAlpha ) );
+     };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  bool UseSymmetry=true;
+  char *s=getenv("BUFF_NOSYMMETRY");
   if (s && s[0]=='1')
-   UseSymmetry=true;
+   UseSymmetry=false;
 
   /***************************************************************/
   /***************************************************************/
@@ -490,7 +498,7 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
          if (JJ==0.0) continue;
    
          cdouble G, dG[6];
-         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, Cache, dG, NeedQuantity);
+         G=GetGMatrixElement(OA, nbfA, OB, nbfB, Omega, Cache, dG, NeedFT);
    
          if (UseSymmetry)
           { 
@@ -526,20 +534,20 @@ Log("OpenMP multithreading (%i threads)",NumThreads);
       /*- accumulate PFT contributions for this pair of objects       */
       /*--------------------------------------------------------------*/
       PFTMatrix->AddEntry(noA, 0, P  );
-      PFTMatrix->AddEntry(noA, 1, Fx );
-      PFTMatrix->AddEntry(noA, 2, Fy );
-      PFTMatrix->AddEntry(noA, 3, Fz );
-      PFTMatrix->AddEntry(noA, 4, Tx );
-      PFTMatrix->AddEntry(noA, 5, Ty );
-      PFTMatrix->AddEntry(noA, 6, Tz );
+      PFTMatrix->AddEntry(noA, 2, Fx );
+      PFTMatrix->AddEntry(noA, 3, Fy );
+      PFTMatrix->AddEntry(noA, 4, Fz );
+      PFTMatrix->AddEntry(noA, 5, Tx );
+      PFTMatrix->AddEntry(noA, 6, Ty );
+      PFTMatrix->AddEntry(noA, 7, Tz );
       if (noB>noA)
        { PFTMatrix->AddEntry(noB, 0, P );
-         PFTMatrix->AddEntry(noB, 1, -1.0 * Fx );
-         PFTMatrix->AddEntry(noB, 2, -1.0 * Fy );
-         PFTMatrix->AddEntry(noB, 3, -1.0 * Fz );
-         PFTMatrix->AddEntry(noB, 4, -1.0 * Tx );
-         PFTMatrix->AddEntry(noB, 5, -1.0 * Ty );
-         PFTMatrix->AddEntry(noB, 6, -1.0 * Tz );
+         PFTMatrix->AddEntry(noB, 2, -1.0 * Fx );
+         PFTMatrix->AddEntry(noB, 3, -1.0 * Fy );
+         PFTMatrix->AddEntry(noB, 4, -1.0 * Fz );
+         PFTMatrix->AddEntry(noB, 5, -1.0 * Tx );
+         PFTMatrix->AddEntry(noB, 6, -1.0 * Ty );
+         PFTMatrix->AddEntry(noB, 7, -1.0 * Tz );
        };
    
    };  // for(int noA=0:NumObjects, noB=noA:NumObjects
@@ -586,17 +594,23 @@ int NumThreads = GetNumThreads();
          double Factor = 0.5;
          PFTMatrix->AddEntry(no, 0, Factor * P );
          Factor/=real(Omega);
-         PFTMatrix->AddEntry(no, 1, Factor * Fx );
-         PFTMatrix->AddEntry(no, 2, Factor * Fy );
-         PFTMatrix->AddEntry(no, 3, Factor * Fz );
-         PFTMatrix->AddEntry(no, 4, Factor * Tx );
-         PFTMatrix->AddEntry(no, 5, Factor * Ty );
-         PFTMatrix->AddEntry(no, 6, Factor * Tz );
+         PFTMatrix->AddEntry(no, 2, Factor * Fx );
+         PFTMatrix->AddEntry(no, 3, Factor * Fy );
+         PFTMatrix->AddEntry(no, 4, Factor * Fz );
+         PFTMatrix->AddEntry(no, 5, Factor * Tx );
+         PFTMatrix->AddEntry(no, 6, Factor * Ty );
+         PFTMatrix->AddEntry(no, 7, Factor * Tz );
        };
 
    }; // if (IF)
   Elapsed = Secs() - Elapsed;
   AddTaskTiming(5,Elapsed);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  for(int no=0; no<NumObjects; no++)
+   PFTMatrix->AddEntry(no, 1, -1.0*PFTMatrix->GetEntry(no,0));
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 LogTaskTiming("DensePFT");

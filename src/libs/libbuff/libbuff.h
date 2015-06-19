@@ -49,6 +49,17 @@ namespace buff {
 #define ZVAC 376.73031346177
 #endif
 
+// number of PFT quantities
+#define NUMPFT 8
+
+// number of integrals needed to compute PFTs
+#define NUMPFTIS 7
+
+// SWG coordination number = maximum possible number
+// of SWG basis functions whose supports overlap
+// with any given basis function
+#define MAXOVERLAP 7
+
 /***************************************************************/
 /* SWGTet is a structure containing data on a single           */
 /* tetrahedron in the meshed geometry.                         */
@@ -208,8 +219,9 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetDensePFT(IncField *IF, HVector *JVector, cdouble Omega,
-                        HMatrix *PFTMatrix=0, bool *NeedQuantity=0);
+   HMatrix *GetDensePFT(IncField *IF, HVector *JVector,
+                        HVector *RHSVector, cdouble Omega,
+                        HMatrix *PFTMatrix=0, bool *NeedFT=0);
    HMatrix *GetSparsePFT(HVector *JVector, cdouble Omega,
                          HMatrix *PFTMatrix=0);
 

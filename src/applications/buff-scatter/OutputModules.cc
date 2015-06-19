@@ -114,18 +114,18 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
 /***************************************************************/
 /* compute power, force, and torque                            */
 /***************************************************************/
-void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedQuantity[6])
+void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedFT[6])
 { 
   SWGGeometry *G = BSD->G;
 
-  HMatrix *DensePFT=G->GetDensePFT(BSD->IF, BSD->J, BSD->Omega, 0, NeedQuantity);
+  HMatrix *DensePFT=G->GetDensePFT(BSD->IF, BSD->J, BSD->RHS, BSD->Omega, 0, NeedFT);
 
   HMatrix *SparsePFT=G->GetSparsePFT(BSD->J, BSD->Omega);
 
   FILE *f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)
    { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
-     for(int n=0; n<7; n++)
+     for(int n=0; n<NUMPFT; n++)
       fprintf(f,"%e ",DensePFT->GetEntryD(no,n));
      fprintf(f,"%e ",SparsePFT->GetEntryD(no,0));
      fprintf(f,"%e ",SparsePFT->GetEntryD(no,1));
