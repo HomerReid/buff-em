@@ -69,6 +69,7 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
    if (MP->ErrMsg == 0 )
     { 
       Log("Created isotropic material with MatProp=%s",MP->Name);
+      MatProp::SetLengthUnit(1.0e-6);
       return;
     };
    delete MP;
