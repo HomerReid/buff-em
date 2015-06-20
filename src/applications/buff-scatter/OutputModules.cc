@@ -164,7 +164,7 @@ void WriteDSIPFTFile(BSData *BSD, char *PFTFile, char *DSIMesh,
    snprintf(Label,100,"R%g_N%i",DSIRadius,DSIPoints);
 
   FILE *f=fopen(PFTFile,"a");
-  fprintf(f,"%e %s ",z2s(BSD->Omega),Label);
+  fprintf(f,"%s %s ",z2s(BSD->Omega),Label);
   for(int nq=0; nq<NUMPFT; nq++)
    fprintf(f,"%e  ",PFT[nq]);
   fprintf(f,"\n");
