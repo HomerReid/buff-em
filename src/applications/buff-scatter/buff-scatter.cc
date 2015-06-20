@@ -50,27 +50,40 @@ using namespace buff;
 /***************************************************************/
 int main(int argc, char *argv[])
 {
-
   /***************************************************************/
   /* process options *********************************************/
   /***************************************************************/
   InstallHRSignalHandler();
   char *GeoFile=0;
+
   double pwDir[3*MAXPW];             int npwDir;
   cdouble pwPol[3*MAXPW];            int npwPol;
+
   double gbDir[3*MAXGB];             int ngbDir;
   cdouble gbPol[3*MAXGB];            int ngbPol;
   double gbCenter[3*MAXGB];          int ngbCenter;
   double gbWaist[MAXGB];             int ngbWaist;
+
   double psLoc[3*MAXPS];             int npsLoc;
   cdouble psStrength[3*MAXPS];       int npsStrength;
+
   cdouble OmegaVals[MAXFREQ];        int nOmegaVals;
   char *OmegaFile;                   int nOmegaFiles;
+
   char *EPFiles[MAXEPF];             int nEPFiles;
+
   char *JPlotFile=0;
+
   char *PFTFile=0;
   bool NeedFT[6]={false, false, false, false, false, false};
+
+  char *DSIPFTFile = 0;
+  double DSIRadius = 10.0;
+  int DSIPoints    = 302;
+  char *DSIMesh    = 0;
+
   char *MomentFile=0;
+
   int ExportMatrix=0;
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
@@ -94,6 +107,7 @@ int main(int argc, char *argv[])
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
      {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,             "name of PFT output file"},
+/**/
      {"XForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[0])), 0,  "compute x-directed force"},
      {"YForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[1])), 0,  "compute y-directed force"},
      {"ZForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[2])), 0,  "compute z-directed force"},
@@ -101,8 +115,15 @@ int main(int argc, char *argv[])
      {"YTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[4])), 0,  "compute y-directed torque"},
      {"ZTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[5])), 0,  "compute z-directed torque"},
 /**/
+     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,             "name of displaced surface-integral PFT output file"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "mesh file for surface-integral PFT"},
+     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
+     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
+/**/
      {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "name of J-plot file"},
+/**/
      {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,             "name of induced-dipole-moment output file"},
+/**/
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -273,6 +294,9 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      if (PFTFile)
       WritePFTFile(BSD, PFTFile, NeedFT);
+
+     if (DSIPFTFile)
+      WriteDSIPFTFile(BSD, DSIPFTFile, DSIMesh, DSIRadius, DSIPoints);
 
      if (MomentFile)
       WriteMomentFile(BSD, MomentFile);

@@ -35,6 +35,13 @@
 
 #define II cdouble(0.0,1.0)
 
+namespace buff {
+void GetDSIPFT(SWGGeometry *G, IncField *IF, HVector *J,
+               cdouble Omega, double PFT[NUMPFT],
+               char *DSIMesh, double DSIRadius, int DSIPoints,
+               GTransformation *GT);
+              }
+
 using namespace buff;
 using namespace scuff;
 
@@ -138,6 +145,30 @@ void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedFT[6])
   delete DensePFT;
   delete SparsePFT;
 
+}
+
+/***************************************************************/
+/* compute power, force, and torque                            */
+/***************************************************************/
+void WriteDSIPFTFile(BSData *BSD, char *PFTFile, char *DSIMesh,
+                     double DSIRadius, int DSIPoints)
+{ 
+  double PFT[NUMPFT];
+  buff::GetDSIPFT(BSD->G, BSD->IF, BSD->J, BSD->Omega, PFT,
+                  DSIMesh, DSIRadius, DSIPoints, 0);
+
+  char Label[100];
+  if (DSIMesh)
+   strncpy(Label,DSIMesh,100);
+  else
+   snprintf(Label,100,"R%g_N%i",DSIRadius,DSIPoints);
+
+  FILE *f=fopen(PFTFile,"a");
+  fprintf(f,"%e %s ",z2s(BSD->Omega),Label);
+  for(int nq=0; nq<NUMPFT; nq++)
+   fprintf(f,"%e  ",PFT[nq]);
+  fprintf(f,"\n");
+  fclose(f);
 }
 
 /***************************************************************/

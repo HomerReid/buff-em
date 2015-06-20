@@ -54,6 +54,8 @@ typedef struct BSData
 /***************************************************************/
 //void GetMoments(BSData *BSD, char *MomentFile);
 void WritePFTFile(BSData *SSD, char *PFTFile, bool NeedQuantity[6]);
+void WriteDSIPFTFile(BSData *BSD, char *PFTFile, char *DSIMesh,
+                     double DSIRadius, int DSIPoints);
 void ProcessEPFile(BSData *BSData, char *EPFileName);
 void WriteMomentFile(BSData *BSD, char *FileName);
 

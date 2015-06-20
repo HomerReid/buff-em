@@ -4,6 +4,7 @@ libbuff_la_SOURCES = 	\
  GetFields.cc    	\
  GMatrixElements.cc	\
  Cubature.cc     	\
+ DSIPFT.cc       	\
  FIBBICache.cc   	\
  IHAIMatProp.cc  	\
  InitFaceList.cc 	\
