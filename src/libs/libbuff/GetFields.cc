@@ -291,7 +291,7 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( XMatrix==0 || XMatrix->NC!=3 || XMatrix->NR==0 )
+  if ( XMatrix==0 || XMatrix->NC<3 || XMatrix->NR==0 )
    ErrExit("wrong-size XMatrix (%ix%i) passed to GetFields",XMatrix->NR,XMatrix->NC);
 
   if (FMatrix==0) 
