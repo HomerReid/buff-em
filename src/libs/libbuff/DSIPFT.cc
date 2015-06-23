@@ -144,4 +144,92 @@ void GetDSIPFT(SWGGeometry *G, IncField *IF, HVector *J,
 
 }
 
+/***************************************************************/
+/* Get power, force, and torque by the displaced               */
+/* surface-integral method.                                    */
+/***************************************************************/
+#if 0
+void GetDSIPFTTrace(SWGGeometry *G, HMatrix *R,
+                    cdouble Omega, double PFT[NUMPFT],
+                    char *DSIMesh, double DSIRadius, int DSIPoints,
+                    GTransformation *GT)
+{
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (DSIMesh)
+   Log("Computing DSIPFT trace over bounding surface %s...",DSIMesh);
+  else
+   Log("Computing DSIPFT trace: (R,NPts)=(%e,%i)",DSIRadius, DSIPoints);
+
+  /***************************************************************/
+  /* get cubature-rule matrix ************************************/
+  /***************************************************************/
+  HMatrix *SCRMatrix = GetSCRMatrix(DSIMesh, DSIRadius, DSIPoints, false, GT);
+
+  double XTorque[3] = {0.0, 0.0, 0.0};
+  if (GT) GT->Apply(XTorque);
+
+  double EpsAbs = TENTHIRDS / ZVAC;
+  double  MuAbs = TENTHIRDS * ZVAC;
+
+  /***************************************************************/
+  /* precompute 1BF fields at cubature points                    */
+  /***************************************************************/
+  Log(" Precomputing incident fields at cubature points...");
+  HMatrix *FInc  = G->GetFields(IF, 0, Omega, SCRMatrix);
+  Log(" Computing scattered fields at cubature points...");
+  HMatrix *FScat = G->GetFields( 0, J, Omega, SCRMatrix);
+
+  /***************************************************************/
+  /* loop over points in the cubature rule                       */
+  /***************************************************************/
+  Log(" Evaluating trace rule...");
+#ifdef USE_OPENMP
+  memset(PFT, 0, NUMPFT*sizeof(double));
+  for(int nbfa=0; nbfa<NBF; nbfa++)
+   for(int nbfb=0; nbfb<NBF; nbfb++)
+    for(int nr=0; nr<SCRMatrix->NR; nr++)
+     { 
+       double w, X[3], nHat[3];
+       SCRMatrix->GetEntriesD(nr, "0:2", X);
+       SCRMatrix->GetEntriesD(nr, "3:5", nHat);
+       w = SCRMatrix->GetEntryD(nr, 6);
+
+       double NMatrix[NUMPFT][3][3];
+       GetNMatrices(nHat, X, XTorque, NMatrix);
+
+       cdouble *EAlpha, *HAlpha, *EBeta, *HBeta;
+       ES = FMatrix->GetEntries("0:2", ES);
+       FScat->GetEntries(nr, "3:5", HS);
+       FInc ->GetEntries(nr, "0:2", ET);
+       FInc ->GetEntries(nr, "3:5", HT);
+     for(int Mu=0; Mu<3; Mu++)
+      { ET[Mu] += ES[Mu];
+        HT[Mu] += HS[Mu];
+      };
+
+     // absorbed power 
+     PFT[PFT_PABS]  -= 0.25 * w * (  HVMVP(ET, NMatrix[PFT_PABS], HT)
+                                    -HVMVP(HT, NMatrix[PFT_PABS], ET)
+                                  );
+     // scattered power 
+     PFT[PFT_PSCAT] += 0.25 * w * (  HVMVP(ES, NMatrix[PFT_PABS], HS)
+                                    -HVMVP(HS, NMatrix[PFT_PABS], ES)
+                                  );
+     // force and torque
+     for(int nq=PFT_XFORCE; nq<=PFT_ZTORQUE; nq++)
+      PFT[nq] += 0.25 * w * ( EpsAbs*HVMVP(ET, NMatrix[nq], ET)
+                             + MuAbs*HVMVP(HT, NMatrix[nq], HT)
+                            );
+   };
+  Log(" Done!");
+
+  delete FInc;
+  delete FScat;
+  delete SCRMatrix;
+
+}
+#endif
+
 } // namespace buff

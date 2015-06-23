@@ -61,8 +61,6 @@ void GetTraces(BNEQData *BNEQD, int SourceObject, int DestObject,
 
   SMatrix *Sigma = BNEQD->Sigma[SourceObject];
 
-  
-
 } 
 
 /***************************************************************/

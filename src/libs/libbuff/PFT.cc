@@ -53,8 +53,8 @@ using namespace scuff;
 /***************************************************************/
 namespace buff {
 
-int GetVInvAndImEpsEntries(SWGVolume *V, int nfA,
-                           cdouble Omega, int Indices[MAXOVERLAP],
+int GetVInvAndImEpsEntries(SWGVolume *V, int nfA, cdouble Omega, 
+                           int Indices[MAXOVERLAP],
                            cdouble VInvEntries[MAXOVERLAP],
                            double ImEpsEntries[MAXOVERLAP]);
 

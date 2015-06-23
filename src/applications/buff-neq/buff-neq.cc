@@ -18,11 +18,11 @@
  */
 
 /*
- * buff-neq   -- a standalone code within the buff-em suite
+ * buff-neq    -- a standalone code within the buff-em suite
  *             -- for implementing the fluctuating-surface-current
- *             -- approach to nonequilibrium phenomena (more 
- *             -- specifically, for computing heat radiation, 
- *             -- heat transfer, and nonequilibrium casimir forces) 
+ *             -- approach to nonequilibrium phenomena (more
+ *             -- specifically, for computing heat radiation,
+ *             -- heat transfer, and nonequilibrium casimir forces)
  *
  * homer reid  -- 5/2012
  *
@@ -38,7 +38,7 @@
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-#define MAXFREQ  10    // max number of frequencies 
+#define MAXFREQ  10    // max number of frequencies
 #define MAXCACHE 10    // max number of cache files for preload
 
 #define MAXTEMPS 10    // max number of objects for which temperatures may be set
@@ -60,20 +60,21 @@ int main(int argc, char *argv[])
   char *GeoFile=0;
   char *TransFile=0;
 
-  int Power=0;
-  int XForce=0;
-  int YForce=0;
-  int ZForce=0;
-  int XTorque=0;
-  int YTorque=0;
-  int ZTorque=0;
+  bool PAbs=0;
+  bool PRad=0;
+  bool XForce=0;
+  bool YForce=0;
+  bool ZForce=0;
+  bool XTorque=0;
+  bool YTorque=0;
+  bool ZTorque=0;
 
   cdouble OmegaVals[MAXFREQ];        int nOmegaVals;
   char *OmegaFile;                   int nOmegaFiles;
   double OmegaMin=0.00;              int nOmegaMin;
   double OmegaMax=-1.0;              int nOmegaMax;
 
-  char *TempStrings[2*MAXTEMPS];     int nTempStrings;
+  char *TemperatureFile=0;
 
   double AbsTol=0.0;
   double RelTol=5.0e-2;
@@ -86,10 +87,13 @@ int main(int argc, char *argv[])
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
    { 
-     {"Geometry",       PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
-     {"TransFile",      PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
+     {"Geometry",        PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
+     {"TransFile",       PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
+     {"TemperatureFile", PA_STRING,  1, 1,       (void *)&TemperatureFile,  0, "file specifying position-dependent temperature"},
 /**/     
-     {"Power",          PA_BOOL,    0, 1,       (void *)&Power,      0,             "compute power transfer"},
+     {"Power",          PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "compute power transfer"},
+     {"PAbs",           PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "(synonym for --power)"},
+     {"PRad",           PA_BOOL,    0, 1,       (void *)&PRad,       0,             "compute power transfer"},
      {"XForce",         PA_BOOL,    0, 1,       (void *)&XForce,     0,             "compute X-force"},
      {"YForce",         PA_BOOL,    0, 1,       (void *)&YForce,     0,             "compute Y-force"},
      {"ZForce",         PA_BOOL,    0, 1,       (void *)&ZForce,     0,             "compute Z-force"},
@@ -102,9 +106,8 @@ int main(int argc, char *argv[])
      {"OmegaMin",       PA_DOUBLE,  1, 1,       (void *)&OmegaMin,   &nOmegaMin,    "lower integration limit"},
      {"OmegaMax",       PA_DOUBLE,  1, 1,       (void *)&OmegaMax,   &nOmegaMax,    "upper integration limit"},
 /**/     
-     {"Temperature",    PA_STRING,  2, MAXTEMPS, (void *)TempStrings, &nTempStrings,  "set object xx temperature to xx"},
 /**/     
-     {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "prefix for names of .log, .flux, .out files"},
+     {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
 /**/     
      {"AbsTol",         PA_DOUBLE,  1, 1,       (void *)&AbsTol,     0,             "absolute tolerance for frequency quadrature"},
      {"RelTol",         PA_DOUBLE,  1, 1,       (void *)&RelTol,     0,             "relative tolerance for frequency quadrature"},
@@ -118,6 +121,8 @@ int main(int argc, char *argv[])
 
   if (GeoFile==0)
    OSUsage(argv[0], OSArray, "--geometry option is mandatory");
+  if (TemperatureFile==0)
+   OSUsage(argv[0], OSArray, "--TemperatureFile option is mandatory");
 
   if (FileBase)
    SetLogFileName("%s.log",FileBase);
@@ -130,10 +135,11 @@ int main(int argc, char *argv[])
   /* determine which output quantities were requested ****************/
   /*******************************************************************/
   int QuantityFlags=0;
-  if (Power)  QuantityFlags|=QFLAG_POWER;
-  if (XForce) QuantityFlags|=QFLAG_XFORCE;
-  if (YForce) QuantityFlags|=QFLAG_YFORCE;
-  if (ZForce) QuantityFlags|=QFLAG_ZFORCE;
+  if (PAbs)    QuantityFlags|=QFLAG_PABS;
+  if (PRad)    QuantityFlags|=QFLAG_PRAD;
+  if (XForce)  QuantityFlags|=QFLAG_XFORCE;
+  if (YForce)  QuantityFlags|=QFLAG_YFORCE;
+  if (ZForce)  QuantityFlags|=QFLAG_ZFORCE;
   if (XTorque) QuantityFlags|=QFLAG_XTORQUE;
   if (YTorque) QuantityFlags|=QFLAG_YTORQUE;
   if (ZTorque) QuantityFlags|=QFLAG_ZTORQUE;
@@ -201,42 +207,10 @@ int main(int argc, char *argv[])
   /* create the BNEQData structure that contains all the info needed */
   /* to evaluate the neq transfer at a single frequency              */
   /*******************************************************************/
-  BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, QuantityFlags, FileBase);
+  BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, TemperatureFile,
+                                 QuantityFlags, FileBase);
   SWGGeometry *G=BNEQD->G;
   BNEQD->UseExistingData   = UseExistingData;
-
-  /*******************************************************************/
-  /* process any temperature specifications **************************/
-  /*******************************************************************/
-  double TEnvironment=0.0;
-  double *TObjects=(double *)malloc(G->NumObjects*sizeof(double));
-  memset(TObjects, 0, G->NumObjects*sizeof(double));
-  if (nTempStrings)
-   { 
-     for(int nts=0; nts<nTempStrings; nts++)
-      { 
-        // first try to parse the number specified for the temperature 
-        double TTemp;
-        if ( 1!=sscanf(TempStrings[2*nts+1],"%le",&TTemp) )
-         ErrExit("invalid temperature (%s) passed for --temperature option",TempStrings[2*nts+1]);
-
-        // now try to figure out which temperature we need to set 
-        if (!strcasecmp(TempStrings[2*nts],"ENVIRONMENT"))
-         { TEnvironment=TTemp;
-           Log("Setting environment temperature to %g kelvin.\n",TTemp);
-           printf("Setting environment temperature to %g kelvin.\n",TTemp);
-         }
-        else 
-         { int WhichObject;
-           G->GetObjectByLabel(TempStrings[2*nts],&WhichObject);
-           if (WhichObject==-1)
-            ErrExit("unknown object (%s) passed for --temperature option",TempStrings[2*nts]);
-           TObjects[WhichObject]=TTemp;
-           Log("Setting temperature of object %s to %g kelvin.\n",TempStrings[2*nts],TTemp);
-           printf("Setting temperature of object %s to %g kelvin.\n",TempStrings[2*nts],TTemp);
-         };
-      };
-   };
          
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
@@ -252,7 +226,6 @@ int main(int argc, char *argv[])
    { 
       double *E = new double[ OutputVectorLength ];
       EvaluateFrequencyIntegral2(BNEQD, OmegaMin, OmegaMax,
-                                 TObjects, TEnvironment,
                                  Intervals, I, E);
       delete[] E;
    };

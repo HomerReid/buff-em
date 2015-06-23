@@ -65,6 +65,8 @@ typedef struct BNEQData
  {
    SWGGeometry *G;
 
+   IHAIMatProp *Temperature;
+
    GTComplex **GTCList;
    int NumTransformations;
 
