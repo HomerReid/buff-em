@@ -36,6 +36,7 @@
 
 #include "libscuff.h"
 #include "libbuff.h"
+#include "PFTOptions.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
@@ -224,21 +225,14 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
                  HMatrix *PFTMatrix)
 { 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFT) )
-   { delete PFTMatrix;
-     PFTMatrix=0;
-   };
-  if (PFTMatrix==0)
-   PFTMatrix= new HMatrix(NumObjects, NUMPFT);
+  int NO = G->NumObjects;
+  if (    (PFTMatrix==0)
+       || (PFTMatrix->NR != NO)
+       || (PFTMatrix->NC != NUMPFT)
+     )
+   ErrExit("invalid PFTMatrix in GetOPFT");
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  PFTMatrix->Zero();
-  for(int no=0; no<G->NumObjects; no++)
+  for(int no=0; no<NO; no++)
    { 
      SWGVolume *O = G->Objects[no];
      int Offset   = G->BFIndexOffset[no];

@@ -44,6 +44,7 @@ using namespace buff;
 #define MAXFREQ  10    // max number of frequencies
 #define MAXEPF   10    // max number of evaluation-point files
 #define MAXSTR   1000
+#define MAXCACHE 10    // max number of cache files for preload
 
 /***************************************************************/
 /***************************************************************/
@@ -74,13 +75,13 @@ int main(int argc, char *argv[])
 
   char *JPlotFile=0;
 
-  char *PFTFile=0;
-  bool NeedFT[6]={false, false, false, false, false, false};
-
+  char *OPFTFile   = 0;
+  char *JDEPFTFile = 0;
   char *DSIPFTFile = 0;
   double DSIRadius = 10.0;
   int DSIPoints    = 302;
   char *DSIMesh    = 0;
+  bool NeedFT[6]={false, false, false, false, false, false};
 
   char *MomentFile=0;
 
@@ -106,7 +107,12 @@ int main(int argc, char *argv[])
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
-     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,             "name of PFT output file"},
+     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,             "name of overlap PFT output file"},
+     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile,   0,           "name of J \\dot E PFT output file"},
+     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile,   0,           "name of DSIPFT output file"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "mesh file for surface-integral PFT"},
+     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
+     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
 /**/
      {"XForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[0])), 0,  "compute x-directed force"},
      {"YForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[1])), 0,  "compute y-directed force"},
@@ -114,11 +120,6 @@ int main(int argc, char *argv[])
      {"XTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[3])), 0,  "compute x-directed torque"},
      {"YTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[4])), 0,  "compute y-directed torque"},
      {"ZTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[5])), 0,  "compute z-directed torque"},
-/**/
-     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,             "name of displaced surface-integral PFT output file"},
-     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "mesh file for surface-integral PFT"},
-     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
-     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
 /**/
      {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "name of J-plot file"},
 /**/
@@ -130,6 +131,12 @@ int main(int argc, char *argv[])
 
   if (GeoFile==0)
    OSUsage(argv[0], OSArray, "--geometry option is mandatory");
+
+  PFTOptions MyPFTOptions, *pftOptions = &MyPFTOptions;
+  BUFF_InitPFTOptions(pftOptions);
+  pftOptions->DSIMesh   = DSIMesh;
+  pftOptions->DSIRadius = DSIRadius;
+  pftOptions->DSIPoints = DSIPoints;
 
   /*******************************************************************/
   /* process frequency-related options to construct a list of        */
@@ -292,12 +299,24 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
-     if (PFTFile)
-      WritePFTFile(BSD, PFTFile, NeedFT);
+     if (OPFTFile)
+      { pftOptions->PFTMethod=SCUFF_PFT_OVERLAP;
+        WritePFTFile(BSD, OPFTFile, pftOptions);
+      };
+
+     if (JDEPFTFile)
+      { pftOptions->PFTMethod=SCUFF_PFT_EP;
+        WritePFTFile(BSD, JDEPFTFile, pftOptions);
+      };
 
      if (DSIPFTFile)
-      WriteDSIPFTFile(BSD, DSIPFTFile, DSIMesh, DSIRadius, DSIPoints);
+      { pftOptions->PFTMethod=SCUFF_PFT_DSI;
+        WritePFTFile(BSD, DSIPFTFile, pftOptions);
+      };
 
+     /*--------------------------------------------------------------*/
+     /*--------------------------------------------------------------*/
+     /*--------------------------------------------------------------*/
      if (MomentFile)
       WriteMomentFile(BSD, MomentFile);
 

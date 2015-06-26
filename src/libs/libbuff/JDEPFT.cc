@@ -145,9 +145,9 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
-                HVector *JVector, HVector *RHSVector,
-                HMatrix *Rytov, HMatrix *PFTMatrix, bool *NeedFT)
+HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+                   HVector *JVector, HVector *RHSVector,
+                   HMatrix *Rytov, HMatrix *PFTMatrix, bool *NeedFT)
 { 
   bool DefaultNeedFT[6]={true, true, true, true, true, true};
   if (NeedFT==0) NeedFT=DefaultNeedFT;
@@ -155,20 +155,21 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( PFTMatrix!=0 && (PFTMatrix->NR!=NumObjects || PFTMatrix->NC!=NUMPFT) )
-   { delete PFTMatrix;
-     PFTMatrix=0;
-   };
-  if (PFTMatrix==0)
-   PFTMatrix= new HMatrix(NumObjects, NUMPFT);
-  PFTMatrix->Zero();
+  int NO              = G->NumObjects;
+  SWGVolume **Objects = G->Objects;
+  int *BFIndexOffset  = G->BFIndexOffset;
+  if (    (PFTMatrix==0)
+       || (PFTMatrix->NR != NO)
+       || (PFTMatrix->NC != NUMPFT)
+     )
+   ErrExit("invalid PFTMatrix in GetJDEPFT");
 
   /***************************************************************/
-  /***************************************************************/
+  /* precompute total power (extinction) if RHSVector is present */
   /***************************************************************/
   if (RHSVector)
    { cdouble PreFactor = -II*Omega*ZVAC;
-     for(int no=0, nbf=0; no<NumObjects; no++)
+     for(int no=0, nbf=0; no<NO; no++)
       for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
        {
          cdouble EAlpha=PreFactor*RHSVector->GetEntry(nbf);
@@ -185,13 +186,13 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   NumThreads = GetNumThreads();
 #endif
   int NQ = NUMPFT;
-  int NO = NumObjects;
   int NONQ = NO*NQ;
   double *DeltaPFT = (double *)mallocEC(NumThreads*NONQ*sizeof(double));
 
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
   /*--------------------------------------------------------------*/
+  int TotalBFs = G->TotalBFs;
   int NumPairs = TotalBFs*(TotalBFs+1)/2;
   cdouble IKZ=II*Omega*ZVAC;
 #ifdef USE_OPENMP
@@ -212,12 +213,11 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       int nob, nfb;
       SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
    
-      cdouble JJ = conj ( JVector->GetEntry(nbfa) )
-                       *( JVector->GetEntry(nbfb) );
+      cdouble JJ = GetJJ(JVector, Rytov, nbfa, nbfb);
       if (JJ==0.0) continue;
    
-      cdouble G, dG[6];
-      G=GetGMatrixElement(OA, nfa, OB, nfb, Omega, Cache, dG, NeedFT);
+      cdouble dG[6];
+      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega, G->Cache, dG, NeedFT);
 
       int nt=0;
 #ifdef USE_OPENMP
@@ -225,13 +225,13 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #endif
       
        int Offset = nt*NONQ + noa*NQ;
-       DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*JJ*G );
+       DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*JJ*GG );
        for(int Mu=0; Mu<6; Mu++)
         DeltaPFT[ Offset + 2 + Mu ] += 0.5*TENTHIRDS*imag( IKZ*JJ*dG[Mu] ) / real(Omega);
 
        if (nbfb>nbfa)
         { Offset = nt*NONQ + nob*NQ;
-          DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*conj(JJ*G) );
+          DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*conj(JJ*GG) );
           for(int Mu=0; Mu<6; Mu++)
            DeltaPFT[ Offset + 2 + Mu ] += 0.5*TENTHIRDS*imag( IKZ*conj(JJ*dG[Mu]) ) / real(Omega);
         };
@@ -241,7 +241,7 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*--------------------------------------------------------------*/
   /*- accumulate contributions of all threads                     */
   /*--------------------------------------------------------------*/
-  for(int no=0; no<NumObjects; no++)
+  for(int no=0; no<NO; no++)
    for(int nq=0; nq<NQ; nq++)
     for(int nt=0; nt<NumThreads; nt++)
      PFTMatrix->AddEntry(no, nq, DeltaPFT[ nt*NONQ + no*NQ + nq ]);
@@ -252,7 +252,7 @@ HMatrix *JDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   double Elapsed=Secs();
   if (IF)
    { 
-      for(int no=0; no<NumObjects; no++)
+      for(int no=0; no<NO; no++)
        { 
          SWGVolume *O = Objects[no];
          int Offset   = BFIndexOffset[no];
@@ -303,12 +303,9 @@ NumThreads = GetNumThreads();
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  for(int no=0; no<NumObjects; no++)
+  for(int no=0; no<NO; no++)
    PFTMatrix->AddEntry(no, 1, -1.0*PFTMatrix->GetEntry(no,0));
 
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-LogTaskTiming("DensePFT");
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   return PFTMatrix;
 
 }

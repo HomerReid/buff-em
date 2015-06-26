@@ -4,11 +4,9 @@ libbuff_la_SOURCES = 	\
  GetFields.cc    	\
  GMatrixElements.cc	\
  Cubature.cc     	\
- DSIPFT.cc       	\
  FIBBICache.cc   	\
  IHAIMatProp.cc  	\
  InitFaceList.cc 	\
- PFT.cc          	\
  ReadGMSHFile.cc 	\
  RHSVector.cc    	\
  SWGGeometry.cc  	\
@@ -17,6 +15,10 @@ libbuff_la_SOURCES = 	\
  TetCR.cc     		\
  VIEMatrix.cc		\
  Visualize.cc		\
+ OPFT.cc         	\
+ JDEPFT.cc         	\
+ DSIPFT.cc       	\
+ GetPFT.cc          	\
  IHAIMatProp.h		\
  FIBBICache.h		\
  rwlock.h    		\

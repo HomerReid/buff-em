@@ -40,6 +40,7 @@
 #include "GTransformation.h"
 #include "IHAIMatProp.h"
 #include "FIBBICache.h"
+#include "PFTOptions.h"
 
 using namespace scuff;
 
@@ -219,11 +220,8 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetDensePFT(IncField *IF, HVector *JVector,
-                        HVector *RHSVector, cdouble Omega,
-                        HMatrix *PFTMatrix=0, bool *NeedFT=0);
-   HMatrix *GetSparsePFT(HVector *JVector, cdouble Omega,
-                         HMatrix *PFTMatrix=0);
+   HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
+                   HMatrix *PFTMatrix, PFTOptions *Options);
 
    void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);
@@ -274,6 +272,8 @@ int GetOverlapElements(SWGVolume *O, int nfA,
 
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
                   bool NeedQ=true);
+
+PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options);
 
 /***************************************************************/
 /* routine to compute matrix elements of the dyadic GF and its */

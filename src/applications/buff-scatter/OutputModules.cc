@@ -35,13 +35,6 @@
 
 #define II cdouble(0.0,1.0)
 
-namespace buff {
-void GetDSIPFT(SWGGeometry *G, IncField *IF, HVector *J,
-               cdouble Omega, double PFT[NUMPFT],
-               char *DSIMesh, double DSIRadius, int DSIPoints,
-               GTransformation *GT);
-              }
-
 using namespace buff;
 using namespace scuff;
 
@@ -119,56 +112,47 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
 }
 
 /***************************************************************/
-/* compute power, force, and torque                            */
 /***************************************************************/
-void WritePFTFile(BSData *BSD, char *PFTFile, bool NeedFT[6])
+/***************************************************************/
+void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
 { 
+  /***************************************************************/
+  /* write file preamble as necessary ****************************/
+  /***************************************************************/
+  FILE *f=fopen(PFTFile,"r");
+  fclose(f);
+  if (!f)
+   { f=fopen(PFTFile,"w");
+     fprintf(f,"# data columns:    \n");
+     fprintf(f,"# 1 frequency      \n");
+     fprintf(f,"# 2 object label   \n");
+     fprintf(f,"# 3 absorbed power (watts) \n");
+     fprintf(f,"# 4 radiated power (watts) \n");
+     fprintf(f,"# 5,6,7  x, y, z force (nanoNewtons)\n");
+     fprintf(f,"# 8,9,10 x, y, z torque (nanoNewtons microns)\n");
+     fprintf(f,"\n");
+   };
+
+  /***************************************************************/
+  /* do the PFT calculation **************************************/
+  /***************************************************************/
   SWGGeometry *G = BSD->G;
+  HMatrix *PFTMatrix = G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, Options);
 
-  HMatrix *DensePFT=G->GetDensePFT(BSD->IF, BSD->J, BSD->RHS, BSD->Omega, 0, NeedFT);
-
-  HMatrix *SparsePFT=G->GetSparsePFT(BSD->J, BSD->Omega);
-
-  FILE *f=fopen(PFTFile,"a");
+  /***************************************************************/
+  /* write results to output file ********************************/
+  /***************************************************************/
+  f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)
    { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
-     for(int n=0; n<NUMPFT; n++)
-      fprintf(f,"%e ",DensePFT->GetEntryD(no,n));
-     fprintf(f,"%e ",SparsePFT->GetEntryD(no,0));
-     fprintf(f,"%e ",SparsePFT->GetEntryD(no,2));
-     fprintf(f,"%e ",SparsePFT->GetEntryD(no,3));
-     fprintf(f,"%e ",SparsePFT->GetEntryD(no,4));
+     for(int nq=0; nq<NUMPFT; nq++)
+      fprintf(f,"%e ",PFTMatrix->GetEntryD(no,nq));
      fprintf(f,"\n");
    };
   fclose(f);
 
-  delete DensePFT;
-  delete SparsePFT;
+  delete PFTMatrix;
 
-}
-
-/***************************************************************/
-/* compute power, force, and torque                            */
-/***************************************************************/
-void WriteDSIPFTFile(BSData *BSD, char *PFTFile, char *DSIMesh,
-                     double DSIRadius, int DSIPoints)
-{ 
-  double PFT[NUMPFT];
-  buff::GetDSIPFT(BSD->G, BSD->IF, BSD->J, BSD->Omega, PFT,
-                  DSIMesh, DSIRadius, DSIPoints, 0);
-
-  char Label[100];
-  if (DSIMesh)
-   strncpy(Label,DSIMesh,100);
-  else
-   snprintf(Label,100,"R%g_N%i",DSIRadius,DSIPoints);
-
-  FILE *f=fopen(PFTFile,"a");
-  fprintf(f,"%s %s ",z2s(BSD->Omega),Label);
-  for(int nq=0; nq<NUMPFT; nq++)
-   fprintf(f,"%e  ",PFT[nq]);
-  fprintf(f,"\n");
-  fclose(f);
 }
 
 /***************************************************************/
