@@ -252,7 +252,8 @@ void FIBBICache::Store(const char *FileName)
 {
   KeyValueMap *KVM=(KeyValueMap *)opTable;
 
-  if (FileName==0) return;
+  if (!FileName)
+   return;
 
   /*--------------------------------------------------------------*/
   /*- pause to check if the following conditions are satisfied:  -*/

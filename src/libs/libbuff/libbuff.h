@@ -228,7 +228,8 @@ class SWGGeometry
    void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);
    void AssembleVInvBlock(int no, cdouble Omega,
-                          SMatrix *VInv, SMatrix *ImEps,
+                          IHAIMatProp *Temperature,
+                          SMatrix *VInv, SMatrix *Sigma,
                           HMatrix *TInv=0, int Offset=0);
 
    // miscellaneous routines

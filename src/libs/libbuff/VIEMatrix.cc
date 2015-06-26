@@ -85,7 +85,7 @@ double GetThetaFactor(double Omega, double T)
 
 /***************************************************************/
 /* user data structure and integrand function for              */
-/* GetVInvAndImEpsThetaEntries                                 */
+/* GetVInvAndSigmaEntries                                 */
 /***************************************************************/
 typedef struct VIIData
  { 
@@ -133,45 +133,51 @@ void VIntegrand(double *x, double *b, double DivB,
   double Theta=1.0;
   if (Temperature)
    { 
-     cdouble Eps[3][3];
-     Temperature->GetEps(0,x,Eps);
-     double T=Eps[0][0];
-     Theta=GetThetaFactor(Omega, T);
+     cdouble TT[3][3];
+     Temperature->GetEps(0,x,TT);
+     double T=real(TT[0][0]);
+     Theta=GetThetaFactor(real(Omega), T);
    };
 
   cdouble VInv=0.0;
-  double ImEpsTheta=0.0;
+  double Sigma=0.0;
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    { VInv       += FA[Mu]*Y[Mu][Nu]*FB[Nu];
-      ImEpsTheta += Theta*FA[Mu]*imag(Eps[Mu][Nu])*FB[Nu];
+    { VInv  += FA[Mu]*Y[Mu][Nu]*FB[Nu];
+      Sigma += Theta*FA[Mu]*imag(Eps[Mu][Nu])*FB[Nu];
     };
-  VInv *= -1.0/ (Omega*Omega);
+  VInv  *= -1.0/ (Omega*Omega);
+  Sigma *= 2.0*real(Omega) / (M_PI*ZVAC);
  
   I[0] = real(VInv);
   I[1] = imag(VInv);
-  I[2] = ImEpsTheta;
+  I[2] = Sigma; 
   
 }
 
 /***************************************************************/
 /* For a given SWG basis function f_a, this routine computes   */
-/* matrix elements of the VInverse and (Im Eps)*Theta operators*/
-/* (where  VInverse=Eps^{-1} / k^2) between f_a and all basis  */
-/* functions f_b that have nonzero overlap with f_a (there are */
-/* a maximum of MAXOVERLAP=7 such BFs.) The indices of the f_b */
-/* functions are returned in Indices.                          */
+/* matrix elements of the VInverse and Sigma operators between */
+/* f_a and all basis functions f_b that have nonzero overlap   */
+/* with f_a (there are a maximum of MAXOVERLAP=7 such BFs.)    */
+/* The indices of the f_b functions are returned in Indices.   */
+/*                                                             */
+/* VInverse = (1 - Eps^{-1}) / k^2                             */
+/*                                                             */
+/*    Sigma = Theta(T) * Im Eps * (2k / Pi*ZVAC)               */
+/*                                                             */
+/* If Temperature==NULL then Theta(T) is set to 1.             */
 /***************************************************************/
-int GetVInvAndImEpsThetaEntries(SWGVolume *V,
-                                int nfA, cdouble Omega,
-                                IHAIMatProp *Temperature,
-                                int Indices[MAXOVERLAP],
-                                cdouble VInvEntries[MAXOVERLAP],
-                                double ImEpsThetaEntries[MAXOVERLAP])
+int GetVInvAndSigmaEntries(SWGVolume *V,
+                           int nfA, cdouble Omega,
+                           IHAIMatProp *Temperature,
+                           int Indices[MAXOVERLAP],
+                           cdouble VInvEntries[MAXOVERLAP],
+                           double SigmaEntries[MAXOVERLAP])
 {
   Indices[0]=nfA;
   VInvEntries[0]=0.0;
-  ImEpsThetaEntries[0]=0.0;
+  SigmaEntries[0]=0.0;
   int NNZ=1;
 
   SWGFace *FA = V->Faces[nfA];
@@ -209,13 +215,13 @@ int GetVInvAndImEpsThetaEntries(SWGVolume *V,
 
      if (nfB==nfA)
       { 
-        VInvEntries[0]       += cdouble(I[0], I[1]);
-        ImEpsThetaEntries[0] += I[2];
+        VInvEntries[0]  += cdouble(I[0], I[1]);
+        SigmaEntries[0] += I[2];
       }
      else
-      { VInvEntries[NNZ]       = cdouble(I[0], I[1]);
-        ImEpsThetaEntries[NNZ] = I[2];
-        Indices[NNZ]           = nfB;
+      { VInvEntries[NNZ]  = cdouble(I[0], I[1]);
+        SigmaEntries[NNZ] = I[2];
+        Indices[NNZ]      = nfB;
         NNZ++;
       };
 
@@ -249,13 +255,13 @@ int GetVInvAndImEpsThetaEntries(SWGVolume *V,
 
      if (nfB==nfA)
       { 
-        VInvEntries[0]        += cdouble( I[0], I[1] );
-        ImEpsThetaEntries[0]  += I[2];
+        VInvEntries[0]  += cdouble( I[0], I[1] );
+        SigmaEntries[0] += I[2];
       }
      else
-      { VInvEntries[NNZ]       = cdouble( I[0], I[1] );
-        ImEpsThetaEntries[NNZ] = I[2];
-        Indices[NNZ] = nfB;
+      { VInvEntries[NNZ]  = cdouble( I[0], I[1] );
+        SigmaEntries[NNZ] = I[2];
+        Indices[NNZ]      = nfB;
         NNZ++;
       };
 
@@ -265,14 +271,13 @@ int GetVInvAndImEpsThetaEntries(SWGVolume *V,
 
 } // routine GetVInvAndImEpsEntries
 
-int GetVInvAndImEpsEntries(SWGVolume *V, 
-                           int nfA, cdouble Omega,
-                           int Indices[MAXOVERLAP],
-                           cdouble VInvEntries[MAXOVERLAP], 
-                           double ImEpsEntries[MAXOVERLAP])
+int GetVInvEntries(SWGVolume *V, int nfA, cdouble Omega,
+                   int Indices[MAXOVERLAP],
+                   cdouble VInvEntries[MAXOVERLAP])
 {
-  GetVInvAndImEpsThetaEntries(V, nfa, Omega, 0,
-                              Indices, VInvEntries, ImEpsEntries);
+  double SigmaEntries[MAXOVERLAP];
+  return GetVInvAndSigmaEntries(V, nfA, Omega, 0,
+                                Indices, VInvEntries, SigmaEntries);
 }
 
 /***************************************************************/
@@ -319,29 +324,34 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleVInvBlock(int no, cdouble Omega,
-                                    SMatrix *VInv, SMatrix *ImEps,
-                                    HMatrix *TInv, int Offset)
+                                    IHAIMatProp *Temperature,
+                                    SMatrix *VInv, SMatrix *Sigma,
+                                    HMatrix *TInv,
+                                    int Offset)
 {
    Log("Adding VInv(%i)",no);
    SWGVolume *O = Objects[no];
 
 #ifdef USE_OPENMP
    int NumThreads=GetNumThreads();
+   if (VInv || Sigma)
+    NumThreads=1;
 #pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
 #endif
    for(int nr=0; nr<O->NumInteriorFaces; nr++)
-    { int nc[MAXOVERLAP];
+    { int ncList[MAXOVERLAP];
       cdouble VInvEntries[MAXOVERLAP];
-      double ImEpsEntries[MAXOVERLAP];
-      int NNZ = GetVInvAndImEpsEntries(O, nr, Omega, nc, VInvEntries, ImEpsEntries);
+      double SigmaEntries[MAXOVERLAP];
+      int NNZ = GetVInvAndSigmaEntries(O, nr, Omega, Temperature,
+                                       ncList, VInvEntries, SigmaEntries);
       for(int nnz=0; nnz<NNZ; nnz++)
-        { 
-          if (VInv) 
-           VInv->SetEntry(nr, nc[nnz], VInvEntries[nnz]);
-          if (ImEps) 
-           ImEps->SetEntry(nr, nc[nnz], ImEpsEntries[nnz]);
+        { int nc = ncList[nnz];
+          if (VInv)
+           VInv->SetEntry(nr, nc, VInvEntries[nnz]);
+          if (Sigma) 
+           Sigma->SetEntry(nr, nc, SigmaEntries[nnz]);
           if (TInv)
-           TInv->AddEntry(Offset + nr, Offset + nc[nnz], VInvEntries[nnz]);
+           TInv->AddEntry(Offset+nr, Offset+nc, VInvEntries[nnz]);
         };
    };
 
@@ -360,11 +370,6 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   if (!M)
    M = new HMatrix(TotalBFs, TotalBFs, LHM_COMPLEX);
 
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-const char *TaskNames[]={"NCV0", "NCV1", "NCV2", "NCV3", "NCV4", 0 };
-InitTaskTiming( TaskNames );
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     { 
@@ -372,7 +377,7 @@ InitTaskTiming( TaskNames );
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)
-       AssembleVInvBlock(noa, Omega, 0, 0, M, BFIndexOffset[noa]);
+       AssembleVInvBlock(noa, Omega, 0, 0, 0, M, BFIndexOffset[noa]);
     };
 
   for(int nr=1; nr<TotalBFs; nr++)
@@ -387,10 +392,6 @@ InitTaskTiming( TaskNames );
      snprintf(FileName,100,"%s.cache",GetFileBase(GeoFileName));
      Cache->Store(FileName);
    };
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-LogTaskTiming("GMatrix assembly");
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 
   return M;
 

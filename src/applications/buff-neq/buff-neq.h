@@ -39,23 +39,25 @@ using namespace buff;
 // differentiate the various quantities that may be computed
 // (power flux and i-directed momentum flux for i=x,y,z)
 
-#define QFLAG_POWER    1
-#define QFLAG_XFORCE   2
-#define QFLAG_YFORCE   4
-#define QFLAG_ZFORCE   8
-#define QFLAG_XTORQUE 16
-#define QFLAG_YTORQUE 32
-#define QFLAG_ZTORQUE 64
+#define QFLAG_PABS      1
+#define QFLAG_PRAD      2
+#define QFLAG_XFORCE    4
+#define QFLAG_YFORCE    8
+#define QFLAG_ZFORCE   16
+#define QFLAG_XTORQUE  32
+#define QFLAG_YTORQUE  64
+#define QFLAG_ZTORQUE 128
 
-#define QINDEX_POWER   0
-#define QINDEX_XFORCE  1
-#define QINDEX_YFORCE  2
-#define QINDEX_ZFORCE  3
-#define QINDEX_XTORQUE 4
-#define QINDEX_YTORQUE 5
-#define QINDEX_ZTORQUE 6
+#define QINDEX_PABS     0
+#define QINDEX_PRAD     1
+#define QINDEX_XFORCE   2
+#define QINDEX_YFORCE   3
+#define QINDEX_ZFORCE   4
+#define QINDEX_XTORQUE  5
+#define QINDEX_YTORQUE  6
+#define QINDEX_ZTORQUE  7
 
-#define MAXQUANTITIES 7
+#define MAXQUANTITIES 8
 
 /****************************************************************/
 /* BNEQData ('buff-neq data') is a structure that contains all */
@@ -76,19 +78,33 @@ typedef struct BNEQData
    int NTNONQ;
 
    // HMatrix structures for the BEM matrix and its subblocks
-   HMatrix **GBlocks;   // G[nb]     = nbth block of G-matrix
-   HMatrix ***dGBlocks; // dG[nb][i] = nbth block \partial_i G-matrix
+   HMatrix ***GBlocks;   // G[no][nop] = G_{no, nop} block
 
    // SMatrix structures for sparse matrix subblocks
+   //  VInv[no] = VInverse matrix for object #no
+   // Sigma[no] =    Sigma matrix for object #no
    SMatrix **VInv;
-   SMatrix **ImEps;
-   bool FirstTime;
+   SMatrix **Sigma;
+   bool SMatricesInitialized;
 
    // internally-stored buffers for linear algebra operations
-   HMatrix *A, *Buf1, *Buf2;
+   HMatrix *WorkMatrix[3];
 
    char *FileBase;
+   bool UseExistingData;
 
  } BNEQData;
+
+/****************************************************************/
+/****************************************************************/
+/****************************************************************/
+BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
+                         char *TemperatureFile, int QuantityFlags,
+                         char *pFileBase);
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
 
 #endif
