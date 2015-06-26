@@ -121,8 +121,6 @@ int main(int argc, char *argv[])
 
   if (GeoFile==0)
    OSUsage(argv[0], OSArray, "--geometry option is mandatory");
-  if (TemperatureFile==0)
-   OSUsage(argv[0], OSArray, "--TemperatureFile option is mandatory");
 
   if (FileBase)
    SetLogFileName("%s.log",FileBase);
@@ -151,7 +149,7 @@ int main(int argc, char *argv[])
   /* frequencies at which to run simulations                         */
   /*******************************************************************/
   HVector *OmegaPoints=0, *OmegaPoints0;
-  int nFreq, nOV, NumFreqs=0;
+  int NumFreqs=0;
   if (nOmegaFiles==1) // first process --OmegaFile option if present
    { 
      OmegaPoints=new HVector(OmegaFile,LHM_TEXT);
@@ -167,13 +165,13 @@ int main(int argc, char *argv[])
      NumFreqs += nOmegaVals;
      OmegaPoints0=OmegaPoints;
      OmegaPoints=new HVector(NumFreqs, LHM_COMPLEX);
-     nFreq=0;
+     int nFreq=0;
      if (OmegaPoints0)
       { for(nFreq=0; nFreq<OmegaPoints0->N; nFreq++)
          OmegaPoints->SetEntry(nFreq, OmegaPoints0->GetEntry(nFreq));
         delete OmegaPoints0;
       };
-     for(nOV=0; nOV<nOmegaVals; nOV++)
+     for(int nOV=0; nOV<nOmegaVals; nOV++)
       OmegaPoints->SetEntry(nFreq+nOV, OmegaVals[nOV]);
      Log("Read %i frequencies from command line.",nOmegaVals);
    };
@@ -186,8 +184,6 @@ int main(int argc, char *argv[])
   if ( OmegaPoints ) 
    { if ( nOmegaMin>0 || nOmegaMax>0 )
       ErrExit("--OmegaMin/--OmegaMax options may not be used with --Omega/--OmegaFile");
-     if ( nTempStrings>0 )
-      ErrExit("--Temperature option may not be used with --Omega/--OmegaFile");
      Log("Computing spectral density at %i frequencies.",NumFreqs);
    }
   else
@@ -210,7 +206,7 @@ int main(int argc, char *argv[])
   BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, TemperatureFile,
                                  QuantityFlags, FileBase);
   SWGGeometry *G=BNEQD->G;
-  BNEQD->UseExistingData   = UseExistingData;
+  BNEQD->UseExistingData = UseExistingData;
          
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
@@ -219,10 +215,12 @@ int main(int argc, char *argv[])
   int OutputVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects* BNEQD->NQ;
   double *I = new double[ OutputVectorLength ];
   if (NumFreqs>0)
-   { for (nFreq=0; nFreq<NumFreqs; nFreq++)
+   { for (int nFreq=0; nFreq<NumFreqs; nFreq++)
       GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), I);
    }
   else
+   ErrExit("not supported");
+#if 0
    { 
       double *E = new double[ OutputVectorLength ];
       EvaluateFrequencyIntegral2(BNEQD, OmegaMin, OmegaMax,
@@ -230,6 +228,7 @@ int main(int argc, char *argv[])
       delete[] E;
    };
   delete[] I;
+#endif
 
   /***************************************************************/
   /***************************************************************/

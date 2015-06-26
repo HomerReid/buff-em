@@ -5,8 +5,9 @@ SCUFFEM  = /home/homer/work/scuff-em-installation
 #SCUFFEM  = /home/homer/work/scuff-em-debug
 LIBDIR   = $(SCUFFEM)/lib
 
-BUFFLIBDIR = ../../libs/libbuff
-BUFFINCDIR = ../../libs/libbuff
+BUFFEM  = /home/homer/work/buff-em-installation
+BUFFLIBDIR = $(BUFFEM)/lib
+BUFFINCDIR = $(BUFFEM)/include/buff-em
 
 ##################################################
 ##################################################
@@ -16,8 +17,8 @@ CPPFLAGS += -I/home/homer/work/scuff-em/src/libs/libscuff
 CPPFLAGS += -I$(BUFFINCDIR)
 LDFLAGS += -L$(LIBDIR) -Wl,-rpath,$(LIBDIR)
 LDFLAGS += -L$(HOME)/codes/lib -L$(HOME)/lib -L$(BUFFLIBDIR) -L.
-CXXFLAGS += -O3 
-#CXXFLAGS = -ggdb -O0
+#CXXFLAGS += -O3 
+CXXFLAGS = -ggdb -O0
 
 HR_LIBS=-lbuff -lscuff
 
@@ -34,13 +35,9 @@ LIBS = $(HR_LIBS) $(OTHER_LIBS)
 OBJS =			\
  buff-neq.o		\
  CreateBNEQData.o	\
- Quadrature.o		\
- TraceFormulas.o
+ GetFlux.o		\
 
-buff-neq:    	buff-neq0.o
-		$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-buff-neq0:    	$(OBJS)
+buff-neq:    	$(OBJS)
 		$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:

@@ -1,6 +1,6 @@
 /* Copyright (C) 2005-2011 M. T. Homer Reid
  *
- * This fileis part of BUFF-EM.
+ * This file is part of BUFF-EM.
  *
  * BUFF-EM is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,24 +44,12 @@
 /***************************************************************/
 int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq)
 {
-  int NO = BNEQD->G->NumObjects;
-  int NQ = BNEQD->NQ;
-  int NONQ = NO*NQ;
+  int NO    = BNEQD->G->NumObjects;
+  int NQ    = BNEQD->NQ;
+  int NONQ  = NO*NQ;
   int NO2NQ = NO*NO*NQ;
   return nt*NO2NQ + nos*NONQ + nod*NQ + nq; 
 }
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void GetTraces(BNEQData *BNEQD, int SourceObject, int DestObject,
-               cdouble Omega, double *Results, bool SelfTerm=false)
-{
-  SWGGeometry *G = BNEQD->G;
-
-  SMatrix *Sigma = BNEQD->Sigma[SourceObject];
-
-} 
 
 /***************************************************************/
 /* return false on failure *************************************/
@@ -71,7 +59,7 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
   if (BNEQD->UseExistingData==false)
    return false;
 
-  FILE *f=vfopen("%s.flux","r",BNEQD->FileBase);
+  FILE *f=vfopen("%s.SIFlux","r",BNEQD->FileBase);
   if (!f) return false;
   Log("Attempting to cache-read flux data for Omega=%e...",real(Omega));
 
@@ -143,16 +131,7 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 }
 
 /***************************************************************/
-/* the computed quantities are ordered in the output vector    */
-/* like this:                                                  */
-/*                                                             */
-/*  Flux[ nt*NO2NQ + ns*NONQ + nsp*NQ + nq ]                   */
-/*   = contribution of sources inside surface #nsp to flux of  */
-/*     quantity #nq into surface #ns, all at transformation #nt*/
-/*                                                             */
-/*  where    NQ = number of quantities (1--4)                  */
-/*  where  NONQ = number of surface * NQ                       */
-/*  where NO2NQ = (number of surfaces)^2* NQ                   */
+/***************************************************************/
 /***************************************************************/
 void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
 {
@@ -162,83 +141,117 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   Log("Computing neq quantities at omega=%s...",z2s(Omega));
 
   /***************************************************************/
-  /* extract fields from BNEQData structure ************************/
+  /* extract fields from BNEQData structure **********************/
   /***************************************************************/
-  SWGGeometry *G      = BNEQD->G;
-  HMatrix *W          = BNEQD->W;
-  HMatrix **TInv      = BNEQD->TInv;
-  HMatrix **GBlocks   = BNEQD->GBlocks;
-  SMatrix **Sigma     = BNEQD->Sigma;
-  int NQ              = BNEQD->NQ;
+  SWGGeometry *G           = BNEQD->G;
+  IHAIMatProp *Temperature = BNEQD->Temperature;
+  HMatrix ***GBlocks       = BNEQD->GBlocks;
+  SMatrix **VInv           = BNEQD->VInv;
+  SMatrix **Sigma          = BNEQD->Sigma;
+  HMatrix **WorkMatrix     = BNEQD->WorkMatrix;
+  int NQ                   = BNEQD->NQ;
 
   /***************************************************************/
-  /* before entering the loop over transformations, we first     */
-  /* assemble the (transformation-independent) TInv and Sigma    */
-  /* matrix blocks at this frequency.                            */
+  /* compute transformation-independent matrix blocks            */
   /***************************************************************/
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
      if (G->Mate[no]!=-1)
-      { Log(" Block %i is identical to %i (reusing TInv matrix)",no,G->Mate[no]);
+      { Log(" Block %i is identical to %i (reusing matrix blocks)",no,G->Mate[no]);
         continue;
       }
-     else
-      Log(" Assembling self contributions to T(%i)...",no);
-     G->AssembleVIEMatrixBlock(ns, ns, Omega, T[no], 0, Sigma[no]);
+
+     Log(" Assembling G_{%i,%i}...",no,no);
+     G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
+
+     if (BNEQD->SMatricesInitialized==false)
+      { VInv[no]->BeginAssembly(MAXOVERLAP);
+        Sigma[no]->BeginAssembly(MAXOVERLAP);
+      };
+
+     Log(" Assembling Im V_{%i} and Sigma_{%i} ...",no,no);
+     G->AssembleVInvBlock(no, Omega, Temperature, VInv[no], Sigma[no]);
+     if (BNEQD->SMatricesInitialized==false)
+      { VInv[no]->EndAssembly();
+        Sigma[no]->EndAssembly();
+      };
+   };
+  BNEQD->SMatricesInitialized=true;
+
+  if (G->AutoCache)
+   { char FileName[100];
+     snprintf(FileName,100,"%s.cache",GetFileBase(G->GeoFileName));
+     G->Cache->Store(FileName);
    };
 
   /***************************************************************/
   /* now loop over transformations.                              */
   /* note: 'gtc' stands for 'geometrical transformation complex' */
   /***************************************************************/
-  char *Tag;
-  int RowOffset, ColOffset;
   for(int nt=0; nt<BNEQD->NumTransformations; nt++)
    { 
      /*--------------------------------------------------------------*/
      /*- transform the geometry -------------------------------------*/
      /*--------------------------------------------------------------*/
-     Tag=BNEQD->GTCList[nt]->Tag;
+     char *Tag=BNEQD->GTCList[nt]->Tag;
      G->Transform(BNEQD->GTCList[nt]);
      Log(" Computing quantities at geometrical transform %s",Tag);
 
      /*--------------------------------------------------------------*/
-     /* assemble off-diagonal matrix blocks.                         */
+     /* assemble off-diagonal G-matrix blocks.                       */
      /* note that not all off-diagonal blocks necessarily need to    */
      /* be recomputed for all transformations; this is what the 'if' */
      /* statement here is checking for.                              */
      /*--------------------------------------------------------------*/
-     for(int nb=0, no=0; no<NO; no++)
-      for(int nop=no+1; nop<NO; nop++, nb++)
-       if ( nt==0 || G->ObjectMoved[no] || G->ObjectMoved[nop] )
-        G->AssembleGBlock(no, nop, Omega, GBlocks[nb], dGBlocks[nb]);
+     for(int no=0; no<NO; no++)
+      for(int nop=no+1; nop<NO; nop++)
+       G->AssembleGBlock(no, nop, Omega, GBlocks[no][nop]);
+       //if ( nt==0 || G->ObjectMoved[no] || G->ObjectMoved[nop] )
 
      /*--------------------------------------------------------------*/
-     /*- compute the requested quantities for all objects -----------*/
+     /*--------------------------------------------------------------*/
+     /*--------------------------------------------------------------*/
+     // 1. set W = G-matrix
+     int *Offset = G->BFIndexOffset;
+     HMatrix *W  = WorkMatrix[0];
+     for(int no=0; no<NO; no++)
+      for(int nop=no; nop<NO; nop++)
+       { W->InsertBlock(GBlocks[no][nop], Offset[no], Offset[nop]);
+         if (nop>no)
+          W->InsertBlockTranspose(GBlocks[no][nop], Offset[nop], Offset[no]);
+       };
+     // 2. save a copy of G matrix in WGm1
+     HMatrix *WGm1  = WorkMatrix[1];
+     WGm1->Copy(W);
+     // 3. set W = VInverse + G-matrix = VIE matrix M
+     for(int no=0; no<NO; no++)
+      W->AddBlock(VInv[no], Offset[no], Offset[no]);
+     // 4. set WGm1 = M^{-1} * G matrix 
+     W->LUFactorize();
+     W->LUSolve(WGm1);
+     // 5. set WGm1 = WGm1 - identity matrix
+     for(int nr=0; nr<W->NR; nr++)
+      WGm1->SetEntry(nr, nr, W->GetEntry(nr,nr) - 1.0 );
+
+     /*--------------------------------------------------------------*/
+     /*- compute the requested quantities for all objects           -*/
      /*- note: nos = 'num object, source'                           -*/
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
-     FILE *f=vfopen("%s.flux","a",BNEQD->FileBase);
-     double Quantities[7];
+     FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
+     double Quantities[MAXQUANTITIES];
      for(int nos=0; nos<NO; nos++)
-      for(int nod=0; nod<NO; nod++)
-       { 
-         fprintf(f,"%e %s ",real(Omega),Tag);
-         fprintf(f,"%i%i ",nos+1,nod+1);
-         GetTraces(BNEQD, nos, nod, Omega, Quantities, false);
-         for(int nq=0; nq<NQ; nq++)
-          { int Index=GetIndex(BNEQD, nt, nos, nod, nq);
-            Flux[Index] = Quantities[nq]; 
-            if ( nos==nod )
-             Flux[Index] -= SelfContributions[nod][nq]; 
-            fprintf(f,"%.8e ",Flux[Index]);
-            fflush(f);
-          };
-         fprintf(f,"\n");
-         fflush(f);
-    
-       };
+      { 
+        HMatrix *Rytov = WorkMatrix[2];
+        Rytov->Zero();
+        Rytov->AddBlock(Sigma[nos], Offset[nos], Offset[nos]);
+        WGm1->Multiply(Rytov, WorkMatrix[0]);
+        WorkMatrix[0]->Multiply(WGm1,Rytov,"--transB C");
+
+        GetDSIPFTTrace(G, Rytov, Omega, Quantities, 0, pftOptions);
+
+      };
      fclose(f);
 
      /*--------------------------------------------------------------*/
