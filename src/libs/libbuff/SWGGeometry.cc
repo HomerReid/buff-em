@@ -83,6 +83,7 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
          };
         MeshFileName=strdupEC(Tokens[1]);
       }
+
      /*--------------------------------------------------------------*/
      /*- MATERIAL | MATFILE keyword ---------------------------------*/
      /*--------------------------------------------------------------*/
@@ -93,6 +94,7 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
          };
         MatFileName=strdupEC(Tokens[1]);
       }
+
      /*--------------------------------------------------------------*/
      /*- DISPLACED / ROTATED keywords -------------------------------*/
      /*--------------------------------------------------------------*/
@@ -102,12 +104,8 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
         // note that OTGT is used as a running GTransformation that may
         // be augmented by multiple DISPLACED ... and/or ROTATED ...
         // lines within the OBJECT...ENDOBJECT or SURFACE...ENDSURFACE section, 
-        // and which is applied to the object at its birth and subsequently 
-        // discarded.
-        // in particular, OTGT is NOT stored as the 'GT' field inside 
-        // the RWGSurface class, which is intended to be used for
-        // transformations that are applied and later un-applied 
-        // during the life of the object/surface.
+        // and which is applied to the object at its birth, then
+        // subsequently stored as the OTGT field in the SWGVolume class.
         int TokensConsumed;
         if (OTGT)
 	 { GTransformation *OTGT2 = new GTransformation(Tokens, NumTokens, pErrMsg, &TokensConsumed);
