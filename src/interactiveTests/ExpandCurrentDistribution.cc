@@ -32,7 +32,6 @@
 using namespace scuff;
 using namespace buff;
 
-#define MAXSTR 1000
 
 #define II cdouble(0.0,1.0)
 

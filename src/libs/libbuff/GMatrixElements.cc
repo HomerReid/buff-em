@@ -367,7 +367,7 @@ void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
 void GetGME_BFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
                     int WhichKernel, int NumDerivatives, 
                     bool *NeedDerivative,
-                     cdouble Omega, cdouble *Result)
+                    cdouble Omega, cdouble *Result)
 {
   GMEData MyData, *Data = &MyData;
   Data->k               = Omega;
@@ -394,7 +394,7 @@ void GetGME_BFBFInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
   BFBFInt(OA, nfA, OB, nfB, GMEIntegrand, (void *)Data, 2*fdim,
           (double *)Result, (double *)Error, NumPts, 0, 0.0);
   Elapsed=Secs()-Elapsed;
-  AddTaskTiming(0,Elapsed);
+  //AddTaskTiming(0,Elapsed);
 }
 
 /***************************************************************/
@@ -459,7 +459,7 @@ void GetGME_TetTetInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
                    GMEIntegrand, (void *)Data, 2*fdim,
                    (double *)TTI, (double *)Error, NumPts, 0, 0);
          Elapsed=Secs()-Elapsed;
-         AddTaskTiming(1,Elapsed);
+         //AddTaskTiming(1,Elapsed);
        }
       else
        { 
@@ -471,7 +471,7 @@ void GetGME_TetTetInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
                                WhichKernel, NeedDerivative,
                                Omega, ncv, TTI);
          Elapsed=Secs()-Elapsed;
-         AddTaskTiming(ncv,Elapsed);
+         //AddTaskTiming(ncv,Elapsed);
          for(int nf=0; nf<fdim; nf++)
           TTI[nf] *= 4.0*AreaFactor;
   
@@ -490,42 +490,53 @@ void GetGME_TetTetInt(SWGVolume *OA, int nfA, SWGVolume *OB, int nfB,
 /***************************************************************/
 void ComputeFIBBIData(SWGVolume *OA, int nfA,
                       SWGVolume *OB, int nfB,
-                      FIBBIData *Data)
-{  
-  bool NeedDerivative[6]={true, true, true, true, true, true};
-  int NumDerivatives=6;
+                      double *GFI, double *dGFI)
+{ 
+  int NumDerivatives  = (dGFI ? 6 : 0);
+  bool NeedDerivative[6];
+  NeedDerivative[0] = (dGFI ? true : false);
+  for(int Mu=1; Mu<6; Mu++)
+   NeedDerivative[Mu] = NeedDerivative[0];
+
+  cdouble zGFI[27];
   GetGME_TetTetInt(OA, nfA, OB, nfB, KERNEL_STATIC,
-                   NumDerivatives, NeedDerivative, 0.0,
-                   (cdouble *)(Data->GFI));
+                   NumDerivatives, NeedDerivative, 0.0, zGFI);
+
+  if (GFI)
+   memcpy(GFI, (double *)zGFI, 6*sizeof(double));
+  if (dGFI)
+   { cdouble *zdGFI = zGFI + 3;
+     memcpy(dGFI, (double *)zdGFI, 48*sizeof(double));
+   };
 }
 
 /***************************************************************/
-/* If NeedDerivative and dG are nonzero, they must point to    */
-/* vectors of length 6. The index Mu into this vector has the  */
-/* following significance:                                     */
+/* If dG is nonzero, it must point to an array of length 6.    */
+/* The index Mu into this array has the following significance:*/
 /*  Mu=0,1,2 -->  d/dx, d/dy, d/dz                             */
 /*  Mu=3,4,5 -->  d/dTheta_x, d/dTheta_y, d/dTheta_z           */
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
                           SWGVolume *OB, int nfB,
-                          cdouble Omega, FIBBICache *Cache,
-                          cdouble *dG, bool *NeedDerivative)
+                          cdouble Omega, FIBBICache *GCache,
+                          cdouble *dG, FIBBICache *dGCache)
 {
+  int NumDerivatives = (dG ? 6 : 0);
+  bool NeedDerivative[6];
+  NeedDerivative[0] = dG ? true : false;
+  for(int Mu=1; Mu<6; Mu++)
+   NeedDerivative[Mu]=NeedDerivative[0];
+
   /*--------------------------------------------------------------*/
   /* derivatives vanish identically for diagonal matrix elements  */
   /*--------------------------------------------------------------*/
-  if (dG==0) NeedDerivative=0;
-  if ( (OA==OB && nfA==nfB && NeedDerivative ) )
-   { if (dG) memset(dG, 0, 6*sizeof(cdouble));
-     NeedDerivative=0;
-   };
+  if ( dG && (OA==OB && nfA==nfB) )
+   memset(dG, 0, 6*sizeof(cdouble));
 
-  int NumDerivatives=0;
-  if (NeedDerivative)
-   for(int n=0; n<6; n++) 
-    if (NeedDerivative[n])
-     NumDerivatives++;
-   
+  bool HaveCache = (GCache!=0);
+  if (dG)
+   HaveCache &= (dGCache!=0);
+
   /*--------------------------------------------------------------*/
   /*- count common vertices  -------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -541,7 +552,7 @@ cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
      GetGME_BFBFInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ, 
                     NumDerivatives, NeedDerivative, Omega, GMEs);
    }
-  else if (Cache==0)
+  else if (!HaveCache)
    { 
      GetGME_TetTetInt(OA, nfA, OB, nfB, KERNEL_HELMHOLTZ,
                       NumDerivatives, NeedDerivative, Omega, GMEs);
@@ -559,32 +570,28 @@ cdouble GetGMatrixElement(SWGVolume *OA, int nfA,
      /* now look up or compute the desingularized contributions     */
      /* and add those in.                                           */
      /***************************************************************/
-     FIBBIData *Data=Cache->GetFIBBIData(OA, nfA, OB, nfB);
-     double *Ip= (double *)Data;
+     double GFI[6];
+     GCache->GetFIBBIData(OA, nfA, OB, nfB, GFI);
      cdouble k2=Omega*Omega;
      cdouble IK=II*Omega, IK2=IK*IK, IK3=IK2*IK, IK4=IK3*IK;
-     GMEs[0] += (Ip[0]-Ip[1]/k2) + IK*(Ip[2]-Ip[3]/k2) + IK2*(Ip[4]-Ip[5]/k2);
-     int nip=6;
-     int nME=1;
-     if (NeedDerivative && dG)
-      for(int Mu=0; Mu<6; Mu++)
-       if ( NeedDerivative[Mu] )
-        { GMEs[nME] +=         (Ip[nip+0] - Ip[nip+1]/k2)
-                         + IK2*(Ip[nip+2] - Ip[nip+3]/k2)
-                         + IK3*(Ip[nip+4] - Ip[nip+5]/k2)
-                         + IK4*(Ip[nip+6] - Ip[nip+7]/k2);
-          nip+=8;
-          nME+=1;
-        };
+     GMEs[0] += (GFI[0]-GFI[1]/k2) + IK*(GFI[2]-GFI[3]/k2) + IK2*(GFI[4]-GFI[5]/k2);
+     if (dG)
+      { double dGFI[48];
+        dGCache->GetFIBBIData(OA, nfA, OB, nfB, dGFI);
+        for(int Mu=0; Mu<6; Mu++)
+          { GMEs[Mu+1] +=        (dGFI[8*Mu+0] - dGFI[8*Mu+1]/k2)
+                           + IK2*(dGFI[8*Mu+2] - dGFI[8*Mu+3]/k2)
+                           + IK3*(dGFI[8*Mu+4] - dGFI[8*Mu+5]/k2)
+                           + IK4*(dGFI[8*Mu+6] - dGFI[8*Mu+7]/k2);
+          };
+      };
    };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if (NeedDerivative && dG)
-   for(int Mu=0, nME=1; Mu<6; Mu++)
-    if ( NeedDerivative[Mu] )
-     dG[Mu] = GMEs[nME++];
+  if (dG)
+   memcpy(dG, GMEs+1, 6*sizeof(cdouble));
   return GMEs[0];
 
 }

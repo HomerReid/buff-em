@@ -34,8 +34,6 @@
 using namespace scuff;
 using namespace buff;
 
-#define MAXSTR 1000
-
 /***************************************************************/
 /* quality factor for tetrahedron, defined as                  */
 /*  volume / ( (avg edge length) * (total surface area) )      */
@@ -119,10 +117,84 @@ void AnalyzeVolume(SWGVolume *V)
 }
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void WriteCache(SWGVolume *O, bool GCache=true,
+                int NumChunks=1, int WhichChunk=0)
+{
+  FIBBICache *Cache = new FIBBICache(O->MeshFileName, GCache);
+  const char *CacheType = GCache ? "GCache" : "dGCache";
+
+  int NF     = O->NumInteriorFaces;
+  Log("Writing %s for %s",CacheType, O->MeshFileName);
+  if (NumChunks>1)
+   LogC(" (chunk %i/%i)",WhichChunk,NumChunks);
+
+  unsigned long M0=GetMemoryUsage() / (1<<20);
+  Log("Initial memory usage: %8lu MB",M0);
+
+  int NumPairs = NF*(NF+1)/2;
+  int ChunkSize = NumPairs / NumChunks;
+  int npMin = WhichChunk*ChunkSize;
+  int npMax = npMin + ChunkSize - 1;
+  if (npMax >= NumPairs)
+   npMax=NumPairs-1;
+  int np=-1;
+#ifdef USE_OPENMP
+  int NumThreads=GetNumThreads();
+  Log("OpenMP multithreading (%i threads)",NumThreads);
+#pragma omp parallel for schedule(dynamic,1),      \
+                         collapse(2),              \
+                         num_threads(NumThreads)
+#endif
+  for(int nfa=0; nfa<NF; nfa++)
+   for(int nfb=0; nfb<NF; nfb++)
+    {
+      if (nfb<nfa) continue;
+      np++;
+
+      if (np<npMin) continue;
+      if (np>=npMax) continue;
+      int ncv = CompareBFs(O, nfa, O, nfb);
+      if (ncv==0) continue;
+
+      LogPercent(np-npMin, ChunkSize, 100);
+      double Data[48];
+      Cache->GetFIBBIData(O, nfa, O, nfb, Data);
+    };
+
+  char FileName[MAXSTR];
+  if (NumChunks>1)
+   {
+     snprintf(FileName,MAXSTR,"%s.%s.%i.%i",
+                               RemoveExtension(O->MeshFileName),
+                               CacheType, WhichChunk, NumChunks);
+   }
+  else
+   {
+     snprintf(FileName,MAXSTR,"%s.%s",RemoveExtension(O->MeshFileName),
+                               CacheType);
+   };
+  Cache->Store(FileName);
+
+  printf("Wrote %i FIBBI records to %s.\n",Cache->NumRecords,FileName);
+
+  unsigned long M1=GetMemoryUsage() / (1<<20);
+  Log("Memory with cache:    %8lu MB (cache size %8lu) ",M1,M1-M0);
+  delete Cache;
+
+  unsigned long M2=GetMemoryUsage() / (1<<20);
+  Log("Memory after free:    %8lu MB (leaked:    %8lu)",M2,M2-M0);
+
+}
+
+/***************************************************************/
 /* main function   *********************************************/
 /***************************************************************/  
 int main(int argc, char *argv[])
 {
+  SetLogFileName("buff-analyze.log");
+
   /***************************************************************/
   /* convenience shortcuts that allow the code to be invoked as  */
   /*  % buff-analyze File.vmsh                                   */
@@ -151,16 +223,29 @@ int main(int argc, char *argv[])
   bool PlotPermittivity=false;
   int PlotBF[10], nPlotBF;
   int PlotTet[10], nPlotTet;
+  bool WriteGCache=false;
+  bool WritedGCache=false;
+  int NumChunks=1;
+  int WhichChunk=0;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
    { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,          0, ".buffgeo file"},
      {"mesh",               PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
      {"meshfile",           PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
+/**/
      {"transfile",          PA_STRING, 1, 1, (void *)&TransFile,        0, "list of geometrical transformations"},
+/**/
      {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
+/**/
+     {"WriteGCache",        PA_BOOL,   0, 1, (void *)&WriteGCache,      0, "write G cache file"},
+     {"WritedGCache",       PA_BOOL,   0, 1, (void *)&WritedGCache,      0, "write dG cache file"},
+     {"NumChunks",          PA_INT,    1, 1, (void *)&NumChunks,         0, "number of pieces into which to subdivide cache write (1)"},
+     {"WhichChunk",         PA_INT,    1, 1, (void *)&WhichChunk,        0, "which piece to write (0)"},
+/**/
      {"PlotPermittivity",   PA_BOOL,   0, 1, (void *)&PlotPermittivity, 0, "color tetrahedra by average local permittivity"},
      {"PlotBF",             PA_INT,    1, 10, (void *)PlotBF,    &nPlotBF, "draw an individual basis function"},
      {"PlotTet",            PA_INT,    1, 10, (void *)PlotTet,   &nPlotTet, "draw an individual tetrahedron"},
+/**/
      {0,0,0,0,0,0,0}
    };
   ProcessOptions(argc, argv, OSArray);
@@ -187,7 +272,14 @@ int main(int argc, char *argv[])
       };
    }
   else if (MeshFile)
-   AnalyzeVolume( new SWGVolume(MeshFile) );
+   { SWGVolume *O=new SWGVolume(MeshFile);
+     if (WriteGCache)
+      WriteCache(O, true, NumChunks, WhichChunk);
+     else if (WritedGCache)
+      WriteCache(O, false, NumChunks, WhichChunk);
+     else 
+      AnalyzeVolume( O );
+   }
   else
    ErrExit("either --geometry or --mesh / --meshfile option is mandatory");
 

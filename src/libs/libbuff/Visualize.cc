@@ -36,7 +36,6 @@ namespace buff {
 
 #define II cdouble(0,1)
 
-#define MAXSTR 1000
 
 /************************************************************/
 /* subroutines for emitting GMSH postprocessing code        */

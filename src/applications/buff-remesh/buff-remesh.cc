@@ -34,7 +34,6 @@
 using namespace scuff;
 using namespace buff;
 
-#define MAXSTR 1000
 
 /***************************************************************/
 /* quality factor for tetrahedron, defined as                  */

@@ -36,7 +36,6 @@
 #define MAXFREQ  10    // max number of frequencies 
 #define MAXCACHE 10    // max number of cache files for preload
 
-#define MAXSTR   1000
 
 /***************************************************************/
 /***************************************************************/

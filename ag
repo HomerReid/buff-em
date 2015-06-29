@@ -4,4 +4,4 @@ export LDFLAGS="${LDFLAGS} -L/home/homer/work/scuff-em-installation/lib"
 
 export CPPFLAGS="${CPPFLAGS} -I/home/homer/work/scuff-em-installation/include/scuff-em"
 
-sh autogen.sh --prefix=/home/homer/work/buff-em-installation
+sh autogen.sh --prefix=/home/homer/work/buff-em-sandbox/buff-em-scratch

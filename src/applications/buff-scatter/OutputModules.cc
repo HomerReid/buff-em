@@ -27,7 +27,6 @@
 
 #include "buff-scatter.h"
 
-#define MAXSTR   1000 
 
 #define ABSTOL   0.0
 #define RELTOL   5.0e-2

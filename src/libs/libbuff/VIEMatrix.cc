@@ -43,7 +43,6 @@ using namespace scuff;
 
 namespace buff {
 
-#define MAXSTR 1000
 #define II cdouble(0.0,1.0)
 
 /***************************************************************/
@@ -284,7 +283,8 @@ int GetVInvEntries(SWGVolume *V, int nfA, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G, int RowOffset, int ColOffset)
+                                 HMatrix *G,
+                                 int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -294,6 +294,11 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   int NFA = OA->NumInteriorFaces;
   int NFB = OB->NumInteriorFaces;
   int SameObject = (noa==nob) ? 1 : 0;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  FIBBICache *GCache = (noa==nob) ?  ObjectGCaches[noa] : 0;
 
   Log("Assembling G(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
@@ -312,7 +317,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 
       int Row=RowOffset + nfa;
       int Col=ColOffset + nfb;
-      cdouble GAB=GetGMatrixElement(OA, nfa, OB, nfb, Omega, Cache);
+      cdouble GAB=GetGMatrixElement(OA, nfa, OB, nfb, Omega, GCache);
       G->SetEntry(Row, Col, GAB);
       if (SameObject && nfb>nfa)
        G->SetEntry(Col, Row, GAB);
@@ -383,15 +388,6 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   for(int nr=1; nr<TotalBFs; nr++)
    for(int nc=0; nc<nr; nc++)
     M->SetEntry(nr, nc, M->GetEntry(nc,nr));
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  if (AutoCache)
-   { char FileName[100];
-     snprintf(FileName,100,"%s.cache",GetFileBase(GeoFileName));
-     Cache->Store(FileName);
-   };
 
   return M;
 

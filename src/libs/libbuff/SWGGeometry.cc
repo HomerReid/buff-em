@@ -38,7 +38,6 @@
 using namespace scuff;
 namespace buff{
 
-#define MAXSTR 1000
 #define MAXTOK 50
 
 /***************************************************************/
@@ -167,7 +166,6 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   GeoFileName=strdup(pGeoFileName);
   NumObjects=0;
   Objects=0;
-  AutoCache=true;
 
   /***************************************************************/
   /***************************************************************/
@@ -197,13 +195,6 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
    { sscanf(s,"%le",&TaylorDuffyTolerance);
      Log("Setting TaylorDuffy tolerance=%e.",TaylorDuffyTolerance);
    };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  s=getenv("BUFF_DISABLE_AUTOCACHE");
-  if (s && s[0]=='1')
-   AutoCache=false;
 
   /***************************************************************/
   /* try to open input file **************************************/
@@ -313,16 +304,22 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  Cache=new FIBBICache();
-  if (AutoCache)
-   { f=vfopen("%s.cache","r",GetFileBase(GeoFileName));
-     if (f)
-      { fclose(f);
-        char FileName[100];
-        snprintf(FileName,100,"%s.cache",GetFileBase(GeoFileName));
-        Cache->PreLoad(FileName);
+  #define ONEMEG 1048576
+  Log(" Mem before cache preload: %lu",GetMemoryUsage()/ONEMEG);
+  ObjectGCaches  = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
+  ObjectdGCaches = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
+  for(int no=0; no<NumObjects; no++)
+   { if ( Mate[no]!=-1 )
+      { ObjectGCaches[no]  = ObjectGCaches[ Mate[no] ];
+        ObjectdGCaches[no] = ObjectdGCaches[ Mate[no] ];
+      }
+     else
+      { 
+        ObjectGCaches[no]  = new FIBBICache(Objects[no]->MeshFileName, true);
+        ObjectdGCaches[no] = 0;
       };
    };
+  Log(" Mem after cache preload: %lu",GetMemoryUsage()/ONEMEG);
 
 }
 

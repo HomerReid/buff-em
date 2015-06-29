@@ -43,7 +43,6 @@
 
 #define MAXTEMPS 10    // max number of objects for which temperatures may be set
 
-#define MAXSTR   1000
 
 #define II cdouble(0.0,1.0)
 

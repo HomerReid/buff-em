@@ -33,7 +33,6 @@
 
 #include "buff-cas3D.h"
 
-#define MAXSTR 1000
 
 using namespace scuff;
 using namespace buff;

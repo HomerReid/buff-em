@@ -43,7 +43,6 @@ using namespace buff;
 #define MAXPS    10    // max number of point sources
 #define MAXFREQ  10    // max number of frequencies
 #define MAXEPF   10    // max number of evaluation-point files
-#define MAXSTR   1000
 #define MAXCACHE 10    // max number of cache files for preload
 
 /***************************************************************/

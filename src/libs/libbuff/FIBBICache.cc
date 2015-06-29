@@ -18,7 +18,8 @@
  */
 
 /*
- * FIBBI.cc -- 
+ * FIBBICache.cc -- caching of (F)requency-(I)ndependent 
+ *               -- (B)asis function -- (B)asis function (I)ntegrals
  * 
  * homer reid    -- 4/2015
  */
@@ -31,6 +32,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <tr1/unordered_map>
+#include <pthread.h> // needed for rwlock
+#include <omp.h> // needed for rwlock
 
 #include <libhrutil.h>
 
@@ -40,17 +43,27 @@ namespace buff {
 
 void ComputeFIBBIData(SWGVolume *OA, int nfA,
                       SWGVolume *OB, int nfB,
-                      FIBBIData *Data);
+                      double *GFI, double *dGFI);
 
-#define KEYLEN 27 
+#define KEYLEN 27
 #define KEYSIZE (KEYLEN*sizeof(float))
 
+// for GCache entries, only 6 of the 48 entries in Data are used.
+typedef struct DataRecord
+ { float Key[27];
+   double Data[48];
+ } DataRecord;
+
+#define GCACHE_DATALEN 6
+#define DGCACHE_DATALEN 48
+
+/*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
 /*- note: i found this on wikipedia ... ------------------------*/
 /*--------------------------------------------------------------*/
 static long JenkinsHash(const char *key, size_t len)
 {
-    long hash; 
+    long hash;
     unsigned int i;
     for(hash = i = 0; i < len; ++i)
     {
@@ -71,47 +84,53 @@ long HashFunction(const float *Key)
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
-typedef struct
- { float Key[KEYLEN];
- } KeyStruct;
+typedef float  *KeyType;
+typedef double *DataType;
 
-typedef std::pair<KeyStruct, FIBBIData *> KeyValuePair;
+typedef std::pair<KeyType, DataType> KeyValuePair;
 
 struct KeyHash
  {
-   long operator() (const KeyStruct &K) const 
-    { return HashFunction(K.Key); }
+   long operator() (const KeyType &K) const 
+    { return HashFunction(K); }
  };
 
 typedef struct 
  { 
-   bool operator()(const KeyStruct &K1, const KeyStruct &K2) const
+   bool operator()(const KeyType &K1, const KeyType &K2) const
     { 
-      if ( memcmp( (const void *)K1.Key, 
-                   (const void *)K2.Key, 
-                   KEYSIZE
-                 ) 
-         ) return false;
-      return true;
+      return !memcmp( (const void *)K1, (const void *)K2, KEYSIZE );
     };
 
  } KeyCmp;
 
-typedef std::tr1::unordered_map< KeyStruct,
-                                 FIBBIData *,
+typedef std::tr1::unordered_map< KeyType,
+                                 DataType,
                                  KeyHash,
                                  KeyCmp> KeyValueMap;
 
 /*--------------------------------------------------------------*/
 /*- class constructor ------------------------------------------*/
 /*--------------------------------------------------------------*/
-FIBBICache::FIBBICache()
+FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
 {
   KeyValueMap *KVM=new KeyValueMap;
   opTable = (void *)KVM;
   PreloadFileName=0;
   RecordsPreloaded=0;
   Hits=Misses=0;
+  RecordBuffer=0;
+  NumRecords=RecordBufferLen=0;
+  IsGCache=pIsGCache;
+  pthread_rwlock_init(&lock,0);
+
+  if (MeshFileName)
+   { char CacheFileName[MAXSTR];
+     const char *Extension = IsGCache ? "GCache" : "dGCache";
+     snprintf(CacheFileName, MAXSTR, "%s.%s", 
+              RemoveExtension(MeshFileName), Extension);
+     PreLoad(CacheFileName);
+   };
 }
 
 /*--------------------------------------------------------------*/
@@ -119,11 +138,17 @@ FIBBICache::FIBBICache()
 /*--------------------------------------------------------------*/
 FIBBICache::~FIBBICache()
 {
-  if (PreloadFileName) 
+  pthread_rwlock_destroy(&lock);
+
+  if (PreloadFileName)
    free(PreloadFileName);
+
+  if (RecordBuffer)
+   free(RecordBuffer);
 
   KeyValueMap *KVM=(KeyValueMap *)opTable;
   delete KVM;
+
 } 
 
 /***************************************************************/
@@ -132,14 +157,14 @@ FIBBICache::~FIBBICache()
 /* a translation-independent (but not rotation-indepedent) way */
 /***************************************************************/
 static void inline VecSubFloat(double *V1, double *V2, float *V1mV2)
-{ V1mV2[0] = ((float)V1[0]) - ((float)V2[0]);
-  V1mV2[1] = ((float)V1[1]) - ((float)V2[1]);
-  V1mV2[2] = ((float)V1[2]) - ((float)V2[2]);
+{ V1mV2[0] = (float)(V1[0] - V2[0]);
+  V1mV2[1] = (float)(V1[1] - V2[1]);
+  V1mV2[2] = (float)(V1[2] - V2[2]);
 }
 
-void GetFIBBICacheKey(SWGVolume *OA, int nfA, 
+void GetFIBBICacheKey(SWGVolume *OA, int nfA,
                       SWGVolume *OB, int nfB,
-                      KeyStruct *KS)
+                      KeyType K)
 {
 
   double  *VA = OA->Vertices;
@@ -158,16 +183,15 @@ void GetFIBBICacheKey(SWGVolume *OA, int nfA,
   double *V2B = VB + 3*(FB->iV2);
   double *V3B = VB + 3*(FB->iV3);
 
-  float *Key = KS->Key;
-  VecSubFloat(QMA, QPA, Key + 0*3);
-  VecSubFloat(V1A, QPA, Key + 1*3);
-  VecSubFloat(V2A, QPA, Key + 2*3);
-  VecSubFloat(V3A, QPA, Key + 3*3);
-  VecSubFloat(QPB, QPA, Key + 4*3);
-  VecSubFloat(QMB, QPA, Key + 5*3);
-  VecSubFloat(V1B, QPA, Key + 6*3);
-  VecSubFloat(V2B, QPA, Key + 7*3);
-  VecSubFloat(V3B, QPA, Key + 8*3);
+  VecSubFloat(QMA, QPA, K + 0*3);
+  VecSubFloat(V1A, QPA, K + 1*3);
+  VecSubFloat(V2A, QPA, K + 2*3);
+  VecSubFloat(V3A, QPA, K + 3*3);
+  VecSubFloat(QPB, QPA, K + 4*3);
+  VecSubFloat(QMB, QPA, K + 5*3);
+  VecSubFloat(V1B, QPA, K + 6*3);
+  VecSubFloat(V2B, QPA, K + 7*3);
+  VecSubFloat(V3B, QPA, K + 8*3);
 
 }
 
@@ -178,41 +202,69 @@ void GetFIBBICacheKey(SWGVolume *OA, int nfA,
 /*- compute a new FIBBI data record for this panel pair and     */
 /*- add it to the table.                                        */
 /*--------------------------------------------------------------*/
-FIBBIData *FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
-                                    SWGVolume *OB, int nfB)
+void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
+                              SWGVolume *OB, int nfB,
+                              double *Data)
 {
-  KeyStruct KS;
-  GetFIBBICacheKey(OA, nfA, OB, nfB, &KS);
+  int DataLen    = (IsGCache) ? GCACHE_DATALEN : DGCACHE_DATALEN;
+  int DataSize   = DataLen * sizeof(double);
 
   /***************************************************************/
   /* look for this key in the cache ******************************/
   /***************************************************************/
+  float Key[KEYLEN], *K=Key;
+  GetFIBBICacheKey(OA, nfA, OB, nfB, K);
   KeyValueMap *KVM=(KeyValueMap *)opTable;
 
-  FCLock.read_lock();
-  KeyValueMap::iterator p=KVM->find(KS);
-  FCLock.read_unlock();
+  //FCLock.read_lock();
+  pthread_rwlock_rdlock(&lock);
+  KeyValueMap::iterator p=KVM->find(K);
+  //FCLock.read_unlock();
+  pthread_rwlock_unlock(&lock);
 
   if ( p != (KVM->end()) )
    { Hits++;
-     return (FIBBIData *)(p->second);
+     memcpy(Data, (double *)(p->second), DataSize);
    };
   
   /***************************************************************/
-  /* if it was not found, allocate and compute a new FIBBIData   */
-  /* structure, then add this structure to the cache             */
+  /* if it was not found, compute a new FIBBI data record...     */
   /***************************************************************/
   Misses++;
-  KeyStruct *K2 = (KeyStruct *)mallocEC(sizeof(*K2));
-  memcpy(K2->Key, KS.Key, KEYSIZE);
-  FIBBIData *Data=(FIBBIData *)mallocEC(sizeof(FIBBIData));
-  ComputeFIBBIData(OA, nfA, OB, nfB, Data);
+  
+  double DataBuffer[48];
+  if (IsGCache)
+   ComputeFIBBIData(OA, nfA, OB, nfB, DataBuffer, 0);
+  else
+   ComputeFIBBIData(OA, nfA, OB, nfB, 0, DataBuffer);
+  memcpy(Data, DataBuffer, DataSize);
    
-  FCLock.write_lock();
-  KVM->insert( KeyValuePair(*K2, Data) );
-  FCLock.write_unlock();
+  /***************************************************************/
+  /* ...and add this data record to the cache                    */
+  /***************************************************************/
+  pthread_rwlock_wrlock(&lock);
 
-  return Data;
+  NumRecords++;
+  int RecordSize = KEYSIZE + DataSize;
+  if (NumRecords>RecordBufferLen)
+   { 
+     #define CHUNK 10000
+     RecordBufferLen += CHUNK;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+printf("thread %i reallocing to %8i \n", omp_get_thread_num(),RecordBufferLen);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+     RecordBuffer = reallocEC(RecordBuffer, RecordBufferLen*RecordSize);
+   };
+  char *Record    = ((char *)RecordBuffer) + NumRecords*RecordSize;
+  float *NewKey   = (float *)Record;
+  float *fNewData = NewKey + KEYLEN;
+  double *NewData = (double *)fNewData;
+
+  memcpy(NewKey, Key, KEYSIZE);
+  memcpy(NewData, DataBuffer, DataSize);
+  KVM->insert( KeyValuePair(NewKey, NewData) );
+
+  pthread_rwlock_unlock(&lock);
 }
 
 /***************************************************************/
@@ -223,30 +275,22 @@ FIBBIData *FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
 /*                                                             */
 /* the file format is pretty simple (and non-portable w.r.t.   */
 /* endianness):                                                */
-/*  bytes 0--10:   'FIBBICACHE' + 0 (a file signature used as  */
-/*                                   a simple sanity check)    */
-/*  next xx bytes:  first record                               */
+/*  bytes 0--12:   'FIBBI_GCACHE' + 0                          */
+/*   or                                                        */
+/*                 'FIBBIdGCACHE' + 0                          */
+/*  next xx bytes:  first record                               */ 
 /*  next xx bytes:  second record                              */
 /*  ...             ...                                        */
 /*                                                             */
 /* where xx is the size of the record; each record consists of */
 /* a search key (KEYLEN float values) followed by the content  */
-/* of the FIBBIDataRecord for that search key.                 */
+/* of the FIBBI data record for that search key.               */
 /*                                                             */
 /* note: FIBBICF = 'FIBBI cache file'                          */
 /***************************************************************/
-const char FIBBICF_Signature[]="FIBBICACHE";
-#define FIBBICF_SIGSIZE sizeof(FIBBICF_Signature)
-
-// note that this structure differs from the KeyValuePair structure 
-// defined above in that it contains the actual contents of 
-// QIFIBBIData structure, whereas KeyValuePair contains just a 
-// pointer to such a structure.
-typedef struct FIBBICF_Record
- { KeyStruct K;
-   FIBBIData DataBuffer;
- } FIBBICF_Record;
-#define FIBBICF_RECSIZE sizeof(FIBBICF_Record)
+const char FIBBICF_GSignature[]  = "FIBBI_GCACHE";
+const char FIBBICF_dGSignature[] = "FIBBIdGCACHE";
+#define FIBBICF_SIGSIZE (sizeof(FIBBICF_GSignature))
 
 void FIBBICache::Store(const char *FileName)
 {
@@ -266,21 +310,19 @@ void FIBBICache::Store(const char *FileName)
   /*- the cache since the operation would result in a cache dump -*/
   /*- file identical to the one that already exists.             -*/
   /*--------------------------------------------------------------*/
-  if (     PreloadFileName 
-       && !strcmp(PreloadFileName, FileName) 
+  if (     PreloadFileName
+       && !strcmp(PreloadFileName, FileName)
        && RecordsPreloaded==(KVM->size())
-     )  
+     )
    { Log("FIBBI cache unchanged since reading from %s (skipping cache dump)",FileName);
      return;
    };
 
   /*--------------------------------------------------------------*/
+  /*- i assume that Preload() and Store() won't be called from    */
+  /*- multithreaded code sections.                                */
   /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  FCLock.read_lock();
-
-  KeyValueMap::iterator it;
-  int NumRecords=0;
+  //FCLock.read_lock();
 
   /*--------------------------------------------------------------*/
   /*- try to open the file ---------------------------------------*/
@@ -288,48 +330,51 @@ void FIBBICache::Store(const char *FileName)
   FILE *f=fopen(FileName,"w");
   if (!f)
    { fprintf(stderr,"warning: could not open file %s (aborting cache dump)...",FileName);
-     goto done;
+     //FCLock.read_unlock();
+     return;
    };
   Log("Writing FIBBI cache to file %s...",FileName);
 
   /*---------------------------------------------------------------------*/
   /*- write file signature ----------------------------------------------*/
   /*---------------------------------------------------------------------*/
-  fwrite(FIBBICF_Signature,FIBBICF_SIGSIZE,1,f);
+  if (IsGCache)
+   fwrite(FIBBICF_GSignature, FIBBICF_SIGSIZE,1,f);
+  else
+   fwrite(FIBBICF_dGSignature,FIBBICF_SIGSIZE,1,f);
 
   /*---------------------------------------------------------------------*/
   /*- iterate through the table and write entries to the file one-by-one */
   /*---------------------------------------------------------------------*/
-  KeyStruct K;
-  FIBBIData *Data;
-  FIBBICF_Record MyRecord;
-  for ( it = KVM->begin(); it != KVM->end(); it++ ) 
+  int NumWritten=0;
+  int DataLen  = (IsGCache) ? GCACHE_DATALEN : DGCACHE_DATALEN;
+  int DataSize = DataLen * sizeof(double);
+  int RecordSize = KEYSIZE + DataSize;
+  KeyValueMap::iterator it;
+  for ( it = KVM->begin(); it != KVM->end(); it++ )
    { 
-     K=it->first;
-     Data=it->second;
-     memcpy(&(MyRecord.K.Key),      K.Key, sizeof(MyRecord.K.Key ));
-     memcpy(&(MyRecord.DataBuffer), Data,  sizeof(MyRecord.DataBuffer));
-     if ( 1 != fwrite(&(MyRecord),sizeof(MyRecord),1,f ) )
-      break;
-     NumRecords++;
+     float *K=it->first;
+     if ( 1 != fwrite(K, RecordSize, 1, f ) ) break;
+     NumWritten++;
    };
 
   /*---------------------------------------------------------------------*/
   /*- and that's it -----------------------------------------------------*/
   /*---------------------------------------------------------------------*/
   fclose(f);
-  Log(" ...wrote %i FIBBI records.",NumRecords);
+  Log(" ...wrote %i/%i FIBBI records.",NumWritten,NumRecords);
 
- done:
-  FCLock.read_unlock();
+  //FCLock.read_unlock();
 }
 
 void FIBBICache::PreLoad(const char *FileName)
 {
-
-  FCLock.write_lock();
-
+  int DataLen    = (IsGCache) ? GCACHE_DATALEN : DGCACHE_DATALEN;
+  int DataSize   = DataLen * sizeof(double);
+  int RecordSize = DataSize + KEYSIZE;
   KeyValueMap *KVM=(KeyValueMap *)opTable;
+
+  //FCLock.write_lock();
 
   /*--------------------------------------------------------------*/
   /*- try to open the file ---------------------------------------*/
@@ -338,95 +383,117 @@ void FIBBICache::PreLoad(const char *FileName)
   if (!f)
    { fprintf(stderr,"warning: could not open file %s (skipping cache preload)\n",FileName);
      Log("Could not open FIBBI cache file %s...",FileName); 
-     goto done;
+     //FCLock.write_unlock();
+     return;
    };
 
   /*--------------------------------------------------------------*/
   /*- run through some sanity checks to make sure we have a valid */
   /*- cache file                                                  */
   /*--------------------------------------------------------------*/
-  const char *ErrMsg;
-  ErrMsg = 0;
-  
+  const char *ErrMsg=0;
   struct stat fileStats;
-  if ( fstat(fileno(f), &fileStats) )
-   ErrMsg="invalid cache file";
-  
-  // check that the file signature is present and correct 
   off_t FileSize;
+  if ( fstat(fileno(f), &fileStats) )
+   { ErrMsg="invalid cache file";
+     goto fail;
+   };
+  
+  // check that the file signature is present and has the right size 
   FileSize=fileStats.st_size;
   char FileSignature[FIBBICF_SIGSIZE]; 
-  if ( ErrMsg==0 && (FileSize < (signed int )FIBBICF_SIGSIZE) )
-   ErrMsg="invalid cache file";
-  if ( ErrMsg==0 && 1!=fread(FileSignature, FIBBICF_SIGSIZE, 1, f) )
-   ErrMsg="invalid cache file";
-  if ( ErrMsg==0 && strcmp(FileSignature, FIBBICF_Signature) ) 
-   ErrMsg="invalid cache file";
+  if ( (FileSize < ((signed int )FIBBICF_SIGSIZE)) )
+   { ErrMsg="invalid cache file";
+     goto fail;
+   };
+  if ( 1!=fread(FileSignature, FIBBICF_SIGSIZE, 1, f) )
+   { ErrMsg="invalid cache file";
+     goto fail;
+   };
 
-  // the file size, minus the portion taken up by the signature, 
-  // should be an integer multiple of the size of a FIBBICF_Record
+  // check that the file signature is one that we recognize
+  bool FileIsGCache;
+  if (      !strcmp(FileSignature, FIBBICF_GSignature)  )
+   FileIsGCache=true;
+  else if ( !strcmp(FileSignature, FIBBICF_dGSignature) )
+   FileIsGCache=false;
+  else 
+   { ErrMsg="invalid cache file";
+     goto fail;
+   };
+
+  // check that the file type agrees with what we are
+  if ( FileIsGCache!=IsGCache )
+   { ErrMsg="cache file is wrong type";
+     goto fail;
+   };
+
+  // the file size, minus the portion taken up by the signature,
+  // should be an integer multiple of the size of a (Key,Data) pair
   FileSize-=FIBBICF_SIGSIZE;
-  if ( ErrMsg==0 && (FileSize % FIBBICF_RECSIZE)!=0 )
-   ErrMsg="cache file has incorrect size";
+  if ( (FileSize % RecordSize)!=0 )
+   { ErrMsg="cache file has incorrect size";
+     goto fail;
+   };
 
   /*--------------------------------------------------------------*/
   /*- allocate memory to store cache entries read from the file. -*/
   /*- for now, we abort if there is not enough memory to store   -*/
   /*- the full cache; TODO explore schemes for partial preload.  -*/
   /*--------------------------------------------------------------*/
-  unsigned int NumRecords;
-  FIBBICF_Record *Records;
-  NumRecords = FileSize / FIBBICF_RECSIZE;
-  if ( ErrMsg==0 )
-   { Records=(FIBBICF_Record *)mallocEC(NumRecords*FIBBICF_RECSIZE);
-     if ( !Records)
-      ErrMsg="insufficient memory to preload cache";
-   };
-
-  /*--------------------------------------------------------------*/
-  /*- pause here to clean up if anything went wrong --------------*/
-  /*--------------------------------------------------------------*/
-  if (ErrMsg)
-   { fprintf(stderr,"warning: file %s: %s (skipping cache preload)\n",FileName,ErrMsg);
-     Log("FIBBI cache file %s: %s (skipping cache preload)",FileName,ErrMsg);
-     fclose(f);
-     goto done;
-   };
+  NumRecords      = FileSize / RecordSize;
+  RecordBufferLen = NumRecords;
+  RecordBuffer    = (void *)mallocEC(NumRecords*DataSize);
 
   /*--------------------------------------------------------------*/
   /*- now just read records from the file one at a time and add   */
   /*- them to the table.                                          */
   /*--------------------------------------------------------------*/
-  unsigned int nr;
   Log("Preloading FIBBI records from file %s...",FileName);
-  for(nr=0; nr<NumRecords; nr++)
+  for(int nr=0; nr<NumRecords; nr++)
    { 
-     if ( fread(Records+nr, FIBBICF_RECSIZE,1,f) != 1 )
-      { fprintf(stderr,"warning: file %s: read only %i of %i records",FileName,nr+1,NumRecords);
+     char *Record    = ((char *)RecordBuffer) + nr*RecordSize;
+     if ( fread( Record, RecordSize, 1, f) != 1 )
+      { fprintf(stderr,"warning: file %s: read only %i of %i records",
+                FileName,nr+1,NumRecords);
+        NumRecords=nr;        
         fclose(f);
-	goto done;
+        //FCLock.write_unlock();
+	return;
       };
-
-     KVM->insert( KeyValuePair(Records[nr].K, &(Records[nr].DataBuffer)) );
+  
+     float *NewKey   = (float *)Record;
+     float *fNewData = NewKey + KEYLEN;
+     double *NewData = (double *)fNewData;
+     KVM->insert( KeyValuePair(NewKey, NewData) );
    };
 
   /*--------------------------------------------------------------*/
-  /*- the full file was successfully preloaded -------------------*/
+  /* the most recent file from which we preloaded, and the number */
+  /* of records preloaded, are stored within the class body to    */
+  /* allow us to skip dumping the cache back to disk in cases     */
+  /* where that would amount to just rewriting the same cache     */
   /*--------------------------------------------------------------*/
-  Log(" ...successfully preloaded %i FIBBI records.",NumRecords);
-  fclose(f);
-
-  // the most recent file from which we preloaded, and the number of 
-  // records preloaded, are stored within the class body to allow us 
-  // to skip dumping the cache back to disk in cases where that would
-  // amount to just rewriting the same cache file
   if (PreloadFileName)
    free(PreloadFileName);
   PreloadFileName=strdupEC(FileName);
   RecordsPreloaded=NumRecords;
 
- done:
-  FCLock.write_unlock();
+  Log(" ...successfully preloaded %i FIBBI records.",NumRecords);
+  fclose(f);
+  //FCLock.write_unlock();
+  return;
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+ fail:
+  fprintf(stderr,"warning: file %s: %s (skipping cache preload)\n",FileName,ErrMsg);
+  Log("FIBBI cache file %s: %s (skipping cache preload)",FileName,ErrMsg);
+  fclose(f);
+  //FCLock.write_unlock();
+  return;
+
 }
 
 } // namespace buff

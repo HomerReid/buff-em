@@ -45,14 +45,6 @@ namespace buff {
 class SWGVolume; // forward reference needed below
 
 /*--------------------------------------------------------------*/
-/*--------------------------------------------------------------*/
-/*--------------------------------------------------------------*/
-typedef struct FIBBIData
- { double GFI[6];
-   double dGFI[48];
- } FIBBIData;
-
-/*--------------------------------------------------------------*/
 /* 'FIBBICache' is a class that implements efficient storage    */
 /* and retrieval of FIBBIData structures for many pairs of      */
 /* tetrahedra.                                                  */
@@ -62,18 +54,19 @@ class FIBBICache
   public:
 
     // constructor, destructor 
-    FIBBICache();
+    FIBBICache(char *MeshFileName=0, bool IsGCache=true);
     ~FIBBICache(); 
+
     // look up an entry 
-    FIBBIData *GetFIBBIData(SWGVolume *VA, int nfA,
-                            SWGVolume *VB, int nfB);
+    void GetFIBBIData(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
+                      double *Data);
 
     // store/retrieve cache to/from binary file
     void Store(const char *FileName);
     void PreLoad(const char *FileName);
 
-    int Hits, Misses;
-
+    int Hits, Misses, NumRecords;
+    bool IsGCache;
 
   private:
 
@@ -84,10 +77,13 @@ class FIBBICache
     // implementation
     void *opTable;
 
-    rwlock FCLock;
+    pthread_rwlock_t lock;
 
     char *PreloadFileName;
     unsigned int RecordsPreloaded;
+
+    int RecordBufferLen;
+    void *RecordBuffer;
 
  };
 

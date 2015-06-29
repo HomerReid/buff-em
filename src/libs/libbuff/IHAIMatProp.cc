@@ -33,7 +33,7 @@
 #include "IHAIMatProp.h"
 #include "cmatheval.h"
 
-#define MAXSTR       1000
+#define MAXSTR 200
 
 /***************************************************************/
 /* constructor *************************************************/

@@ -56,6 +56,9 @@ if test "x$with_openmp" = xyes; then
    CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"
 fi
 
+# libpthread is needed only for its rwlock implementation
+AC_CHECK_LIB(pthread, pthread_rwlock_init)
+
 ##################################################
 # checks for blas/lapack
 ##################################################

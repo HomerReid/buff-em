@@ -11,7 +11,6 @@ libbuff_la_SOURCES = 	\
  RHSVector.cc    	\
  SWGGeometry.cc  	\
  SWGVolume.cc    	\
- TaskTiming.cc		\
  TetCR.cc     		\
  VIEMatrix.cc		\
  Visualize.cc		\
@@ -21,7 +20,6 @@ libbuff_la_SOURCES = 	\
  GetPFT.cc          	\
  IHAIMatProp.h		\
  FIBBICache.h		\
- rwlock.h    		\
  libbuff.h
 
 # combine all auxiliary libraries into a single library 

@@ -61,6 +61,9 @@ namespace buff {
 // with any given basis function
 #define MAXOVERLAP 7
 
+// length of character strings for filenames, etc
+#define MAXSTR 200 
+
 /***************************************************************/
 /* SWGTet is a structure containing data on a single           */
 /* tetrahedron in the meshed geometry.                         */
@@ -251,8 +254,7 @@ class SWGGeometry
 
    char *GeoFileName;
 
-   FIBBICache *Cache;
-   bool AutoCache;
+   FIBBICache **ObjectGCaches, **ObjectdGCaches;
 
  }; // class SWGGeometry
 
@@ -282,7 +284,7 @@ PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options);
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
                           cdouble Omega, FIBBICache *Cache=0,
-                          cdouble *dG=0, bool *NeedDerivative=0);
+                          cdouble *dG=0, FIBBICache *dGCache=0);
 
 /***************************************************************/
 /* routines for integrating over tetrahedra and faces          */
@@ -348,15 +350,6 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
                  int Order, int MaxEvals, double RelTol);
 
 double *GetTetCR(int NumPts);
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void InitTaskTiming(const char **pTaskNames);
-void ResetTaskTiming();
-void AddTaskTiming(int WhichTask, double Elapsed);
-void LogTaskTiming(const char *Title);
-
 
 } // namespace buff 
 

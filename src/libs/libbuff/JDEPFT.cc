@@ -217,7 +217,13 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       if (JJ==0.0) continue;
    
       cdouble dG[6];
-      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega, G->Cache, dG, NeedFT);
+      FIBBICache *GCache=0, *dGCache=0;
+      if (noa==nob)
+       { GCache=G->ObjectGCaches[noa];
+         dGCache=G->ObjectdGCaches[noa];
+       };
+      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega,
+                                   GCache, dG, dGCache);
 
       int nt=0;
 #ifdef USE_OPENMP
@@ -298,7 +304,7 @@ NumThreads = GetNumThreads();
 
    }; // if (IF)
   Elapsed = Secs() - Elapsed;
-  AddTaskTiming(5,Elapsed);
+  //AddTaskTiming(5,Elapsed);
 
   /***************************************************************/
   /***************************************************************/

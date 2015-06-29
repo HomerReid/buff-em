@@ -42,7 +42,6 @@ using namespace scuff;
 
 namespace buff {
 
-#define MAXSTR 1000
 #define MAXTOK 50  
 
 /*--------------------------------------------------------------*/
