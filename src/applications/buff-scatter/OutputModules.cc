@@ -130,6 +130,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
      fprintf(f,"# 5,6,7  x, y, z force (nanoNewtons)\n");
      fprintf(f,"# 8,9,10 x, y, z torque (nanoNewtons microns)\n");
      fprintf(f,"\n");
+     fclose(f);
    };
 
   /***************************************************************/
