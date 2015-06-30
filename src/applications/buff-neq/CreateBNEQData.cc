@@ -103,7 +103,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
      BNEQD->GBlocks[no] = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
      for(int nop=no; nop<NO; nop++)
       { int NBFP = G->Objects[nop]->NumInteriorFaces;
-        BNEQD->GBlocks[no][nop] = new HMatrix(NBF, NBF, LHM_COMPLEX);
+        BNEQD->GBlocks[no][nop] = new HMatrix(NBF, NBFP, LHM_COMPLEX);
       };
    };
   BNEQD->SMatricesInitialized=false;

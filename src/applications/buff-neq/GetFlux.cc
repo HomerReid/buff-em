@@ -30,6 +30,39 @@
 
 #define II cdouble(0.0,1.0)
 
+namespace buff { 
+
+void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
+                    double PFT[NUMPFT], GTransformation *GT,
+                    PFTOptions *Options);
+               } 
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+GTransformation *GetFullVolumeTransformation(SWGGeometry *G,
+                                             int no,
+                                             bool *CreatedGT)
+{
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  SWGVolume *S=G->Objects[no];
+  GTransformation *GT=0;
+  *CreatedGT=false;
+  if ( (S->OTGT!=0) && (S->GT==0) ) 
+   GT=S->OTGT;
+  else if ( (S->OTGT==0) && (S->GT!=0) ) 
+   GT=S->GT;
+  else if ( (S->OTGT!=0) && (S->GT!=0) )
+   { *CreatedGT=true;
+     GT=new GTransformation(S->GT);
+     GT->Transform(S->OTGT);
+   };
+
+  return GT;
+}
+
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/
 /* each quantity is characterized by values of four indices:   */
@@ -149,6 +182,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   SMatrix **VInv           = BNEQD->VInv;
   SMatrix **Sigma          = BNEQD->Sigma;
   HMatrix **WorkMatrix     = BNEQD->WorkMatrix;
+  PFTOptions *pftOptions   = BNEQD->pftOptions;
   int NQ                   = BNEQD->NQ;
 
   /***************************************************************/
@@ -178,12 +212,6 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
       };
    };
   BNEQD->SMatricesInitialized=true;
-
-  if (G->AutoCache)
-   { char FileName[100];
-     snprintf(FileName,100,"%s.cache",GetFileBase(G->GeoFileName));
-     G->Cache->Store(FileName);
-   };
 
   /***************************************************************/
   /* now loop over transformations.                              */
@@ -240,17 +268,34 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
      FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
-     double Quantities[MAXQUANTITIES];
      for(int nos=0; nos<NO; nos++)
       { 
+        // get the Rytov matrix for source object #nos
         HMatrix *Rytov = WorkMatrix[2];
         Rytov->Zero();
         Rytov->AddBlock(Sigma[nos], Offset[nos], Offset[nos]);
         WGm1->Multiply(Rytov, WorkMatrix[0]);
         WorkMatrix[0]->Multiply(WGm1,Rytov,"--transB C");
 
-        GetDSIPFTTrace(G, Rytov, Omega, Quantities, 0, pftOptions);
+        // get the PFT on all destination objects #nod
+        for(int nod=0; nod<NO; nod++)
+         { 
+           bool CreatedGT=false;
+           GTransformation *FullGT
+            =GetFullVolumeTransformation(G, nod, &CreatedGT);
 
+           double PFT[MAXQUANTITIES];
+           GetDSIPFTTrace(G, Omega, Rytov, PFT, FullGT, pftOptions);
+           if (CreatedGT) delete FullGT;
+
+           fprintf(f,"%s %e %i%i",Tag,real(Omega),nos+1,nod+1);
+           for(int nq=0; nq<NQ; nq++)
+            { fprintf(f,"%e ",PFT[nq]);
+              int Index=GetIndex(BNEQD, nt, nos, nod, nq);
+              Flux[Index]=PFT[nq];
+            };
+           fprintf(f,"\n");
+         };
       };
      fclose(f);
 

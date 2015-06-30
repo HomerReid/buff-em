@@ -1,3 +1,4 @@
 SUBDIRS = 		\
  buff-analyze		\
- buff-scatter 
+ buff-scatter 		\
+ buff-neq

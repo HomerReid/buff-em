@@ -92,6 +92,7 @@ typedef struct BNEQData
 
    char *FileBase;
    bool UseExistingData;
+   PFTOptions *pftOptions;
 
  } BNEQData;
 

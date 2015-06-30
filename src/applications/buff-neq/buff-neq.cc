@@ -59,28 +59,37 @@ int main(int argc, char *argv[])
   char *GeoFile=0;
   char *TransFile=0;
 
-  bool PAbs=0;
-  bool PRad=0;
-  bool XForce=0;
-  bool YForce=0;
-  bool ZForce=0;
-  bool XTorque=0;
-  bool YTorque=0;
-  bool ZTorque=0;
+  /*--------------------------------------------------------------*/
+  bool PAbs=false;
+  bool PRad=false;
+  bool XForce=false;
+  bool YForce=false;
+  bool ZForce=false;
+  bool XTorque=false;
+  bool YTorque=false;
+  bool ZTorque=false;
 
+  /*--------------------------------------------------------------*/
   cdouble OmegaVals[MAXFREQ];        int nOmegaVals;
   char *OmegaFile;                   int nOmegaFiles;
   double OmegaMin=0.00;              int nOmegaMin;
   double OmegaMax=-1.0;              int nOmegaMax;
 
+  /*--------------------------------------------------------------*/
   char *TemperatureFile=0;
 
+  /*--------------------------------------------------------------*/
   double AbsTol=0.0;
   double RelTol=5.0e-2;
   int Intervals=25;
 
-  char *FileBase=0;
+  /*--------------------------------------------------------------*/
+  char *DSIMesh    = 0;
+  double DSIRadius = 10.0;
+  int DSIPoints    = 302;
 
+  /*--------------------------------------------------------------*/
+  char *FileBase=0;
   bool UseExistingData=false;
 
   /* name               type    #args  max_instances  storage           count         description*/
@@ -105,6 +114,9 @@ int main(int argc, char *argv[])
      {"OmegaMin",       PA_DOUBLE,  1, 1,       (void *)&OmegaMin,   &nOmegaMin,    "lower integration limit"},
      {"OmegaMax",       PA_DOUBLE,  1, 1,       (void *)&OmegaMax,   &nOmegaMax,    "upper integration limit"},
 /**/     
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "bounding surface .msh file for DSIPFT"},
+     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "bounding-sphere radius for DSIPFT"},
+     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for DSIPFT"},
 /**/     
      {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
 /**/     
@@ -197,6 +209,16 @@ int main(int argc, char *argv[])
      else
       Log("Integrating over range Omega=(%g,%g).",OmegaMin,OmegaMax);
    };
+  
+  /*******************************************************************/
+  /*******************************************************************/
+  /*******************************************************************/
+  PFTOptions MyOptions, *pftOptions=&MyOptions;
+  InitPFTOptions(pftOptions);
+  pftOptions->PFTMethod=SCUFF_PFT_DSI;
+  pftOptions->DSIMesh  =DSIMesh;
+  pftOptions->DSIRadius=DSIRadius;
+  pftOptions->DSIPoints=DSIPoints;
 
   /*******************************************************************/
   /* create the BNEQData structure that contains all the info needed */
@@ -206,6 +228,7 @@ int main(int argc, char *argv[])
                                  QuantityFlags, FileBase);
   SWGGeometry *G=BNEQD->G;
   BNEQD->UseExistingData = UseExistingData;
+  BNEQD->pftOptions      = pftOptions;
          
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
