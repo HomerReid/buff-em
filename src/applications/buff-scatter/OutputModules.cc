@@ -119,9 +119,9 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
   /* write file preamble as necessary ****************************/
   /***************************************************************/
   FILE *f=fopen(PFTFile,"r");
-  fclose(f);
   if (!f)
-   { f=fopen(PFTFile,"w");
+   { 
+     f=fopen(PFTFile,"w");
      fprintf(f,"# data columns:    \n");
      fprintf(f,"# 1 frequency      \n");
      fprintf(f,"# 2 object label   \n");
@@ -130,8 +130,8 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
      fprintf(f,"# 5,6,7  x, y, z force (nanoNewtons)\n");
      fprintf(f,"# 8,9,10 x, y, z torque (nanoNewtons microns)\n");
      fprintf(f,"\n");
-     fclose(f);
    };
+  fclose(f);
 
   /***************************************************************/
   /* do the PFT calculation **************************************/
