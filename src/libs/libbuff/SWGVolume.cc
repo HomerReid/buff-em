@@ -182,18 +182,6 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   /* complicated enough to warrant its own separate routine.    */
   /*------------------------------------------------------------*/
   InitFaceList();
-
-  /*------------------------------------------------------------*/
-  /*------------------------------------------------------------*/
-  /*------------------------------------------------------------*/
-  if (OTGT)
-   { OTGT->Apply(Vertices, NumVertices);
-     for(int nf=0; nf<NumTotalFaces; nf++)
-      OTGT->Apply(Faces[nf]->Centroid, 1);
-     for(int nt=0; nt<NumTets; nt++)
-      OTGT->Apply(Tets[nt]->Centroid, 1);
-   };
-
 } 
 
 /***************************************************************/
