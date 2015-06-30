@@ -315,7 +315,7 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
       }
      else
       { 
-        ObjectGCaches[no]  = new FIBBICache(Objects[no]->MeshFileName, true);
+        ObjectGCaches[no]  = new FIBBICache(0, true);
         ObjectdGCaches[no] = 0;
       };
    };

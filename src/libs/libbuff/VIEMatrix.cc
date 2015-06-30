@@ -299,7 +299,18 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   /***************************************************************/
   /***************************************************************/
   FIBBICache *GCache = (noa==nob) ?  ObjectGCaches[noa] : 0;
+  int InitialCacheSize = 0;
+  if (GCache && GCache->Size()==0)
+   { char CacheFileName[MAXSTR];
+     snprintf(CacheFileName, MAXSTR, "%s.GCache",
+              RemoveExtension(OA->MeshFileName));
+     GCache->PreLoad(CacheFileName);
+     InitialCacheSize = GCache->Size();
+   };
 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   Log("Assembling G(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
   Log(" no multithreading...");
@@ -322,6 +333,16 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
       if (SameObject && nfb>nfa)
        G->SetEntry(Col, Row, GAB);
     };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  if (GCache && GCache->Size()>InitialCacheSize)
+   { char CacheFileName[MAXSTR];
+     snprintf(CacheFileName, MAXSTR, "%s.GCache",
+              RemoveExtension(OA->MeshFileName));
+     GCache->Store(CacheFileName);
+   };
 
 }
 

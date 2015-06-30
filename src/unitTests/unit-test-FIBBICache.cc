@@ -33,52 +33,107 @@
 using namespace scuff;
 using namespace buff;
 
-void Mem(const char *s=0)
-{
-  if (s==0) s="default:";
-  printf("\n*\n* %s\n*\n",s);
-  unsigned long MU[7];
-  GetMemoryUsage(MU);
-  printf("%10lu %10lu %10lu %10lu\n",MU[0],MU[1],MU[2],MU[3]);
-  printf("%10lu %10lu %10lu      \n",MU[4],MU[5],MU[6]);
-}
-
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
 int main(int argc, char *argv[])
 {
+  int NumTests=0, NumFailed=0;
+
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   SetLogFileName("buff-test-FIBBICache.log");
-  Log("buff-test-LFField running on %s",GetHostName());
+  Log("buff-test-FIBBICache running on %s",GetHostName());
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  SWGGeometry *G = new SWGGeometry("E10Sphere_533.buffgeo");
+  SWGGeometry *G = new SWGGeometry("E10P1ISphere_48.buffgeo");
   SWGVolume *O   = G->Objects[0];
-  int nfA        = 0;
-  int nfB        = 0;
+  int nfA        = O->NumInteriorFaces - 1;
+  int nfB        = nfA;
   
   /***************************************************************/
+  /* first test whether a single cache entry can be properly     */
+  /* stored and retrieved                                        */
   /***************************************************************/
-  /***************************************************************/
-  double Data1[6], Data2[6];
-
   unsigned long M0=GetMemoryUsage();
 
   FIBBICache *GCache=new FIBBICache();
-  printf("Alloc GCache: %lu\n",GetMemoryUsage()-M0);
 
+  Tic(true);
+  double Data1[6], Data2[6];
   GCache->GetFIBBIData(O, nfA, O, nfB, Data1);
-  printf("GetData 1   : %lu\n",GetMemoryUsage()-M0);
+  unsigned long M1;
+  double Time1=Toc(&M1);
+  Log("GetData 1 : %.3e us, %8lu b allocated", Time1, M1);
 
+  Tic(true);
   GCache->GetFIBBIData(O, nfA, O, nfB, Data2);
-  printf("GetData 2   : %lu\n",GetMemoryUsage()-M0);
+  unsigned long M2;
+  double Time2=Toc(&M2);
+  Log("GetData 2 : %.3e us, %8lu b allocated", Time2, M2);
+  
+  NumTests++;
+  if ( memcmp(Data2, Data1, 6*sizeof(double) ) )
+   { Log(" Data 2 != Data 1");
+     NumFailed++;
+   };
 
   delete GCache;
-  printf("After free  : %lu\n",GetMemoryUsage()-M0);
+  Log("After cache delete: %lu",GetMemoryUsage()-M0);
 
+  /***************************************************************/
+  /* next test whether the cache file is properly written to     */
+  /* disk by the VIE matrix assembly                             */
+  /***************************************************************/
+  unlink("Sphere_48.GCache");
+  HMatrix *M=G->AllocateVIEMatrix();
+  Log("Assembling VIE matrix the first time...");
+  G->AssembleVIEMatrix(1.0, M);
+  Log("After VIE matrix assembly: %8lu MB allocated",
+       GetMemoryUsage() / (1<<20));
+
+  Tic(true);
+  double Data3[6];
+  GCache=G->ObjectGCaches[0];
+  int Size1=GCache->Size();
+  GCache->GetFIBBIData(O, nfA, O, nfB, Data3);
+  unsigned long M3;
+  double Time3=Toc(&M3);
+  Log("GetData 3 : %.3e us, %8lu b allocated", Time3, M3);
+
+  NumTests++;
+  if ( memcmp(Data3, Data1, 6*sizeof(double) ) )
+   { Log(" Data 3 != Data 1");
+     NumFailed++;
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  Log("Reading cache from disk...");
+  GCache=new FIBBICache(G->Objects[0]->MeshFileName);
+  int Size2=GCache->Size();
+  NumTests++;
+  if (Size2!=Size1)
+   { Log(" read only %i records (should have been %i)!",Size2,Size1);
+     NumFailed++;
+   };
+
+  Tic(true);
+  double Data4[6];
+  GCache->GetFIBBIData(O, nfA, O, nfB, Data4);
+  unsigned long M4;
+  double Time4=Toc(&M4);
+  Log("GetData 4 : %.3e us, %8lu b allocated", Time4, M4);
+  NumTests++;
+  if ( memcmp(Data4, Data1, 6*sizeof(double) ) )
+   { Log(" Data 4 != Data 1");
+     NumFailed++;
+   };
+
+  Log("%i/%i tests passed.",NumTests-NumFailed,NumTests);
+  return NumFailed;
 }

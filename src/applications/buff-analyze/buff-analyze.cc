@@ -140,11 +140,13 @@ void WriteCache(SWGVolume *O, bool GCache=true,
   if (npMax >= NumPairs)
    npMax=NumPairs-1;
   int np=-1;
+  int NumRecords=0;
 #ifdef USE_OPENMP
   int NumThreads=GetNumThreads();
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
                          collapse(2),              \
+                         reduction(+:NumRecords)   \
                          num_threads(NumThreads)
 #endif
   for(int nfa=0; nfa<NF; nfa++)
@@ -161,6 +163,7 @@ void WriteCache(SWGVolume *O, bool GCache=true,
       LogPercent(np-npMin, ChunkSize, 100);
       double Data[48];
       Cache->GetFIBBIData(O, nfa, O, nfb, Data);
+      NumRecords++;
     };
 
   char FileName[MAXSTR];
@@ -177,7 +180,7 @@ void WriteCache(SWGVolume *O, bool GCache=true,
    };
   Cache->Store(FileName);
 
-  printf("Wrote %i FIBBI records to %s.\n",Cache->NumRecords,FileName);
+  printf("Wrote %i FIBBI records to %s.\n",NumRecords,FileName);
 
   unsigned long M1=GetMemoryUsage() / (1<<20);
   Log("Memory with cache:    %8lu MB (cache size %8lu) ",M1,M1-M0);

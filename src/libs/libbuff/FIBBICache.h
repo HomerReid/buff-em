@@ -61,11 +61,14 @@ class FIBBICache
     void GetFIBBIData(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
                       double *Data);
 
+    // get the number of records
+    int Size();
+
     // store/retrieve cache to/from binary file
     void Store(const char *FileName);
     void PreLoad(const char *FileName);
 
-    int Hits, Misses, NumRecords;
+    int Hits, Misses;
     bool IsGCache;
 
   private:
@@ -81,10 +84,6 @@ class FIBBICache
 
     char *PreloadFileName;
     unsigned int RecordsPreloaded;
-
-    void *RecordBuffer;
-    int RecordBufferLen;
-    int RBChunkSize;
 
  };
 
