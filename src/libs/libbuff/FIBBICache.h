@@ -82,8 +82,9 @@ class FIBBICache
     char *PreloadFileName;
     unsigned int RecordsPreloaded;
 
-    int RecordBufferLen;
     void *RecordBuffer;
+    int RecordBufferLen;
+    int RBChunkSize;
 
  };
 

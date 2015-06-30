@@ -116,14 +116,23 @@ FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
 {
   KeyValueMap *KVM=new KeyValueMap;
   opTable = (void *)KVM;
-  PreloadFileName=0;
-  RecordsPreloaded=0;
+  IsGCache=pIsGCache;
+
+  pthread_rwlock_init(&lock,0);
+
   Hits=Misses=0;
   RecordBuffer=0;
   NumRecords=RecordBufferLen=0;
-  IsGCache=pIsGCache;
-  pthread_rwlock_init(&lock,0);
+  RBChunkSize=1000; // default chunk size for reallocation
+  char *s=getenv("BUFF_FIBBI_CHUNK");
+  //if (char *s=getenv("BUFF_FIBBI_CHUNK"))
+  if (s)
+   { sscanf(s,"%i",&RBChunkSize);
+     Log("Set FIBBI chunk size to %i.",RBChunkSize);
+   };
 
+  PreloadFileName=0;
+  RecordsPreloaded=0;
   if (MeshFileName)
    { char CacheFileName[MAXSTR];
      const char *Extension = IsGCache ? "GCache" : "dGCache";
@@ -219,13 +228,13 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
   //FCLock.read_lock();
   pthread_rwlock_rdlock(&lock);
   KeyValueMap::iterator p=KVM->find(K);
-  //FCLock.read_unlock();
-  pthread_rwlock_unlock(&lock);
-
-  if ( p != (KVM->end()) )
+  bool Found = (p != (KVM->end()) );
+  if ( Found )
    { Hits++;
      memcpy(Data, (double *)(p->second), DataSize);
    };
+  pthread_rwlock_unlock(&lock);
+  if (Found) return;
   
   /***************************************************************/
   /* if it was not found, compute a new FIBBI data record...     */
@@ -248,8 +257,7 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
   int RecordSize = KEYSIZE + DataSize;
   if (NumRecords>RecordBufferLen)
    { 
-     #define CHUNK 10000
-     RecordBufferLen += CHUNK;
+     RecordBufferLen += RBChunkSize;
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 printf("thread %i reallocing to %8i \n", omp_get_thread_num(),RecordBufferLen);
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
