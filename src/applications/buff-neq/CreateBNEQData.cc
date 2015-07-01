@@ -146,7 +146,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   MyTime=time(0);
   MyTm=localtime(&MyTime);
   strftime(TimeString,30,"%D::%T",MyTm);
-  FILE *f=vfopen("%s.SRFlux","a",BNEQD->FileBase);
+  FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
   fprintf(f,"\n");
   fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
   fprintf(f,"# data file columns: \n");
