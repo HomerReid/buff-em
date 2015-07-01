@@ -93,7 +93,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   /*--------------------------------------------------------------*/
   int NO=G->NumObjects;
   BNEQD->Overlap = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
-  BNEQD->VInv    = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
+  BNEQD->VBlocks = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->Sigma   = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->GBlocks = (HMatrix ***)mallocEC(NO*sizeof(HMatrix **));
   for(int no=0; no<NO; no++)
@@ -101,7 +101,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
      int NBF  = G->Objects[no]->NumInteriorFaces;
 
      BNEQD->Overlap[no]  = new SMatrix(NBF, NBF, LHM_REAL);
-     BNEQD->VInv[no]     = new SMatrix(NBF, NBF, LHM_COMPLEX);
+     BNEQD->VBlocks[no]  = new SMatrix(NBF, NBF, LHM_COMPLEX);
      BNEQD->Sigma[no]    = new SMatrix(NBF, NBF, LHM_REAL);
 
      BNEQD->GBlocks[no]  = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));

@@ -172,7 +172,7 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   SWGGeometry *G       = BNEQD->G;
   HMatrix ***GBlocks   = BNEQD->GBlocks;
   SMatrix **Overlap    = BNEQD->Overlap;
-  SMatrix **VInv       = BNEQD->VInv;
+  SMatrix **VBlocks    = BNEQD->VBlocks;
   SMatrix **Sigma      = BNEQD->Sigma;
   HMatrix **WorkMatrix = BNEQD->WorkMatrix;
 
@@ -196,7 +196,7 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   HMatrix *M1=WorkMatrix[0];
   M1->Zero();
   for(int no=0; no<NO; no++)
-   M1->AddBlock(VInv[no], Offset[no], Offset[no]);
+   M1->AddBlock(VBlocks[no], Offset[no], Offset[no]);
 
   // step (b)
   HMatrix *M2=WorkMatrix[1];
@@ -271,9 +271,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   SWGGeometry *G           = BNEQD->G;
   IHAIMatProp *Temperature = BNEQD->Temperature;
   HMatrix ***GBlocks       = BNEQD->GBlocks;
-  SMatrix **VInv           = BNEQD->VInv;
+  SMatrix **VBlocks        = BNEQD->VBlocks;
   SMatrix **Sigma          = BNEQD->Sigma;
-  HMatrix **WorkMatrix     = BNEQD->WorkMatrix;
   PFTOptions *pftOptions   = BNEQD->pftOptions;
   int NQ                   = BNEQD->NQ;
 
@@ -283,14 +282,15 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
-     Log(" Assembling Im V_{%i} and Sigma_{%i} ...",no,no);
+     Log(" Assembling V_{%i} and Sigma_{%i} ...",no,no);
      if (BNEQD->SMatricesInitialized==false)
-      { VInv[no]->BeginAssembly(MAXOVERLAP);
+      { VBlocks[no]->BeginAssembly(MAXOVERLAP);
         Sigma[no]->BeginAssembly(MAXOVERLAP);
       };
-     G->AssembleVInvBlock(no, Omega, Temperature, VInv[no], Sigma[no]);
+     G->AssembleOverlapBlocks(no, Omega, Temperature,
+                              VBlocks[no], 0, Sigma[no]);
      if (BNEQD->SMatricesInitialized==false)
-      { VInv[no]->EndAssembly();
+      { VBlocks[no]->EndAssembly();
         Sigma[no]->EndAssembly();
       };
 

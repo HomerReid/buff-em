@@ -76,7 +76,7 @@ void RHSVectorIntegrand(double *x, double *b, double Divb,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V)
+HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *RHS)
 {
   IF->SetFrequency(Omega, true);
 
@@ -107,14 +107,13 @@ HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V)
         BFInt(O, nf, RHSVectorIntegrand, (void *)Data,
               2, (double *)&Entry, 0, 33, 0, 0);
 
-        V->SetEntry( Offset + nf, PreFactor * Entry);
+        RHS->SetEntry( Offset + nf, PreFactor * Entry);
 
       }; // for(int nf=0; nf<O->NumInteriorFaces; no++, nbf++)
 
    }; // for(int no=0...)
   
-  return V;
-
+  return RHS;
 
 }
 

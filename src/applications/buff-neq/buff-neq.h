@@ -82,10 +82,10 @@ typedef struct BNEQData
 
    // SMatrix structures for sparse matrix subblocks
    // Overlap[no] = overlap matrix for object #no
-   // VInv[no]    = VInverse matrix for object #no
+   // VBlocks[no] = V matrix for object #no
    // Sigma[no]   = Sigma matrix for object #no
    SMatrix **Overlap;
-   SMatrix **VInv;
+   SMatrix **VBlocks;
    SMatrix **Sigma;
    bool SMatricesInitialized;
 

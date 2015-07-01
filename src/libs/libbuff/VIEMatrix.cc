@@ -84,9 +84,9 @@ double GetThetaFactor(double Omega, double T)
 
 /***************************************************************/
 /* user data structure and integrand function for              */
-/* GetVInvAndSigmaEntries                                 */
+/* GetOverlaps                                                 */
 /***************************************************************/
-typedef struct VIIData
+typedef struct GOData
  { 
    double *QA;
    double PreFacA;
@@ -96,15 +96,15 @@ typedef struct VIIData
    IHAIMatProp *MP;
    IHAIMatProp *Temperature;
 
- } VIIData;
+ } GOData;
 
-void VIntegrand(double *x, double *b, double DivB, 
-                void *UserData, double *I)
+void GetOverlapIntegrand(double *x, double *b, double DivB, 
+                         void *UserData, double *I)
 {
   (void) DivB;
   (void) b;
 
-  VIIData *Data            = (VIIData *)UserData;
+  GOData *Data            = (GOData *)UserData;
   double *QA               = Data->QA;
   double PreFacA           = Data->PreFacA;
   double *QB               = Data->QB;
@@ -113,13 +113,12 @@ void VIntegrand(double *x, double *b, double DivB,
   IHAIMatProp *MP          = Data->MP;
   IHAIMatProp *Temperature = Data->Temperature;
 
-  cdouble Eps[3][3], Y[3][3];
-  MP->GetEps( Omega, x, Eps );
-
-  Eps[0][0] -= 1.0;
-  Eps[1][1] -= 1.0;
-  Eps[2][2] -= 1.0;
-  Invert3x3Matrix(Eps, Y);
+  cdouble EpsM1[3][3], InvEpsM1[3][3];
+  MP->GetEps( Omega, x, EpsM1 );
+  EpsM1[0][0] -= 1.0;
+  EpsM1[1][1] -= 1.0;
+  EpsM1[2][2] -= 1.0;
+  Invert3x3Matrix(EpsM1, InvEpsM1);
 
   double FA[3], FB[3];
   FA[0] = PreFacA * (x[0] - QA[0]);
@@ -138,51 +137,56 @@ void VIntegrand(double *x, double *b, double DivB,
      Theta=GetThetaFactor(real(Omega), T);
    };
 
-  cdouble VInv=0.0;
+  cdouble V=0.0, VInv=0.0;
   double Sigma=0.0;
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    { VInv  += FA[Mu]*Y[Mu][Nu]*FB[Nu];
-      Sigma += Theta*FA[Mu]*imag(Eps[Mu][Nu])*FB[Nu];
+    { V     += FA[Mu]*EpsM1[Mu][Nu]*FB[Nu];
+      VInv  += FA[Mu]*InvEpsM1[Mu][Nu]*FB[Nu];
+      Sigma += Theta*FA[Mu]*imag(EpsM1[Mu][Nu])*FB[Nu];
     };
-  VInv  *= -1.0/ (Omega*Omega);
+  V     *= -1.0*Omega*Omega;
+  VInv  *= -1.0 / (Omega*Omega);
   Sigma *= 2.0*real(Omega) / (M_PI*ZVAC);
  
-  I[0] = real(VInv);
-  I[1] = imag(VInv);
-  I[2] = Sigma; 
+  I[0] = real(V);
+  I[1] = imag(V);
+  I[2] = real(VInv);
+  I[3] = imag(VInv);
+  I[4] = Sigma; 
   
 }
 
 /***************************************************************/
 /* For a given SWG basis function f_a, this routine computes   */
-/* matrix elements of the VInverse and Sigma operators between */
-/* f_a and all basis functions f_b that have nonzero overlap   */
-/* with f_a (there are a maximum of MAXOVERLAP=7 such BFs.)    */
+/* the matrix elements of various operators between f_a and    */
+/* all basis functions f_b that have nonzero overlap with f_a  */
+/* (there are at most MAXOVERLAP=7 such BFs.)                  */
 /* The indices of the f_b functions are returned in Indices.   */
 /*                                                             */
-/* VInverse = (1 - Eps^{-1}) / k^2                             */
-/*                                                             */
+/*        V = k^2 * (1 - Eps)k^2                               */
+/* VInverse = V^{-1}                                           */
 /*    Sigma = Theta(T) * Im Eps * (2k / Pi*ZVAC)               */
 /*                                                             */
 /* If Temperature==NULL then Theta(T) is set to 1.             */
 /***************************************************************/
-int GetVInvAndSigmaEntries(SWGVolume *V,
-                           int nfA, cdouble Omega,
-                           IHAIMatProp *Temperature,
-                           int Indices[MAXOVERLAP],
-                           cdouble VInvEntries[MAXOVERLAP],
-                           double SigmaEntries[MAXOVERLAP])
+int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
+                IHAIMatProp *Temperature,
+                int Indices[MAXOVERLAP],
+                cdouble VEntries[MAXOVERLAP],
+                cdouble VInvEntries[MAXOVERLAP],
+                double SigmaEntries[MAXOVERLAP])
 {
   Indices[0]=nfA;
+  VEntries[0]=0.0;
   VInvEntries[0]=0.0;
   SigmaEntries[0]=0.0;
   int NNZ=1;
 
-  SWGFace *FA = V->Faces[nfA];
-  struct VIIData MyVIIData, *Data=&MyVIIData;
+  SWGFace *FA = O->Faces[nfA];
+  struct GOData MyGOData, *Data=&MyGOData;
   Data->Omega       = Omega;
-  Data->MP          = V->MP;
+  Data->MP          = O->MP;
   Data->Temperature = Temperature;
 
   /*--------------------------------------------------------------*/
@@ -190,36 +194,40 @@ int GetVInvAndSigmaEntries(SWGVolume *V,
   /* nfB runs over the 4 faces of the positive tetrahedron of nfA */
   /*--------------------------------------------------------------*/
   int nt        = FA->iPTet;
-  SWGTet *T     = V->Tets[nt];
-  Data->QA      = V->Vertices + 3*(FA->iQP);
+  SWGTet *T     = O->Tets[nt];
+  Data->QA      = O->Vertices + 3*(FA->iQP);
   Data->PreFacA = FA->Area / (3.0*T->Volume);
   for(int ifB=0; ifB<4; ifB++)
    { 
      int nfB = T->FI[ifB];
-     if (nfB >= V->NumInteriorFaces) continue;
+     if (nfB >= O->NumInteriorFaces) continue;
 
-     SWGFace *FB = V->Faces[nfB];
+     SWGFace *FB = O->Faces[nfB];
      if ( FB->iPTet == nt )
-      { Data->QB      = V->Vertices + 3*(FB->iQP);
+      { Data->QB      = O->Vertices + 3*(FB->iQP);
         Data->PreFacB = FB->Area / (3.0*T->Volume);
       }
      else
-      { Data->QB      = V->Vertices + 3*(FB->iQM);
+      { Data->QB      = O->Vertices + 3*(FB->iQM);
         Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
-     double I[3], E[3];
-     TetInt(V, nt, 0, 1.0, VIntegrand, (void *)Data,
-            3, I, E, 33, 0, 1.0e-4);
+     #define NFUN 5
+     int Order=33;
+     double RelTol=1.0e-4;
+     double I[NFUN], E[NFUN];
+     TetInt(O, nt, 0, 1.0, GetOverlapIntegrand, (void *)Data,
+            NFUN, I, E, Order, 0, RelTol);
 
      if (nfB==nfA)
-      { 
-        VInvEntries[0]  += cdouble(I[0], I[1]);
-        SigmaEntries[0] += I[2];
+      { VEntries[0]     += cdouble(I[0], I[1]);
+        VInvEntries[0]  += cdouble(I[2], I[3]);
+        SigmaEntries[0] += I[4];
       }
      else
-      { VInvEntries[NNZ]  = cdouble(I[0], I[1]);
-        SigmaEntries[NNZ] = I[2];
+      { VEntries[NNZ]     = cdouble(I[0], I[1]);
+        VInvEntries[NNZ]  = cdouble(I[2], I[3]);
+        SigmaEntries[NNZ] = I[4];
         Indices[NNZ]      = nfB;
         NNZ++;
       };
@@ -230,36 +238,40 @@ int GetVInvAndSigmaEntries(SWGVolume *V,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   nt            = FA->iMTet;
-  T             = V->Tets[nt];
-  Data->QA      = V->Vertices + 3*(FA->iQM);
+  T             = O->Tets[nt];
+  Data->QA      = O->Vertices + 3*(FA->iQM);
   Data->PreFacA = -1.0*FA->Area / (3.0*T->Volume);
   for(int ifB=0; ifB<4; ifB++)
    { 
      int nfB = T->FI[ifB];
-     if (nfB >= V->NumInteriorFaces) continue;
+     if (nfB >= O->NumInteriorFaces) continue;
 
-     SWGFace *FB = V->Faces[nfB];
+     SWGFace *FB = O->Faces[nfB];
      if ( FB->iPTet == nt )
-      { Data->QB      = V->Vertices + 3*(FB->iQP);
+      { Data->QB      = O->Vertices + 3*(FB->iQP);
         Data->PreFacB = FB->Area / (3.0*T->Volume);
       }
      else
-      { Data->QB      = V->Vertices + 3*(FB->iQM);
+      { Data->QB      = O->Vertices + 3*(FB->iQM);
         Data->PreFacB = -1.0*FB->Area / (3.0*T->Volume);
       };
 
-     double I[3], E[3];
-     TetInt(V, nt, 0, 1.0, VIntegrand, (void *)Data,
-            3, I, E, 33, 0, 0);
+     int Order=33;
+     double RelTol=1.0e-4;
+     double I[NFUN], E[NFUN];
+     TetInt(O, nt, 0, 1.0, GetOverlapIntegrand, (void *)Data,
+            NFUN, I, E, Order, 0, RelTol);
 
      if (nfB==nfA)
       { 
-        VInvEntries[0]  += cdouble( I[0], I[1] );
-        SigmaEntries[0] += I[2];
+        VEntries[0]     += cdouble( I[0], I[1] );
+        VInvEntries[0]  += cdouble( I[2], I[3] );
+        SigmaEntries[0] += I[4];
       }
      else
-      { VInvEntries[NNZ]  = cdouble( I[0], I[1] );
-        SigmaEntries[NNZ] = I[2];
+      { VEntries[NNZ]     = cdouble( I[0], I[1] );
+        VInvEntries[NNZ]  = cdouble( I[2], I[3] );
+        SigmaEntries[NNZ] = I[4];
         Indices[NNZ]      = nfB;
         NNZ++;
       };
@@ -268,23 +280,63 @@ int GetVInvAndSigmaEntries(SWGVolume *V,
 
   return NNZ;
 
-} // routine GetVInvAndImEpsEntries
+} // routine GetOverlaps
 
-int GetVInvEntries(SWGVolume *V, int nfA, cdouble Omega,
+int GetVInvEntries(SWGVolume *O, int nfA, cdouble Omega,
                    int Indices[MAXOVERLAP],
                    cdouble VInvEntries[MAXOVERLAP])
 {
+  cdouble VEntries[MAXOVERLAP];
   double SigmaEntries[MAXOVERLAP];
-  return GetVInvAndSigmaEntries(V, nfA, Omega, 0,
-                                Indices, VInvEntries, SigmaEntries);
+  IHAIMatProp *Temperature=0;
+  return GetOverlaps(O, nfA, Omega, Temperature, Indices,
+                     VEntries, VInvEntries, SigmaEntries);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
+                                        IHAIMatProp *Temperature,
+                                        SMatrix *V, SMatrix *VInv,
+                                        SMatrix *Sigma, HMatrix *TInv,
+                                        int Offset)
+{
+   SWGVolume *O = Objects[no];
+
+#ifdef USE_OPENMP
+   int NumThreads=GetNumThreads();
+   if (V || VInv || Sigma)
+    NumThreads=1;
+#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
+#endif
+   for(int nr=0; nr<O->NumInteriorFaces; nr++)
+    { int ncList[MAXOVERLAP];
+      cdouble VEntries[MAXOVERLAP];
+      cdouble VInvEntries[MAXOVERLAP];
+      double SigmaEntries[MAXOVERLAP];
+      int NNZ = GetOverlaps(O, nr, Omega, Temperature, ncList,
+                            VEntries, VInvEntries, SigmaEntries);
+      for(int nnz=0; nnz<NNZ; nnz++)
+        { int nc = ncList[nnz];
+          if (V)
+           V->SetEntry(nr, nc, VEntries[nnz]);
+          if (VInv)
+           VInv->SetEntry(nr, nc, VInvEntries[nnz]);
+          if (Sigma) 
+           Sigma->SetEntry(nr, nc, SigmaEntries[nnz]);
+          if (TInv)
+           TInv->AddEntry(Offset+nr, Offset+nc, VInvEntries[nnz]);
+        };
+   };
+
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G,
-                                 int RowOffset, int ColOffset)
+                                 HMatrix *G, int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/
@@ -349,43 +401,6 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::AssembleVInvBlock(int no, cdouble Omega,
-                                    IHAIMatProp *Temperature,
-                                    SMatrix *VInv, SMatrix *Sigma,
-                                    HMatrix *TInv,
-                                    int Offset)
-{
-   Log("Adding VInv(%i)",no);
-   SWGVolume *O = Objects[no];
-
-#ifdef USE_OPENMP
-   int NumThreads=GetNumThreads();
-   if (VInv || Sigma)
-    NumThreads=1;
-#pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
-#endif
-   for(int nr=0; nr<O->NumInteriorFaces; nr++)
-    { int ncList[MAXOVERLAP];
-      cdouble VInvEntries[MAXOVERLAP];
-      double SigmaEntries[MAXOVERLAP];
-      int NNZ = GetVInvAndSigmaEntries(O, nr, Omega, Temperature,
-                                       ncList, VInvEntries, SigmaEntries);
-      for(int nnz=0; nnz<NNZ; nnz++)
-        { int nc = ncList[nnz];
-          if (VInv)
-           VInv->SetEntry(nr, nc, VInvEntries[nnz]);
-          if (Sigma) 
-           Sigma->SetEntry(nr, nc, SigmaEntries[nnz]);
-          if (TInv)
-           TInv->AddEntry(Offset+nr, Offset+nc, VInvEntries[nnz]);
-        };
-   };
-
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 {
   if ( M && ( (M->NR!=TotalBFs) || (M->NR != M->NC) ) )
@@ -403,7 +418,10 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)
-       AssembleVInvBlock(noa, Omega, 0, 0, 0, M, BFIndexOffset[noa]);
+       { Log("Adding VInv(%i)",noa);
+         AssembleOverlapBlocks(noa, Omega, 0, 0, 0, 0,
+                               M, BFIndexOffset[noa]);
+       };
     };
 
   for(int nr=1; nr<TotalBFs; nr++)

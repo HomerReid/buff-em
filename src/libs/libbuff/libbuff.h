@@ -219,19 +219,20 @@ class SWGGeometry
    HMatrix *AllocateVIEMatrix(bool PureImagFreq=false);
    HMatrix *AssembleVIEMatrix(cdouble Omega, HMatrix *M);
    HVector *AllocateRHSVector();
-   HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *V);
+   HVector *AssembleRHSVector(cdouble Omega, IncField *IF, HVector *RHS);
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
    HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
                    HMatrix *PFTMatrix, PFTOptions *Options);
 
+   void AssembleOverlapBlocks(int no, cdouble Omega,
+                              IHAIMatProp *Temperature,
+                              SMatrix *V, SMatrix *VInv,
+                              SMatrix *Sigma, HMatrix *TInv=0,
+                              int Offset=0);
    void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);
-   void AssembleVInvBlock(int no, cdouble Omega,
-                          IHAIMatProp *Temperature,
-                          SMatrix *VInv, SMatrix *Sigma,
-                          HMatrix *TInv=0, int Offset=0);
 
    // miscellaneous routines
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);
