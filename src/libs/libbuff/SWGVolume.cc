@@ -397,7 +397,8 @@ int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB,
 /***************************************************************/
 /***************************************************************/
 int GetOverlapElements(SWGVolume *O, int nfA,
-                       int Indices[7], double Entries[7])
+                       int Indices[MAXOVERLAP],
+                       double Entries[MAXOVERLAP])
 { 
   int NNZ=0;
   

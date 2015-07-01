@@ -92,15 +92,17 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   /*- transformations.                                           -*/
   /*--------------------------------------------------------------*/
   int NO=G->NumObjects;
+  BNEQD->Overlap = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->VInv    = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->Sigma   = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->GBlocks = (HMatrix ***)mallocEC(NO*sizeof(HMatrix **));
   for(int no=0; no<NO; no++)
    { 
      int NBF  = G->Objects[no]->NumInteriorFaces;
-     BNEQD->VInv[no]  = new SMatrix(NBF, NBF, LHM_COMPLEX);
-     BNEQD->Sigma[no] = new SMatrix(NBF, NBF, LHM_REAL);
-     BNEQD->GBlocks[no] = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
+     BNEQD->Overlap[no]  = new SMatrix(NBF, NBF, LHM_REAL);
+     BNEQD->VInv[no]     = new SMatrix(NBF, NBF, LHM_COMPLEX);
+     BNEQD->Sigma[no]    = new SMatrix(NBF, NBF, LHM_REAL);
+     BNEQD->GBlocks[no]  = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
      for(int nop=no; nop<NO; nop++)
       { int NBFP = G->Objects[nop]->NumInteriorFaces;
         BNEQD->GBlocks[no][nop] = new HMatrix(NBF, NBFP, LHM_COMPLEX);
@@ -111,6 +113,27 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   int NBFTot=G->TotalBFs;
   for(int n=0; n<3; n++)
    BNEQD->WorkMatrix[n] = new HMatrix(NBFTot, NBFTot, LHM_COMPLEX);
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  for(int no=0; no<NO; no++)
+   { 
+     SMatrix *OM=BNEQD->Overlap[no];
+     OM->BeginAssembly(MAXOVERLAP);
+
+     SWGVolume *O=G->Objects[no];
+     for(int nfa=0; nfa<O->NumInteriorFaces; nfa++)
+      { 
+        int nfbList[MAXOVERLAP];
+        double Entries[MAXOVERLAP];
+        int NNZ=GetOverlapElements(O, nfa, nfbList, Entries);
+        for(int nnz=0; nnz<NNZ; nnz++)
+         OM->SetEntry(nfa, nfbList[nnz], Entries[nnz]);
+      };
+
+     OM->EndAssembly();
+   };
 
   /*--------------------------------------------------------------*/
   /* write file preambles ----------------------------------------*/
