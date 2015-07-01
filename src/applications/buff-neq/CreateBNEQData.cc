@@ -99,9 +99,11 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   for(int no=0; no<NO; no++)
    { 
      int NBF  = G->Objects[no]->NumInteriorFaces;
+
      BNEQD->Overlap[no]  = new SMatrix(NBF, NBF, LHM_REAL);
      BNEQD->VInv[no]     = new SMatrix(NBF, NBF, LHM_COMPLEX);
      BNEQD->Sigma[no]    = new SMatrix(NBF, NBF, LHM_REAL);
+
      BNEQD->GBlocks[no]  = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
      for(int nop=no; nop<NO; nop++)
       { int NBFP = G->Objects[nop]->NumInteriorFaces;

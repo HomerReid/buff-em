@@ -283,25 +283,23 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
-     if (G->Mate[no]!=-1)
-      { Log(" Block %i is identical to %i (reusing matrix blocks)",no,G->Mate[no]);
-        continue;
-      }
-
-     Log(" Assembling G_{%i,%i}...",no,no);
-     G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
-
+     Log(" Assembling Im V_{%i} and Sigma_{%i} ...",no,no);
      if (BNEQD->SMatricesInitialized==false)
       { VInv[no]->BeginAssembly(MAXOVERLAP);
         Sigma[no]->BeginAssembly(MAXOVERLAP);
       };
-
-     Log(" Assembling Im V_{%i} and Sigma_{%i} ...",no,no);
      G->AssembleVInvBlock(no, Omega, Temperature, VInv[no], Sigma[no]);
      if (BNEQD->SMatricesInitialized==false)
       { VInv[no]->EndAssembly();
         Sigma[no]->EndAssembly();
       };
+
+     if (G->Mate[no]!=-1)
+      { Log(" Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
+        continue;
+      };
+     Log(" Assembling G_{%i,%i}...",no,no);
+     G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
    };
   BNEQD->SMatricesInitialized=true;
 
