@@ -78,16 +78,20 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
   /***************************************************************/
   for(int no=0; no<NO; no++)
    { 
-     SWGVolume *O = G->Objects[no];
-     int Offset   = G->BFIndexOffset[no];
-     int NBF      = O->NumInteriorFaces;
+     SWGVolume *O      = G->Objects[no];
+     int Offset        = G->BFIndexOffset[no];
+     int NBF           = O->NumInteriorFaces;
+
+     double XTorque[3] = {0.0, 0.0, 0.0};
+     if (O->OTGT) O->OTGT->Apply(XTorque);
+     if (O->GT)   O->GT->Apply(XTorque);
 
      for(int nbfA=0; nbfA<NBF; nbfA++)
       { 
         int nbfBList[MAXOVERLAP];
         double OPFTIntegrals[14][MAXOVERLAP];
         int NNZ=GetOverlapEntries(O, nbfA, OverlapIntegrand_PFT,
-                                  14, 0,
+                                  14, (void *)XTorque,
                                   Omega, nbfBList, OPFTIntegrals);
 
         for(int nnz=0; nnz<NNZ; nnz++)

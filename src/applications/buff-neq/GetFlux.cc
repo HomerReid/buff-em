@@ -32,6 +32,15 @@
 
 namespace buff { 
 
+HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
+                 HVector *JVector, HMatrix *Rytov,
+                 HMatrix *PFTMatrix);
+
+HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+                   HVector *JVector, HVector *RHSVector,
+                   HMatrix *Rytov, HMatrix *PFTMatrix, 
+                   bool *NeedFT=0);
+
 void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
                     double PFT[NUMPFT],
                     GTransformation *GT1, GTransformation *GT2,
@@ -250,7 +259,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   SMatrix **VBlocks        = BNEQD->VBlocks;
   SMatrix **Sigma          = BNEQD->Sigma;
   PFTOptions *pftOptions   = BNEQD->pftOptions;
-  int NQ                   = BNEQD->NQ;
+  int QuantityFlags        = BNEQD->QuantityFlags;
 
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
@@ -309,27 +318,46 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
      FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
+     static HMatrix *OPFT   = new HMatrix(NO, NUMPFT);
+     static HMatrix *JDEPFT = new HMatrix(NO, NUMPFT);
+     static HMatrix *DSIPFT = new HMatrix(NO, NUMPFT);
      for(int nos=0; nos<NO; nos++)
       { 
         // get the Rytov matrix for source object #nos
         HMatrix *Rytov=ComputeRytovMatrix(BNEQD, nos);
-
-        // get the PFT for all destination objects #nod
+        
+        // get the PFT for all destination objects
+        GetOPFT(G, Omega, 0, Rytov, OPFT);
+        GetJDEPFT(G, Omega, 0, 0, 0, Rytov, JDEPFT);
         for(int nod=0; nod<NO; nod++)
-         {
-           double PFT[MAXQUANTITIES];
+         { double PFT[NUMPFT];
            GTransformation *GT1=Objects[nod]->OTGT;
            GTransformation *GT2=Objects[nod]->GT;
            GetDSIPFTTrace(G, Omega, Rytov, PFT, GT1, GT2, pftOptions);
-
-           fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
-           for(int nq=0; nq<NQ; nq++)
-            { fprintf(f,"%e ",PFT[nq]);
-              int Index=GetIndex(BNEQD, nt, nos, nod, nq);
-              Flux[Index]=PFT[nq];
-            };
-           fprintf(f,"\n");
+           DSIPFT->SetEntriesD(nod,":",PFT);
          };
+
+        // write results to file
+        for(int nod=0; nod<NO; nod++)
+         {
+           fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
+           for(int nq=0; nq<NUMPFT; nq++)
+            fprintf(f,"%e ",OPFT->GetEntryD(nod,nq));
+           for(int nq=0; nq<NUMPFT; nq++)
+            fprintf(f,"%e ",JDEPFT->GetEntryD(nod,nq));
+           for(int nq=0; nq<NUMPFT; nq++)
+            fprintf(f,"%e ",DSIPFT->GetEntryD(nod,nq));
+           fprintf(f,"\n");
+
+           for(int nq=0; nq<NUMPFT; nq++)
+            { int Flag = 1 << nq;
+              if ( (QuantityFlags & Flag) == 0 )
+               continue;
+              int Index=GetIndex(BNEQD, nt, nos, nod, nq);
+              Flux[Index] = DSIPFT->GetEntryD(nod, nq);
+            };
+         };
+
       };
      fclose(f);
 

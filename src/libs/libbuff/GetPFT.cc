@@ -78,7 +78,8 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
 // PFT by J \dot E method
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix, bool *NeedFT);
+                   HMatrix *Rytov, HMatrix *PFTMatrix,
+                   bool *NeedFT=0);
 
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
