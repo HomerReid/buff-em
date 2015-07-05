@@ -139,7 +139,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
   /***************************************************************/
   SWGGeometry *G     = BSD->G;
   Options->IF        = BSD->IF;
-  Options->RHS       = BSD->RHS;
+  Options->RHSVector = BSD->RHS;
   Options->PFTMethod = PFTMethod;
   HMatrix *PFTMatrix = G->GetPFT(BSD->J, BSD->Omega, 0, Options);
 
