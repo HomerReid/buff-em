@@ -52,7 +52,7 @@ typedef struct BSData
 /* these are the 'output modules' that compute and process the */
 /* scattered fields in various ways.                           */
 /***************************************************************/
-void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options);
+void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options, int PFTMethod);
 void ProcessEPFile(BSData *BSData, char *EPFileName);
 void WriteMomentFile(BSData *BSD, char *FileName);
 

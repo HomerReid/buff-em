@@ -152,9 +152,8 @@ GTransformation *GetFullObjectTransformation(SWGGeometry *G,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
-                             cdouble Omega, HMatrix *PFTMatrix,
-                             PFTOptions *Options)
+HMatrix *SWGGeometry::GetPFT(HVector *JVector, cdouble Omega, 
+                             HMatrix *PFTMatrix, PFTOptions *Options)
 {
   /***************************************************************/
   /***************************************************************/
@@ -179,6 +178,7 @@ HMatrix *SWGGeometry::GetPFT(IncField *IF, HVector *JVector,
   int PFTMethod      = Options->PFTMethod;
   HMatrix *Rytov     = Options->RytovMatrix; 
   HVector *RHSVector = Options->RHSVector;
+  IncField *IF       = Options->IF;
 
   /***************************************************************/
   /* hand off to the individual PFT algorithms to do the         */

@@ -113,7 +113,8 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
+void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
+                  int PFTMethod)
 { 
   /***************************************************************/
   /* write file preamble as necessary ****************************/
@@ -136,8 +137,11 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options)
   /***************************************************************/
   /* do the PFT calculation **************************************/
   /***************************************************************/
-  SWGGeometry *G = BSD->G;
-  HMatrix *PFTMatrix = G->GetPFT(BSD->IF, BSD->J, BSD->Omega, 0, Options);
+  SWGGeometry *G     = BSD->G;
+  Options->IF        = BSD->IF;
+  Options->RHS       = BSD->RHS;
+  Options->PFTMethod = PFTMethod;
+  HMatrix *PFTMatrix = G->GetPFT(BSD->J, BSD->Omega, 0, Options);
 
   /***************************************************************/
   /* write results to output file ********************************/

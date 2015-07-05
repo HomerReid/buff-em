@@ -299,19 +299,13 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (OPFTFile)
-      { pftOptions->PFTMethod=SCUFF_PFT_OVERLAP;
-        WritePFTFile(BSD, OPFTFile, pftOptions);
-      };
+      WritePFTFile(BSD, OPFTFile, pftOptions, SCUFF_PFT_OVERLAP);
 
      if (JDEPFTFile)
-      { pftOptions->PFTMethod=SCUFF_PFT_EP;
-        WritePFTFile(BSD, JDEPFTFile, pftOptions);
-      };
+      WritePFTFile(BSD, JDEPFTFile, pftOptions, SCUFF_PFT_EP);
 
      if (DSIPFTFile)
-      { pftOptions->PFTMethod=SCUFF_PFT_DSI;
-        WritePFTFile(BSD, DSIPFTFile, pftOptions);
-      };
+      WritePFTFile(BSD, DSIPFTFile, pftOptions, SCUFF_PFT_DSI);
 
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/

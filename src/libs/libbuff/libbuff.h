@@ -223,7 +223,7 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetPFT(IncField *IF, HVector *JVector, cdouble Omega,
+   HMatrix *GetPFT(HVector *JVector, cdouble Omega,
                    HMatrix *PFTMatrix, PFTOptions *Options);
 
    void AssembleOverlapBlocks(int no, cdouble Omega,

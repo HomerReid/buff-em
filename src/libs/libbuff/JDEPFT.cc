@@ -165,20 +165,6 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
    ErrExit("invalid PFTMatrix in GetJDEPFT");
 
   /***************************************************************/
-  /* precompute total power (extinction) if RHSVector is present */
-  /***************************************************************/
-  if (RHSVector)
-   { cdouble PreFactor = -II*Omega*ZVAC;
-     for(int no=0, nbf=0; no<NO; no++)
-      for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
-       {
-         cdouble EAlpha=PreFactor*RHSVector->GetEntry(nbf);
-         cdouble jAlpha=JVector->GetEntry(nbf);
-         PFTMatrix->AddEntry(no, 1, 0.5*real( conj(jAlpha) * EAlpha ) );
-       };
-   };
-
-  /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   for(int no=0; no<NO; no++)
@@ -201,7 +187,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*--------------------------------------------------------------*/
   int TotalBFs = G->TotalBFs;
   int NumPairs = TotalBFs*(TotalBFs+1)/2;
-  cdouble IKZ=II*Omega*ZVAC;
+  cdouble IKZ  = II*Omega*ZVAC;
 #ifdef USE_OPENMP
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
@@ -244,9 +230,9 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 
        if (nbfb>nbfa)
         { Offset = nt*NONQ + nob*NQ;
-          DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*conj(JJ*GG) );
+          DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*conj(JJ)*GG );
           for(int Mu=0; Mu<6; Mu++)
-           DeltaPFT[ Offset + 2 + Mu ] += 0.5*TENTHIRDS*imag( IKZ*conj(JJ*dG[Mu]) ) / real(Omega);
+           DeltaPFT[ Offset + 2 + Mu ] -= 0.5*TENTHIRDS*imag( IKZ*conj(JJ)*dG[Mu] ) / real(Omega);
         };
 
     }; // end of multithreaded loop
@@ -299,14 +285,14 @@ NumThreads = GetNumThreads();
          /*--------------------------------------------------------------*/
          /*--------------------------------------------------------------*/
          double Factor = 0.5;
-         PFTMatrix->AddEntry(no, 0, Factor * P );
+         PFTMatrix->AddEntry(no, PFT_PABS, Factor * P );
          Factor*=TENTHIRDS/real(Omega);
-         PFTMatrix->AddEntry(no, 2, Factor * Fx );
-         PFTMatrix->AddEntry(no, 3, Factor * Fy );
-         PFTMatrix->AddEntry(no, 4, Factor * Fz );
-         PFTMatrix->AddEntry(no, 5, Factor * Tx );
-         PFTMatrix->AddEntry(no, 6, Factor * Ty );
-         PFTMatrix->AddEntry(no, 7, Factor * Tz );
+         PFTMatrix->AddEntry(no, PFT_XFORCE, Factor * Fx );
+         PFTMatrix->AddEntry(no, PFT_YFORCE, Factor * Fy );
+         PFTMatrix->AddEntry(no, PFT_ZFORCE, Factor * Fz );
+         PFTMatrix->AddEntry(no, PFT_XTORQUE, Factor * Tx );
+         PFTMatrix->AddEntry(no, PFT_YTORQUE, Factor * Ty );
+         PFTMatrix->AddEntry(no, PFT_ZTORQUE, Factor * Tz );
        };
 
    }; // if (IF)
@@ -314,10 +300,22 @@ NumThreads = GetNumThreads();
   //AddTaskTiming(5,Elapsed);
 
   /***************************************************************/
+  /* compute scattered power only if RHSVector is present        */
+  /* PScat = PTotal - PAbsorbed                                  */
   /***************************************************************/
-  /***************************************************************/
-  for(int no=0; no<NO; no++)
-   PFTMatrix->AddEntry(no, 1, -1.0*PFTMatrix->GetEntry(no,0));
+  if (RHSVector)
+   { 
+     cdouble PreFactor = -II*Omega*ZVAC;
+     for(int no=0, nbf=0; no<NO; no++)
+      { 
+        PFTMatrix->SetEntry(no, PFT_PSCAT, -1.0*PFTMatrix->GetEntry(no,PFT_PABS));
+        for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++, nbf++)
+         { cdouble EAlpha=PreFactor*RHSVector->GetEntry(nbf);
+           cdouble jAlpha=JVector->GetEntry(nbf);
+           PFTMatrix->AddEntry(no, PFT_PSCAT, 0.5*real( conj(jAlpha) * EAlpha ) );
+         };
+      };
+   };
 
   return PFTMatrix;
 

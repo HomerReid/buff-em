@@ -98,8 +98,8 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
            PFTMatrix->AddEntry(no, PFT_PABS, real(JJ*ME));
 
            for(int nq=PFT_XFORCE; nq<=PFT_ZTORQUE; nq++)
-            { ME=cdouble( OPFTIntegrals[2 + 2*(nq-1) + 0][nnz],
-                          OPFTIntegrals[2 + 2*(nq-1) + 1][nnz]
+            { ME=cdouble( OPFTIntegrals[2*(nq-1) + 0][nnz],
+                          OPFTIntegrals[2*(nq-1) + 1][nnz]
                         );
               PFTMatrix->AddEntry(no, nq, imag(JJ*ME) );
             };
