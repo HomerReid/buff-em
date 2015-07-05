@@ -33,35 +33,10 @@
 namespace buff { 
 
 void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
-                    double PFT[NUMPFT], GTransformation *GT,
+                    double PFT[NUMPFT],
+                    GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options);
                } 
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-GTransformation *GetFullVolumeTransformation(SWGGeometry *G,
-                                             int no,
-                                             bool *CreatedGT)
-{
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  SWGVolume *S=G->Objects[no];
-  GTransformation *GT=0;
-  *CreatedGT=false;
-  if ( (S->OTGT!=0) && (S->GT==0) ) 
-   GT=S->OTGT;
-  else if ( (S->OTGT==0) && (S->GT!=0) ) 
-   GT=S->GT;
-  else if ( (S->OTGT!=0) && (S->GT!=0) )
-   { *CreatedGT=true;
-     GT=new GTransformation(S->GT);
-     GT->Transform(S->OTGT);
-   };
-
-  return GT;
-}
 
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/
@@ -269,6 +244,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /* extract fields from BNEQData structure **********************/
   /***************************************************************/
   SWGGeometry *G           = BNEQD->G;
+  SWGVolume **Objects      = G->Objects;
   IHAIMatProp *Temperature = BNEQD->Temperature;
   HMatrix ***GBlocks       = BNEQD->GBlocks;
   SMatrix **VBlocks        = BNEQD->VBlocks;
@@ -341,13 +317,10 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         // get the PFT for all destination objects #nod
         for(int nod=0; nod<NO; nod++)
          {
-           bool CreatedGT=false;
-           GTransformation *FullGT
-            =GetFullVolumeTransformation(G, nod, &CreatedGT);
-
            double PFT[MAXQUANTITIES];
-           GetDSIPFTTrace(G, Omega, Rytov, PFT, FullGT, pftOptions);
-           if (CreatedGT) delete FullGT;
+           GTransformation *GT1=Objects[nod]->OTGT;
+           GTransformation *GT2=Objects[nod]->GT;
+           GetDSIPFTTrace(G, Omega, Rytov, PFT, GT1, GT2, pftOptions);
 
            fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
            for(int nq=0; nq<NQ; nq++)

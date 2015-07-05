@@ -83,10 +83,12 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                HVector *JVector, double PFT[NUMPFT],
-               GTransformation *GT, PFTOptions *Options);
+               GTransformation *GT1, GTransformation *GT2,
+               PFTOptions *Options);
 
 void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
-                    double PFT[NUMPFT], GTransformation *GT,
+                    double PFT[NUMPFT],
+                    GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options);
 
 /***************************************************************/
@@ -112,41 +114,6 @@ SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf)
   if (pno) *pno = no;
   if (pnf) *pnf = nbf - G->BFIndexOffset[no];
   return G->Objects[no];
-}
-
-/***************************************************************/
-/* Get the full GTransformation that takes an object           */
-/* from its native configuration (as described in its .vmsh    */
-/* file) to its current configuration in a scuff-em calculation.*/
-/* This is a composition of 0, 1, or 2 GTransformations        */
-/* depending on whether (a) the object was DISPLACED/ROTATED   */
-/* in the .buffgeo file, and (b) the object has been           */
-/* transformed since it was read in from that file.            */
-/***************************************************************/
-GTransformation *GetFullObjectTransformation(SWGGeometry *G,
-                                             int no,
-                                             bool *CreatedGT)
-{
-  /*--------------------------------------------------------------*/
-  /*- If the surface in question has been transformed since we   -*/
-  /*- read it in from the meshfile (including any "one-time"     -*/
-  /*- transformation specified in the .scuffgeo file) we need    -*/
-  /*- to transform the cubature rule accordingly.                -*/
-  /*--------------------------------------------------------------*/
-  SWGVolume *O=G->Objects[no];
-  GTransformation *GT=0;
-  *CreatedGT=false;
-  if ( (O->OTGT!=0) && (O->GT==0) ) 
-   GT=O->OTGT;
-  else if ( (O->OTGT==0) && (O->GT!=0) ) 
-   GT=O->GT;
-  else if ( (O->OTGT!=0) && (O->GT!=0) )
-   { *CreatedGT=true;
-     GT=new GTransformation(O->GT);
-     GT->Transform(O->OTGT);
-   };
-
-  return GT;
 }
 
 /***************************************************************/
@@ -195,21 +162,17 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector, cdouble Omega,
    }
   else // ( PFTMethod==SCUFF_PFT_DSI )
    { 
-     double PFT[NUMPFT];
      for(int no=0; no<NumObjects; no++)
       { 
-        bool CreatedGT;
-        GTransformation *GT
-         =GetFullObjectTransformation(this, no, &CreatedGT);
-
+        GTransformation *GT1=Objects[no]->OTGT;
+        GTransformation *GT2=Objects[no]->GT;
+        double PFT[NUMPFT];
         if (Rytov==0)
-         GetDSIPFT(this, Omega, IF, JVector, PFT, GT, Options);
+         GetDSIPFT(this, Omega, IF, JVector, PFT, GT1, GT2, Options);
         else
-         GetDSIPFTTrace(this, Omega, Rytov, PFT, GT, Options);
+         GetDSIPFTTrace(this, Omega, Rytov, PFT, GT1, GT2, Options);
 
         PFTMatrix->SetEntriesD(no, ":", PFT);
-
-        if (CreatedGT) delete(GT);
       };
    };
 
@@ -227,27 +190,16 @@ PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options)
   if (Options==0)
    Options = (PFTOptions *)mallocEC( sizeof(PFTOptions) );
 
-  // general options
+  // set SCUFF-EM defaults
+  scuff::InitPFTOptions(Options);
+
+  // modify as appropriate for BUFF-EM defaults
   Options->PFTMethod = SCUFF_PFT_DSI;
-  Options->RytovMatrix=0;
-  Options->RHSVector = 0;
 
   // options affecting DSI PFT computation
   Options->DSIMesh=0;
   Options->DSIRadius=5.0;
   Options->DSIPoints=110;
-  for(int nq=0; nq<NUMPFT; nq++) 
-   Options->NeedQuantity[nq]=true;
- 
-  // options that are not used in BUFF-EM
-  Options->DSIFarField=false;
-  Options->FluxFileName=0;
-  Options->kBloch=0;
-  Options->TInterior=0;
-  Options->TExterior=0;
-  Options->EPFTOrder=1;
-  Options->EPFTDelta=1.0e-5;
-  Options->GetRegionPFTs=false;
 
   return Options;
 }

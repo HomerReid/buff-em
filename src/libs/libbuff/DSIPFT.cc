@@ -52,7 +52,7 @@
 namespace scuff {
 
 HMatrix *GetSCRMatrix(char *BSMesh, double R, int NumPoints,
-                      bool UseCCQ, GTransformation *GT);
+                      GTransformation *GT1, GTransformation *GT2);
 
 void GetNMatrices(double nHat[3], double X[3], double XTorque[3],
                   double NMatrix[NUMPFT][3][3], 
@@ -89,7 +89,8 @@ SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf);
 /***************************************************************/
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                HVector *JVector, double PFT[NUMPFT],
-               GTransformation *GT, PFTOptions *Options)
+               GTransformation *GT1, GTransformation *GT2, 
+               PFTOptions *Options)
 {
   char *DSIMesh    = Options ? DSIMesh    : 0;
   double DSIRadius = Options ? DSIRadius  : 5.0;
@@ -106,10 +107,11 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /* get cubature-rule matrix ************************************/
   /***************************************************************/
-  HMatrix *SCRMatrix = GetSCRMatrix(DSIMesh, DSIRadius, DSIPoints, false, GT);
+  HMatrix *SCRMatrix = GetSCRMatrix(DSIMesh, DSIRadius, DSIPoints, GT1, GT2);
 
   double XTorque[3] = {0.0, 0.0, 0.0};
-  if (GT) GT->Apply(XTorque);
+  if (GT1) GT1->Apply(XTorque);
+  if (GT2) GT2->Apply(XTorque);
 
   double EpsAbs = TENTHIRDS / ZVAC;
   double  MuAbs = TENTHIRDS * ZVAC;
@@ -173,7 +175,8 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 /***************************************************************/
 /***************************************************************/
 void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
-                    double PFT[NUMPFT], GTransformation *GT,
+                    double PFT[NUMPFT],
+                    GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options)
 {
   char *DSIMesh    = Options ? DSIMesh    : 0;
@@ -191,7 +194,7 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   /***************************************************************/
   /* get cubature-rule matrix ************************************/
   /***************************************************************/
-  HMatrix *SCRMatrix = GetSCRMatrix(DSIMesh, DSIRadius, DSIPoints, false, GT);
+  HMatrix *SCRMatrix = GetSCRMatrix(DSIMesh, DSIRadius, DSIPoints, GT1, GT2);
 
   /***************************************************************/
   /* precompute 1BF fields at cubature points                    */
@@ -229,7 +232,8 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   /***************************************************************/
   Log(" Evaluating cubature rule...");
   double XTorque[3] = {0.0, 0.0, 0.0};
-  if (GT) GT->Apply(XTorque);
+  if (GT1) GT1->Apply(XTorque);
+  if (GT2) GT2->Apply(XTorque);
   double EpsAbs = TENTHIRDS / ZVAC;
   double  MuAbs = TENTHIRDS * ZVAC;
   cdouble *DeltaPFT=(cdouble *)mallocEC(NumThreads*NUMPFT*sizeof(cdouble));
