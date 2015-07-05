@@ -14,6 +14,7 @@ libbuff_la_SOURCES = 	\
  TetCR.cc     		\
  VIEMatrix.cc		\
  Visualize.cc		\
+ OverlapIntegrals.cc	\
  OPFT.cc         	\
  JDEPFT.cc         	\
  DSIPFT.cc       	\

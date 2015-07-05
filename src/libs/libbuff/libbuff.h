@@ -288,6 +288,27 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           cdouble *dG=0, FIBBICache *dGCache=0);
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+typedef void (*OverlapIntegrand)(double x[3],
+                                 double bA[3], double DivbA,
+                                 double bB[3], double DivbB,
+                                 IHAIMatProp *MP, cdouble Omega,
+                                 void *UserData, double *Integrand);
+
+void OverlapIntegrand_PFT(double x[3],
+                          double bA[3], double DivbA,
+                          double bB[3], double DivbB,
+                          IHAIMatProp *MP, cdouble Omega,
+                          void *UserData, double *Integrand);
+
+int GetOverlapEntries(SWGVolume *O, int nfA,
+                      OverlapIntegrand Integrand, int fdim,
+                      void *UserData, cdouble Omega,
+                      int nfBList[MAXOVERLAP],
+                      double Entries[][MAXOVERLAP]);
+
+/***************************************************************/
 /* routines for integrating over tetrahedra and faces          */
 /***************************************************************/
 typedef void (*UserTIntegrand)(double *x, double *b, double Divb,
