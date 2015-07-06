@@ -138,10 +138,17 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
   /* do the PFT calculation **************************************/
   /***************************************************************/
   SWGGeometry *G     = BSD->G;
+  HVector *J         = BSD->J;
+  cdouble Omega      = BSD->Omega;
   Options->IF        = BSD->IF;
   Options->RHSVector = BSD->RHS;
   Options->PFTMethod = PFTMethod;
-  HMatrix *PFTMatrix = G->GetPFT(BSD->J, BSD->Omega, 0, Options);
+
+  HMatrix *JxETorque = 0;
+  if (PFTMethod==SCUFF_PFT_OVERLAP)
+   JxETorque=new HMatrix(G->NumObjects, 3);
+
+  HMatrix *PFTMatrix =G->GetPFT(J, Omega, 0, Options, JxETorque);
 
   /***************************************************************/
   /* write results to output file ********************************/
@@ -151,11 +158,15 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
    { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
      for(int nq=0; nq<NUMPFT; nq++)
       fprintf(f,"%e ",PFTMatrix->GetEntryD(no,nq));
+     if (JxETorque)
+      for(int Mu=0; Mu<3; Mu++)
+       fprintf(f,"%e ", JxETorque->GetEntryD(no,Mu));
      fprintf(f,"\n");
    };
   fclose(f);
 
   delete PFTMatrix;
+  if (JxETorque) delete JxETorque;
 
 }
 

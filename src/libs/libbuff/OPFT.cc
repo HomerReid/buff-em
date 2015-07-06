@@ -60,8 +60,8 @@ cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb);
 /***************************************************************/
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix)
-{ 
+                 HMatrix *PFTMatrix, HMatrix *JxETorque)
+{
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -72,6 +72,7 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
      )
    ErrExit("invalid PFTMatrix in GetOPFT");
   PFTMatrix->Zero();
+  if (JxETorque) JxETorque->Zero();
 
   /***************************************************************/
   /***************************************************************/
@@ -91,7 +92,7 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
         int nbfBList[MAXOVERLAP];
         double OPFTIntegrals[14][MAXOVERLAP];
         int NNZ=GetOverlapEntries(O, nbfA, OverlapIntegrand_PFT,
-                                  14, (void *)XTorque,
+                                  2*10, (void *)XTorque,
                                   Omega, nbfBList, OPFTIntegrals);
 
         for(int nnz=0; nnz<NNZ; nnz++)
@@ -107,6 +108,15 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                         );
               PFTMatrix->AddEntry(no, nq, imag(JJ*ME) );
             };
+
+           if (JxETorque)
+            for(int Mu=0; Mu<3; Mu++)
+             { ME = cdouble( OPFTIntegrals[14 + 2*Mu + 0][nnz],
+                             OPFTIntegrals[14 + 2*Mu + 1][nnz]
+                           );
+               JxETorque->AddEntry(no, Mu, imag(JJ*ME) );
+             };
+
          };
 
       }; // for(int nbfA=0; nbfA<NBF; nbfA++)

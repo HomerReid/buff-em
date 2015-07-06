@@ -73,7 +73,7 @@ namespace buff {
 // PFT by overlap method
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix);
+                 HMatrix *PFTMatrix, HMatrix *JxETorque=0);
 
 // PFT by J \dot E method
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
@@ -120,8 +120,11 @@ SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::GetPFT(HVector *JVector, cdouble Omega, 
-                             HMatrix *PFTMatrix, PFTOptions *Options)
+HMatrix *SWGGeometry::GetPFT(HVector *JVector,
+                             cdouble Omega,
+                             HMatrix *PFTMatrix,
+                             PFTOptions *Options,
+                             HMatrix *JxETorque)
 {
   /***************************************************************/
   /***************************************************************/
@@ -154,7 +157,7 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector, cdouble Omega,
   /***************************************************************/
   if ( PFTMethod==SCUFF_PFT_OVERLAP )
    {
-     GetOPFT(this, Omega, JVector, Rytov, PFTMatrix);
+     GetOPFT(this, Omega, JVector, Rytov, PFTMatrix, JxETorque);
    }
   else if ( PFTMethod==SCUFF_PFT_EP )
    {

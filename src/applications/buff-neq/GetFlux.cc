@@ -34,7 +34,7 @@ namespace buff {
 
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix);
+                 HMatrix *PFTMatrix, HMatrix *JxETorque);
 
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
@@ -317,18 +317,23 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      /*- note: nos = 'num object, source'                           -*/
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
-     FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
-     static HMatrix *OPFT   = new HMatrix(NO, NUMPFT);
-     static HMatrix *JDEPFT = new HMatrix(NO, NUMPFT);
-     static HMatrix *DSIPFT = new HMatrix(NO, NUMPFT);
+     FILE *f1=vfopen("%s.SIFlux.OPFT","a",BNEQD->FileBase);
+     FILE *f2=vfopen("%s.SIFlux.JDEPFT","a",BNEQD->FileBase);
+     FILE *f3=vfopen("%s.SIFlux.DSIPFT","a",BNEQD->FileBase);
+     static HMatrix *OPFT      = new HMatrix(NO, NUMPFT);
+     static HMatrix *JxETorque = new HMatrix(NO, 3);
+     static HMatrix *JDEPFT    = new HMatrix(NO, NUMPFT);
+     static HMatrix *DSIPFT    = new HMatrix(NO, NUMPFT);
      for(int nos=0; nos<NO; nos++)
       { 
         // get the Rytov matrix for source object #nos
         HMatrix *Rytov=ComputeRytovMatrix(BNEQD, nos);
         
         // get the PFT for all destination objects
-        GetOPFT(G, Omega, 0, Rytov, OPFT);
+        GetOPFT(G, Omega, 0, Rytov, OPFT, JxETorque);
+
         GetJDEPFT(G, Omega, 0, 0, 0, Rytov, JDEPFT);
+
         for(int nod=0; nod<NO; nod++)
          { double PFT[NUMPFT];
            GTransformation *GT1=Objects[nod]->OTGT;
@@ -340,14 +345,25 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         // write results to file
         for(int nod=0; nod<NO; nod++)
          {
-           fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
+           fprintf(f1,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
            for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f,"%e ",OPFT->GetEntryD(nod,nq));
+            fprintf(f1,"%e ",OPFT->GetEntryD(nod,nq));
+           for(int Mu=0; Mu<3; Mu++)
+            fprintf(f1,"%e ",JxETorque->GetEntryD(nod,Mu));
+           fprintf(f1,"\n");
+           fflush(f1);
+
+           fprintf(f2,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
            for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f,"%e ",JDEPFT->GetEntryD(nod,nq));
+            fprintf(f2,"%e ",JDEPFT->GetEntryD(nod,nq));
+           fprintf(f2,"\n");
+           fflush(f2);
+
+           fprintf(f3,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
            for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f,"%e ",DSIPFT->GetEntryD(nod,nq));
-           fprintf(f,"\n");
+            fprintf(f3,"%e ",DSIPFT->GetEntryD(nod,nq));
+           fprintf(f3,"\n");
+           fflush(f3);
 
            for(int nq=0; nq<NUMPFT; nq++)
             { int Flag = 1 << nq;
@@ -359,7 +375,9 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
          };
 
       };
-     fclose(f);
+     fclose(f1);
+     fclose(f2);
+     fclose(f3);
 
      /*--------------------------------------------------------------*/
      /* and untransform the geometry                                 */

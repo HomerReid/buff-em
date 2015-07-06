@@ -64,7 +64,7 @@ double GetThetaFactor(double Omega, double T)
 #endif
 
 /***************************************************************/
-/***************************************************************/
+/* fdim = 5 ****************************************************/
 /***************************************************************/
 void OverlapIntegrand_VVInvSigma(double x[3],
                                  double bA[3],  double DivbAlpha,
@@ -115,6 +115,30 @@ void OverlapIntegrand_VVInvSigma(double x[3],
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void GetInvChiDotbB(double X[3], double bB[3],
+                    IHAIMatProp *MP, cdouble Omega,
+                    cdouble E[3])
+{
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  cdouble Chi[3][3], InvChi[3][3];
+  MP->GetEps( Omega, X, Chi);
+  Chi[0][0] -= 1.0;
+  Chi[1][1] -= 1.0;
+  Chi[2][2] -= 1.0;
+  Invert3x3Matrix(Chi, InvChi);
+
+  cdouble PreFac = II*ZVAC/Omega;
+  E[0]=E[1]=E[2]=0.0;
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    E[Mu]+=PreFac*InvChi[Mu][Nu]*bB[Nu];
+}
+
+/***************************************************************/
+/* fdim = 20 ***************************************************/
+/***************************************************************/
 void OverlapIntegrand_PFT(double X[3],
                           double bA[3],  double DivbA,
                           double bB[3],  double DivbB,
@@ -123,60 +147,30 @@ void OverlapIntegrand_PFT(double X[3],
 {
   (void) DivbA; 
 
-  /***************************************************************/ 
-  /***************************************************************/ 
-  /***************************************************************/ 
-  cdouble Chi[3][3], InvChi[3][3];
-  MP->GetEps( Omega, X, Chi);
-  Chi[0][0] -= 1.0;
-  Chi[1][1] -= 1.0;
-  Chi[2][2] -= 1.0;
-  Invert3x3Matrix(Chi, InvChi);
+  /***************************************************************/
+  /* with 'E' defined to be PreFac*InvChi*bB, get E, then get    */
+  /* its derivatives by finite-differencing                      */
+  /***************************************************************/
+  cdouble E[3];
+  GetInvChiDotbB(X, bB, MP, Omega, E);
 
-  /***************************************************************/ 
-  /* finite-differencing to get derivatives of ChiInverse        */
-  /***************************************************************/ 
-  cdouble dInvChi[3][3][3];
+  cdouble dE[3][3];
   for(int Mu=0; Mu<3; Mu++)
    { 
-     double DeltaX = (X[Mu]==0.0 ? 1.0e-4 : 1.0e-4*fabs(X[Mu]));
+     double XP[3], DeltaX = (X[Mu]==0.0 ? 1.0e-4 : 1.0e-4*fabs(X[Mu]));
+     XP[0] = X[0];
+     XP[1] = X[1];
+     XP[2] = X[2];
+     XP[Mu] += DeltaX;
 
-     double Xp[3];
-     Xp[0]  =  X[0];
-     Xp[1]  =  X[1];
-     Xp[2]  =  X[2];
-     Xp[Mu] += DeltaX;
-
-     cdouble InvChipd[3][3];
-     MP->GetEps( Omega, Xp, Chi);
-     Chi[0][0] -= 1.0;
-     Chi[1][1] -= 1.0;
-     Chi[2][2] -= 1.0;
-     Invert3x3Matrix(Chi, InvChipd);
-
-     Xp[Mu] -= 2.0*DeltaX;
-
-     cdouble InvChimd[3][3];
-     MP->GetEps( Omega, Xp, Chi);
-     Chi[0][0] -= 1.0;
-     Chi[1][1] -= 1.0;
-     Chi[2][2] -= 1.0;
-     Invert3x3Matrix(Chi, InvChimd);
+     cdouble EP[3], EM[3];
+     GetInvChiDotbB(XP, bB, MP, Omega, EP);
+     XP[Mu] -= 2.0*DeltaX;
+     GetInvChiDotbB(XP, bB, MP, Omega, EM);
 
      for(int Nu=0; Nu<3; Nu++)
-      for(int Rho=0; Rho<3; Rho++)
-       dInvChi[Mu][Nu][Rho]
-        =(InvChipd[Nu][Rho]-InvChimd[Nu][Rho])/(2.0*DeltaX);
+      dE[Mu][Nu] = (EP[Nu]-EM[Nu])/(2.0*DeltaX);
    };
-
-  /***************************************************************/
-  /* dbB[Mu][Nu] = d_Mu bB_Nu  ***********************************/
-  /***************************************************************/
-  double dbB[3][3];
-  double PreFacB=DivbB/3.0;
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    dbB[Mu][Nu] = (Mu==Nu) ? PreFacB : 0.0;
 
   /***************************************************************/
   /***************************************************************/
@@ -186,46 +180,43 @@ void OverlapIntegrand_PFT(double X[3],
   double *XTorque = (double *) UserData;
   if (XTorque) VecPlusEquals(XmX0, -1.0, XTorque);
 
-  /***************************************************************/
-  /* power    ~ \sum bA[Mu] * CPower[Mu]                         */
-  /* i-force  ~ \sum bA[Mu] * CForce[i][Mu]                      */
-  /* i-torque ~ \sum bA[Mu] * CTorque[i][Mu]                     */
-  /***************************************************************/
-  cdouble CPower[3]={0.0, 0.0, 0.0}, CForce[3][3], CTorque[3][3];
+  cdouble dETheta[3][3];
   for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    CForce[Mu][Nu]=0.0;
-
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    { 
-      CPower[Mu] += InvChi[Mu][Nu] * bB[Nu];
-      for(int i=0; i<3; i++)
-       CForce[i][Mu] += (dInvChi[i][Mu][Nu]*bB[Nu] + InvChi[Mu][Nu]*dbB[i][Nu]);
-    };
-
-  for(int Mu=0; Mu<3; Mu++)
-   for(int i=0; i<3; i++)
-    { int ip1=(i+1)%3, ip2=(i+2)%3;
-      CTorque[i][Mu] = XmX0[ip1]*CForce[ip2][Mu] - XmX0[ip2]*CForce[ip1][Mu];
-    };
+   { dETheta[0][Mu] = XTorque[1]*dE[2][Mu] - XTorque[2]*dE[1][Mu];
+     dETheta[1][Mu] = XTorque[2]*dE[0][Mu] - XTorque[0]*dE[2][Mu];
+     dETheta[2][Mu] = XTorque[0]*dE[1][Mu] - XTorque[1]*dE[0][Mu];
+   };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   cdouble *zI = (cdouble *)I;
-  memset(zI, 0, 7*sizeof(cdouble));
-  cdouble IZOK=II*ZVAC/real(Omega);
-  cdouble IZOK2=TENTHIRDS*IZOK/real(Omega);
+  memset(zI, 0, 10*sizeof(cdouble));
+
+  double PF1 = 1.0/(2.0*real(Omega));
+  double PF2 = 1.0/(2.0*real(Omega)*real(Omega));
   for(int Mu=0; Mu<3; Mu++)
-   { zI[0] += 0.5*IZOK*bA[Mu]*CPower[Mu];
-     zI[1] += 0.5*IZOK2*bA[Mu]*CForce[0][Mu];
-     zI[2] += 0.5*IZOK2*bA[Mu]*CForce[1][Mu];
-     zI[3] += 0.5*IZOK2*bA[Mu]*CForce[2][Mu];
-     zI[4] += 0.5*IZOK2*bA[Mu]*CTorque[0][Mu];
-     zI[5] += 0.5*IZOK2*bA[Mu]*CTorque[1][Mu];
-     zI[6] += 0.5*IZOK2*bA[Mu]*CTorque[2][Mu];
+   { 
+     zI[0] += PF1*bA[Mu]*E[Mu];
+
+     zI[1+0] += PF2*bA[Mu]*dE[0][Mu];
+     zI[1+1] += PF2*bA[Mu]*dE[1][Mu];
+     zI[1+2] += PF2*bA[Mu]*dE[2][Mu];
+
+     zI[4+0] += PF2*bA[Mu]*dETheta[0][Mu];
+     zI[4+1] += PF2*bA[Mu]*dETheta[1][Mu];
+     zI[4+2] += PF2*bA[Mu]*dETheta[2][Mu];
    };
+
+  // separate contributions of JxE torque term in zI[7,8,9]
+  zI[7+0] = PF2*(bA[1]*E[2] - bA[2]*E[1]);
+  zI[7+1] = PF2*(bA[2]*E[0] - bA[0]*E[2]);
+  zI[7+2] = PF2*(bA[0]*E[1] - bA[1]*E[0]);
+  
+  zI[4+0] += zI[7+0];
+  zI[4+1] += zI[7+1];
+  zI[4+2] += zI[7+2];
+
 }
 
 /***************************************************************/
