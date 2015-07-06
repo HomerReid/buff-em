@@ -58,6 +58,7 @@ cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb);
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+#define NUM_OPFT_INTEGRALS 20
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
                  HMatrix *PFTMatrix, HMatrix *JxETorque)
@@ -90,9 +91,9 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
      for(int nbfA=0; nbfA<NBF; nbfA++)
       { 
         int nbfBList[MAXOVERLAP];
-        double OPFTIntegrals[14][MAXOVERLAP];
+        double OPFTIntegrals[NUM_OPFT_INTEGRALS][MAXOVERLAP];
         int NNZ=GetOverlapEntries(O, nbfA, OverlapIntegrand_PFT,
-                                  2*10, (void *)XTorque,
+                                  NUM_OPFT_INTEGRALS, (void *)XTorque,
                                   Omega, nbfBList, OPFTIntegrals);
 
         for(int nnz=0; nnz<NNZ; nnz++)
