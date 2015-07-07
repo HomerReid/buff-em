@@ -66,7 +66,7 @@ class FIBBICache
 
     // store/retrieve cache to/from binary file
     void Store(const char *FileName);
-    void PreLoad(const char *FileName);
+    int PreLoad(const char *FileName);
 
     int Hits, Misses;
     bool IsGCache;

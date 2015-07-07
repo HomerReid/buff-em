@@ -114,7 +114,7 @@ typedef std::tr1::unordered_map< KeyStruct,
                                  KeyCmp> dGKDMap;
 
 /*--------------------------------------------------------------*/
-/*- class constructor ------------------------------------------*/
+/*- class constructor                                          -*/
 /*--------------------------------------------------------------*/
 FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
 {
@@ -133,14 +133,31 @@ FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
 
   Hits=Misses=0;
 
+  /*--------------------------------------------------------------*/
+  /*- attempt to preload -----------------------------------------*/
+  /*--------------------------------------------------------------*/
   PreloadFileName=0;
   RecordsPreloaded=0;
   if (MeshFileName)
-   { char CacheFileName[MAXSTR];
+   { 
      const char *Extension = IsGCache ? "GCache" : "dGCache";
-     snprintf(CacheFileName, MAXSTR, "%s.%s", 
-              RemoveExtension(MeshFileName), Extension);
-     PreLoad(CacheFileName);
+     char CacheFileName[MAXSTR];
+     int Status;
+
+     // first look for ${BUFF_CACHE_DIR}/MeshFile.GCache 
+     char *CacheDir=getenv("BUFF_CACHE_DIR");
+     if (CacheDir)
+      { snprintf(CacheFileName, MAXSTR, "%s/%s.%s",
+                 CacheDir,GetFileBase(MeshFileName),Extension);
+        Status=PreLoad(CacheFileName);
+      };
+
+     // next look for /path/to/MeshFile.vmsh/MeshFile.GCache
+     if (Status!=0)
+      { snprintf(CacheFileName, MAXSTR, "%s.%s",
+                 RemoveExtension(MeshFileName), Extension);
+        Status=PreLoad(CacheFileName);
+      };
    };
 }
 
@@ -335,9 +352,6 @@ void FIBBICache::Store(const char *FileName)
   /*--------------------------------------------------------------*/
   //FCLock.read_lock();
 
-  /*--------------------------------------------------------------*/
-  /*- try to open the file ---------------------------------------*/
-  /*--------------------------------------------------------------*/
   FILE *f=fopen(FileName,"w");
   if (!f)
    { Log("warning: could not open file %s (aborting cache dump)...",FileName);
@@ -395,7 +409,8 @@ void FIBBICache::Store(const char *FileName)
   //FCLock.read_unlock();
 }
 
-void FIBBICache::PreLoad(const char *FileName)
+// return 0 on success, nonzero on failure
+int FIBBICache::PreLoad(const char *FileName)
 {
   /*--------------------------------------------------------------*/
   /*- try to open the file ---------------------------------------*/
@@ -403,7 +418,7 @@ void FIBBICache::PreLoad(const char *FileName)
   FILE *f=fopen(FileName,"r");
   if (!f)
    { Log("could not open file %s (skipping cache preload)",FileName);
-     return;
+     return 1;
    };
 
   GKDMap *GKDM    = (IsGCache) ? (GKDMap *)opTable : 0;
@@ -481,7 +496,7 @@ void FIBBICache::PreLoad(const char *FileName)
         )
       { Log("file %s: read only %i/%i records",FileName,RecordsRead,NumRecords);
         fclose(f);
-	return;
+	return 1;
       };
   
      if (IsGCache)
@@ -504,7 +519,7 @@ void FIBBICache::PreLoad(const char *FileName)
 
   Log(" ...successfully preloaded %i FIBBI records.",RecordsPreloaded);
   fclose(f);
-  return;
+  return 0;
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -512,7 +527,7 @@ void FIBBICache::PreLoad(const char *FileName)
  fail:
   Log("warning: file %s: %s (skipping cache preload)",FileName,ErrMsg);
   fclose(f);
-  return;
+  return 1;
 }
 
 /*--------------------------------------------------------------*/

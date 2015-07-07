@@ -99,7 +99,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   /*- (a) the current working directory                         */
   /*- (b) any directories that may have been specified by       */
   /*-     MESHPATH statements in .scuffgeo files or via the     */
-  /*-     SCUFF_MESH_PATH environment variable                  */
+  /*-     BUFF_MESH_PATH environment variable                   */
   /*------------------------------------------------------------*/
   MeshFileName=strdup(pMeshFileName);
   FILE *MeshFile=fopen(MeshFileName,"r");

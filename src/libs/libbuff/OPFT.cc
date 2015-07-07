@@ -100,6 +100,7 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
          { 
            int nbfB = nbfBList[nnz];
            cdouble JJ=GetJJ(JVector, Rytov, Offset+nbfA, Offset+nbfB);
+
            cdouble ME(OPFTIntegrals[0][nnz], OPFTIntegrals[1][nnz]);
            PFTMatrix->AddEntry(no, PFT_PABS, real(JJ*ME));
 
