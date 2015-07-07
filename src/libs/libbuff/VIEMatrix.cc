@@ -350,13 +350,15 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  FIBBICache *GCache = (noa==nob) ?  ObjectGCaches[noa] : 0;
+  FIBBICache *GCache   = 0;
   int InitialCacheSize = 0;
-  if (GCache && GCache->Size()==0)
-   { char CacheFileName[MAXSTR];
-     snprintf(CacheFileName, MAXSTR, "%s.GCache",
-              RemoveExtension(OA->MeshFileName));
-     GCache->PreLoad(CacheFileName);
+  if (noa==nob)
+   {
+     int noMate=Mate[noa];
+     int noCache = (noMate==-1) ? noa : noMate;
+     if (ObjectGCaches[noCache]==0)
+      ObjectGCaches[noCache]=new FIBBICache(OA->MeshFileName, true);
+     GCache = ObjectGCaches[noCache];
      InitialCacheSize = GCache->Size();
    };
 
@@ -392,7 +394,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   if (GCache && GCache->Size()>InitialCacheSize)
    { char CacheFileName[MAXSTR];
      snprintf(CacheFileName, MAXSTR, "%s.GCache",
-              RemoveExtension(OA->MeshFileName));
+              GetFileBase(OA->MeshFileName));
      GCache->Store(CacheFileName);
    };
 

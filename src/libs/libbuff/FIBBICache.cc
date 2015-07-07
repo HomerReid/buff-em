@@ -142,7 +142,7 @@ FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
    { 
      const char *Extension = IsGCache ? "GCache" : "dGCache";
      char CacheFileName[MAXSTR];
-     int Status;
+     int Status=0;
 
      // first look for ${BUFF_CACHE_DIR}/MeshFile.GCache 
      char *CacheDir=getenv("BUFF_CACHE_DIR");
@@ -421,13 +421,14 @@ int FIBBICache::PreLoad(const char *FileName)
      return 1;
    };
 
-  GKDMap *GKDM    = (IsGCache) ? (GKDMap *)opTable : 0;
-  dGKDMap *dGKDM  = (IsGCache) ? 0 : (dGKDMap *)opTable;
-  int DataLen     = (IsGCache) ? GDATA_LEN: DGDATA_LEN;
-  int DataSize    =  DataLen * sizeof(double);
-  int RecordSize  = KEYSIZE + DataSize;
-  int NumRecords  = 0; 
-  int RecordsRead = 0;
+  GKDMap *GKDM     = (IsGCache) ? (GKDMap *)opTable : 0;
+  dGKDMap *dGKDM   = (IsGCache) ? 0 : (dGKDMap *)opTable;
+  int DataLen      = (IsGCache) ? GDATA_LEN: DGDATA_LEN;
+  int DataSize     =  DataLen * sizeof(double);
+  int RecordSize   = KEYSIZE + DataSize;
+  int NumRecords   = 0; 
+  int RecordsRead  = 0;
+  unsigned long M0 = GetMemoryUsage();
 
   /*--------------------------------------------------------------*/
   /*- run through some sanity checks to make sure we have a valid */
@@ -518,6 +519,8 @@ int FIBBICache::PreLoad(const char *FileName)
   RecordsPreloaded=RecordsRead;
 
   Log(" ...successfully preloaded %i FIBBI records.",RecordsPreloaded);
+#define ONEMEG (1<<20)
+  Log(" Cache memory use: %i MB.",(GetMemoryUsage() - M0)/(ONEMEG));
   fclose(f);
   return 0;
 

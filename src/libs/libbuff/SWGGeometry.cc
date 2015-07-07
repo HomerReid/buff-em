@@ -304,22 +304,8 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  #define ONEMEG 1048576
-  Log(" Mem before cache preload: %lu",GetMemoryUsage()/ONEMEG);
   ObjectGCaches  = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
   ObjectdGCaches = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
-  for(int no=0; no<NumObjects; no++)
-   { if ( Mate[no]!=-1 )
-      { ObjectGCaches[no]  = ObjectGCaches[ Mate[no] ];
-        ObjectdGCaches[no] = ObjectdGCaches[ Mate[no] ];
-      }
-     else
-      { 
-        ObjectGCaches[no]  = new FIBBICache(0, true);
-        ObjectdGCaches[no] = 0;
-      };
-   };
-  Log(" Mem after cache preload: %lu",GetMemoryUsage()/ONEMEG);
 
 }
 
