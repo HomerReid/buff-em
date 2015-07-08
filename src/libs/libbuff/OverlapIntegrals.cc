@@ -206,8 +206,8 @@ void OverlapIntegrand_PFT(double X[3],
   cdouble *zI = (cdouble *)I;
   memset(zI, 0, 10*sizeof(cdouble));
 
-  double PF1 = 1.0/(2.0*real(Omega));
-  double PF2 = 1.0/(2.0*real(Omega)*real(Omega));
+  double PF1 = 0.5;
+  double PF2 = 0.5/real(Omega);
   for(int Mu=0; Mu<3; Mu++)
    { 
      zI[0] += PF1*bA[Mu]*E[Mu];
