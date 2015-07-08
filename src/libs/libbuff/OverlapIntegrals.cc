@@ -133,7 +133,7 @@ void GetInvChiDotbB(double X[3], double bB[3],
   E[0]=E[1]=E[2]=0.0;
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    E[Mu]+=PreFac*InvChi[Mu][Nu]*bB[Nu];
+    E[Mu] += PreFac*InvChi[Mu][Nu]*bB[Nu];
 }
 
 /***************************************************************/
@@ -292,7 +292,8 @@ int GetOverlapEntries(SWGVolume *O, int nfA,
 {
   int NNZ=1;
   nfBList[0] = nfA;
-  memset(Entries[0], 0, fdim*sizeof(double));
+  for(int nf=0; nf<fdim; nf++)
+   Entries[nf][0]=0.0;
 
   // loop over the two (positive and negative) tetrahedra of bf #nfA
   SWGFace *FA = O->Faces[nfA];
