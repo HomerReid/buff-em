@@ -191,13 +191,11 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #ifdef USE_OPENMP
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
-                         collapse(2),              \
                          num_threads(NumThreads)
 #endif
   for(int nbfa=0; nbfa<TotalBFs; nbfa++) 
-   for(int nbfb=0; nbfb<TotalBFs; nbfb++) 
+   for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++) 
     { 
-      if (nbfb<nbfa) continue;
       if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
 
       int noa, nfa;
