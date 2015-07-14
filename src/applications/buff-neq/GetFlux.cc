@@ -332,7 +332,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         // get the PFT for all destination objects
         GetOPFT(G, Omega, 0, Rytov, OPFT, JxETorque);
 
-        GetJDEPFT(G, Omega, 0, 0, 0, Rytov, JDEPFT);
+        //GetJDEPFT(G, Omega, 0, 0, 0, Rytov, JDEPFT);
 
         for(int nod=0; nod<NO; nod++)
          { double PFT[NUMPFT];
