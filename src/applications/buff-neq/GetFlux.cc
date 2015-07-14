@@ -151,6 +151,7 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 /* Note: the return value is a pointer to a preallocated buffer*/
 /* within the BNEQD structure                                  */
 /***************************************************************/
+#if 0
 HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
 {
   SWGGeometry *G       = BNEQD->G;
@@ -238,6 +239,88 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   return Rytov;
 
 }
+#endif
+
+/***************************************************************/
+/* Note: the return value is a pointer to a preallocated buffer*/
+/* within the BNEQD structure                                  */
+/***************************************************************/
+HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
+{
+  SWGGeometry *G        = BNEQD->G;
+  HMatrix ***GBlocks    = BNEQD->GBlocks;
+  SMatrix **Sigma       = BNEQD->Sigma;
+  HMatrix **WorkMatrix  = BNEQD->WorkMatrix;
+
+  int NO               = G->NumObjects;
+  int *Offset          = G->BFIndexOffset;
+
+  // compute Rytov = (WS)*Sigma*(WS)^\dagger - Sigma
+  // in a series of steps:
+  // (a) M1    <- ISVIS
+  // (b) M2    <- G
+  // (c) WInv  <- M1*M2 = ISVIS*G
+  // (d) WInv  += 1
+  // (d) W     <- WInv^{-1}
+  // (e) M1    <- Sigma
+  // (f) M2    <- W * M1 = W * Sigma
+  // (g) Rytov <- M2 * (W)' = W * Sigma * W'
+  // (h) Rytov -= Sigma;
+
+  // step (a)
+  HMatrix *M1=WorkMatrix[0];
+  M1->Copy(BNEQD->ISVIS);
+
+  // step (b)
+  HMatrix *M2=WorkMatrix[1];
+  for(int no=0; no<NO; no++)
+   for(int nop=no; nop<NO; nop++)
+    {
+      M2->InsertBlock(GBlocks[no][nop], Offset[no], Offset[nop]);
+      if (nop>no)
+       M2->InsertBlockTranspose(GBlocks[no][nop], Offset[nop], Offset[no]);
+    };
+
+  // step (c)
+  HMatrix *W=WorkMatrix[2];
+  M1->Multiply(M2, W);
+
+  // step (d)
+  for(int nbf=0; nbf<W->NR; nbf++)
+   W->AddEntry(nbf, nbf, 1.0);
+
+  // step (e)
+  W->LUFactorize();
+  W->LUInvert();
+
+  // step (e)
+  M1=WorkMatrix[1];
+  M1->Zero();
+  M1->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
+
+  // step (f)
+  M2=WorkMatrix[2];
+  W->Multiply(M1,M2);
+
+  // step (i)
+  HMatrix *Rytov=WorkMatrix[1];
+  M2->Multiply(W, Rytov, "--transB C");
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+  if ( !getenv("BUFF_SUBTRACT_SELFTERM") )
+   { Log("Not subtracting self term foryaf.");
+     return Rytov;
+   };
+  Log("Subtracting self term foryaf.");
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+   
+  // step (j)
+  Rytov->AddBlock(Sigma[SourceObject],
+                  Offset[SourceObject], Offset[SourceObject], -1.0);
+
+  return Rytov;
+
+}
 
 /***************************************************************/
 /***************************************************************/
@@ -287,6 +370,20 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
    };
   BNEQD->SMatricesInitialized=true;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  HMatrix *ISVIS=BNEQD->ISVIS;
+  HMatrix *SInverse=BNEQD->ISVIS;
+  HMatrix *M1=BNEQD->WorkMatrix[0];
+  HMatrix *M2=BNEQD->WorkMatrix[1];
+  M1->Zero();
+  int *Offset=G->BFIndexOffset;
+  for(int no=0; no<G->NumObjects; no++)
+   M1->AddBlock(VBlocks[no],Offset[no],Offset[no]);
+  SInverse->Multiply(M1, M2);
+  M2->Multiply(SInverse, ISVIS, "--transB C");
 
   /***************************************************************/
   /* now loop over transformations.                              */
