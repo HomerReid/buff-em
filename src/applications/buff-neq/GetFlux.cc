@@ -261,11 +261,11 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   // (b) M2    <- G
   // (c) WInv  <- M1*M2 = ISVIS*G
   // (d) WInv  += 1
-  // (d) W     <- WInv^{-1}
-  // (e) M1    <- Sigma
-  // (f) M2    <- W * M1 = W * Sigma
-  // (g) Rytov <- M2 * (W)' = W * Sigma * W'
-  // (h) Rytov -= Sigma;
+  // (e) W     <- WInv^{-1}
+  // (f) M1    <- Sigma
+  // (g) M2    <- W * M1 = W * Sigma
+  // (h) Rytov <- M2 * (W)' = W * Sigma * W'
+  // (i) Rytov -= Sigma;
 
   // step (a)
   HMatrix *M1=WorkMatrix[0];
@@ -375,7 +375,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /***************************************************************/
   /***************************************************************/
   HMatrix *ISVIS=BNEQD->ISVIS;
-  HMatrix *SInverse=BNEQD->ISVIS;
+  HMatrix *SInverse=BNEQD->SInverse;
   HMatrix *M1=BNEQD->WorkMatrix[0];
   HMatrix *M2=BNEQD->WorkMatrix[1];
   M1->Zero();
