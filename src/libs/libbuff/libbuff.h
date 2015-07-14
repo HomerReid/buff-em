@@ -272,7 +272,8 @@ int CompareTets(SWGVolume *OA, int ntA, SWGVolume *OB, int ntB,
                 int *OVIA=0, int *OVIB=0);
 
 int GetOverlapElements(SWGVolume *O, int nfA,
-                       int Indices[7], double Entries[7]);
+                       int Indices[MAXOVERLAP],
+                       double Entries[MAXOVERLAP]);
 
 void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
                   bool NeedQ=true);

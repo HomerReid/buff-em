@@ -198,7 +198,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
    for(int nbfb=0; nbfb<TotalBFs; nbfb++) 
     { 
       if (nbfb<nbfa) continue;
-      if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,10);
+      if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
 
       int noa, nfa;
       SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa); 
