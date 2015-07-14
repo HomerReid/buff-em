@@ -294,16 +294,16 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   W->LUInvert();
 
   // step (e)
-  M1=WorkMatrix[1];
+  M1=WorkMatrix[0];
   M1->Zero();
   M1->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
 
   // step (f)
-  M2=WorkMatrix[2];
+  M2=WorkMatrix[1];
   W->Multiply(M1,M2);
 
   // step (i)
-  HMatrix *Rytov=WorkMatrix[1];
+  HMatrix *Rytov=WorkMatrix[0];
   M2->Multiply(W, Rytov, "--transB C");
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
