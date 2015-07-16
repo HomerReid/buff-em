@@ -123,7 +123,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
-  BNEQD->ISVIS=new HMatrix(NBFTot, NBFTot, LHM_COMPLEX);
   HMatrix *SInverse=BNEQD->SInverse=new HMatrix(NBFTot, NBFTot, LHM_COMPLEX);
   SInverse->Zero();
   for(int no=0; no<NO; no++)
