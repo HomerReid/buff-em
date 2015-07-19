@@ -145,18 +145,18 @@ void WriteCache(SWGVolume *O, bool GCache=true,
   int NumThreads=GetNumThreads();
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
-                         collapse(2),              \
                          reduction(+:NumRecords)   \
                          num_threads(NumThreads)
 #endif
   for(int nfa=0; nfa<NF; nfa++)
-   for(int nfb=0; nfb<NF; nfb++)
+   for(int nfb=nfa; nfb<NF; nfb++)
     {
-      if (nfb<nfa) continue;
-      np++;
+      //if (nfb<nfa) continue;
 
+      np++;
       if (np<npMin) continue;
       if (np>=npMax) continue;
+
       int ncv = CompareBFs(O, nfa, O, nfb);
       if (ncv==0) continue;
 
@@ -165,6 +165,7 @@ void WriteCache(SWGVolume *O, bool GCache=true,
       Cache->GetFIBBIData(O, nfa, O, nfb, Data);
       NumRecords++;
     };
+// end of multithreaded loop
 
   char FileName[MAXSTR];
   if (NumChunks>1)
