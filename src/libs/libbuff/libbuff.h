@@ -123,7 +123,8 @@ class SWGVolume
    /* main constructor entry point: construct from 'OBJECT...ENDOBJECT' */
    /* or SURFACE...ENDSURFACE section in a .scuffgeo file               */
    /*-------------------------------------------------------------------*/
-   SWGVolume(char *MeshFileName, char *Label=0, char *MatFileName=0,
+   SWGVolume(char *MeshFileName, char *Label=0,
+             char *MatFileName=0, bool IsMatProp=false,
              GTransformation *OTGT=0);
 
    /* destructor */

@@ -90,6 +90,7 @@ SWGTet *NewSWGTet(double *Vertices, int iV1, int iV2, int iV3, int iV4)
 SWGVolume::SWGVolume(char *pMeshFileName,
                      char *pLabel,
                      char *pMatFileName,
+                     bool IsMatProp,
                      GTransformation *pOTGT)
 {
   ErrMsg=0;
@@ -132,7 +133,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
    }
   else
    { MatFileName=strdup(pMatFileName);
-     MP=new IHAIMatProp(MatFileName);
+     MP=new IHAIMatProp(MatFileName,IsMatProp);
      if (MP->ErrMsg)
       ErrExit(MP->ErrMsg);
    };
