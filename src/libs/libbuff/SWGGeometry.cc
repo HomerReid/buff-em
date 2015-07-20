@@ -60,6 +60,7 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
   char *MeshFileName=0;
   char *MatFileName=0;
   GTransformation *OTGT=0;
+  bool IsMatProp=false;
   while( fgets(Line,MAXSTR,f) )
    { 
      (*LineNum)++;
@@ -84,14 +85,17 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
       }
 
      /*--------------------------------------------------------------*/
-     /*- MATERIAL | MATFILE keyword ---------------------------------*/
+     /*- MATERIAL keyword -------------------------------------------*/
      /*--------------------------------------------------------------*/
-     else if ( !StrCaseCmp(Tokens[0],"MATFILE") || !StrCaseCmp(Tokens[0],"MATERIAL") )
+     else if (    !StrCaseCmp(Tokens[0],"MATERIAL")
+               || !StrCaseCmp(Tokens[0],"SVTENSOR")
+             )
       { if (NumTokens!=2)
          { *pErrMsg=vstrdup("%s keyword requires one argument",Tokens[0]);
            return 0;
          };
         MatFileName=strdupEC(Tokens[1]);
+        IsMatProp=(!StrCaseCmp(Tokens[0],"MATERIAL"));
       }
 
      /*--------------------------------------------------------------*/
@@ -147,11 +151,11 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
   if ( MeshFileName==0 )
    *pErrMsg = strdupEC("no MESHFILE specified for object");
   if ( MatFileName==0 )
-   *pErrMsg = strdupEC("no MATFILE  specified for object");
+   *pErrMsg = strdupEC("no MATERIAL or SVTENSOR specified for object");
   if (*pErrMsg) 
    return 0;
   
-  return new SWGVolume(MeshFileName, Label, MatFileName, OTGT);
+  return new SWGVolume(MeshFileName, Label, MatFileName, IsMatProp, OTGT);
  
 }
 

@@ -298,7 +298,7 @@ void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
      for(int nnpk=0; nnpk<NumPKs; nnpk++)
       KParam[nnpk] = k;
    }
-  else
+  else // static kernels for FIBBIs
    { 
      int npk=0;
      int rPowers[4]={-3,-1,0,1};
@@ -315,6 +315,10 @@ void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
      NumPKs=npk;
      for(int nnpk=0; nnpk<NumPKs; nnpk++)
       KIndex[nnpk] = TTD_RP;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+if (NumPKs==54)
+ NumPKs=30;
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
    };
 
   /***************************************************************/

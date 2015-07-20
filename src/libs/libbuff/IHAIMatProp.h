@@ -43,7 +43,7 @@ class IHAIMatProp
    /* public class methods ****************************************/
    /***************************************************************/
    /* constructor */
-   IHAIMatProp(const char *IHAIMatFileName);
+   IHAIMatProp(const char *IHAIMatFileName, bool IsMatProp=false);
 
   /* destructor */
    ~IHAIMatProp();

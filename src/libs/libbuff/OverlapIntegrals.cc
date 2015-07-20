@@ -183,7 +183,7 @@ void OverlapIntegrand_PFT(double X[3],
   Invert3x3Matrix(Chi, InvChi);
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    dE[Mu][Nu] += (II*ZVAC/Omega) * InvChi[Nu][Mu] * (3.0*DivbB);
+    dE[Mu][Nu] += (II*ZVAC/Omega) * InvChi[Nu][Mu] * (DivbB/3.0);
 
   /***************************************************************/
   /***************************************************************/

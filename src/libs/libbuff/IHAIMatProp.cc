@@ -38,8 +38,8 @@
 /***************************************************************/
 /* constructor *************************************************/
 /***************************************************************/
-IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
- {
+IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName, bool IsMatProp)
+{
    Name=strdupEC(IHAIMatFileName);
    ErrMsg=0;
    NumConstants=0;
@@ -65,22 +65,32 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName )
    /*--------------------------------------------------------------*/
    /*--------------------------------------------------------------*/
    /*--------------------------------------------------------------*/
-   MP=new MatProp(Name);
-   if (MP->ErrMsg == 0 )
-    { 
-      Log("Created isotropic material with MatProp=%s",MP->Name);
-      MatProp::SetLengthUnit(1.0e-6);
-      return;
-    };
-   delete MP;
    MP=0;
+   if (IsMatProp)
+    { MP=new MatProp(Name);
+      if (MP->ErrMsg == 0 )
+       { 
+         Log("Created isotropic material with MatProp=%s",MP->Name);
+         MatProp::SetLengthUnit(1.0e-6);
+         return;
+       };
+      delete MP;
+    };
  
    /*--------------------------------------------------------------*/
    /*- try to open the file ---------------------------------------*/
    /*--------------------------------------------------------------*/
    FILE *f=fopen(Name,"r");
    if (!f)
-    { ErrMsg = vstrdup("could not open file %s",IHAIMatFileName);
+    { char *s=getenv("BUFF_SVTENSOR_PATH");
+      if (s)
+       { f=vfopen("%s/%s","r",s,Name);
+         if (f) 
+          Log("Found SVTensor file %s/%s",s,Name);
+       };
+    };
+   if (!f)
+    { ErrMsg = vstrdup("could not open file %s",Name);
       return;
     };
 
