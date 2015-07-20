@@ -92,9 +92,9 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                GTransformation *GT1, GTransformation *GT2, 
                PFTOptions *Options)
 {
-  char *DSIMesh    = Options ? DSIMesh    : 0;
-  double DSIRadius = Options ? DSIRadius  : 5.0;
-  int DSIPoints    = Options ? DSIPoints  : 110;
+  char *DSIMesh    = Options ? Options->DSIMesh    : 0;
+  double DSIRadius = Options ? Options->DSIRadius  : 5.0;
+  int DSIPoints    = Options ? Options->DSIPoints  : 110;
 
   /***************************************************************/
   /***************************************************************/
@@ -179,9 +179,9 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options)
 {
-  char *DSIMesh    = Options ? DSIMesh    : 0;
-  double DSIRadius = Options ? DSIRadius  : 5.0;
-  int DSIPoints    = Options ? DSIPoints  : 110;
+  char *DSIMesh    = Options ? Options->DSIMesh    : 0;
+  double DSIRadius = Options ? Options->DSIRadius  : 5.0;
+  int DSIPoints    = Options ? Options->DSIPoints  : 110;
 
   /***************************************************************/
   /***************************************************************/
