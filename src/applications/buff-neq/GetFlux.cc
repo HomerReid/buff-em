@@ -151,100 +151,6 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 /* Note: the return value is a pointer to a preallocated buffer*/
 /* within the BNEQD structure                                  */
 /***************************************************************/
-#if 0
-HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
-{
-  SWGGeometry *G       = BNEQD->G;
-  HMatrix ***GBlocks   = BNEQD->GBlocks;
-  SMatrix **Overlap    = BNEQD->Overlap;
-  SMatrix **VBlocks    = BNEQD->VBlocks;
-  SMatrix **Sigma      = BNEQD->Sigma;
-  HMatrix **WorkMatrix = BNEQD->WorkMatrix;
-
-  int NO               = G->NumObjects;
-  int *Offset          = G->BFIndexOffset;
-
-  // compute Rytov = (WS)*Sigma*(WS)^\dagger - Sigma 
-  // in a series of steps:
-  // (a) M1    <- V
-  // (b) M2    <- G
-  // (c) WInv  <- M1*M2 = V*G
-  // (d) WInv  += S
-  // (e) WS    <- S
-  // (f) WS    <- WInv \ WS
-  // (g) M1    <- Sigma
-  // (h) M2    <- WS * M1 = WS*Sigma
-  // (i) Rytov <- M2 * (WS)'
-  // (j) Rytov -= Sigma;
-
-  // step (a)
-  HMatrix *M1=WorkMatrix[0];
-  M1->Zero();
-  for(int no=0; no<NO; no++)
-   M1->AddBlock(VBlocks[no], Offset[no], Offset[no]);
-
-  // step (b)
-  HMatrix *M2=WorkMatrix[1];
-  for(int no=0; no<NO; no++)
-   for(int nop=no; nop<NO; nop++)
-    {
-      M2->InsertBlock(GBlocks[no][nop], Offset[no], Offset[nop]);
-      if (nop>no)
-       M2->InsertBlockTranspose(GBlocks[no][nop], Offset[nop], Offset[no]);
-    };
-
-  // step (c)
-  HMatrix *WInv=WorkMatrix[2];
-  M1->Multiply(M2, WInv);
-
-  // step (d)
-  for(int no=0; no<NO; no++)
-   WInv->AddBlock(Overlap[no], Offset[no], Offset[no]);
-
-  // step (e)
-  HMatrix *WS=WorkMatrix[0];
-  WS->Zero();
-  for(int no=0; no<NO; no++)
-   WS->AddBlock(Overlap[no], Offset[no], Offset[no]);
-
-  // step (f)
-  WInv->LUFactorize();
-  WInv->LUSolve(WS);
-
-  // step (g)
-  M1=WorkMatrix[1];
-  M1->Zero();
-  M1->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
-
-  // step (h)
-  M2=WorkMatrix[2];
-  WS->Multiply(M1,M2);
-
-  // step (i)
-  HMatrix *Rytov=WorkMatrix[1];
-  M2->Multiply(WS, Rytov, "--transB C");
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-  if ( !getenv("BUFF_SUBTRACT_SELFTERM") )
-   { Log("Not subtracting self term foryaf.");
-     return Rytov;
-   };
-  Log("Subtracting self term foryaf.");
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-   
-  // step (j)
-  Rytov->AddBlock(Sigma[SourceObject],
-                  Offset[SourceObject], Offset[SourceObject], -1.0);
-
-  return Rytov;
-
-}
-#endif
-
-/***************************************************************/
-/* Note: the return value is a pointer to a preallocated buffer*/
-/* within the BNEQD structure                                  */
-/***************************************************************/
 HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
 {
   SWGGeometry *G        = BNEQD->G;
@@ -256,23 +162,31 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
 
   int NO               = G->NumObjects;
   int *Offset          = G->BFIndexOffset;
+  int NBF              = G->TotalBFs;
 
-  // compute Rytov = (WS)*Sigma*(WS)^\dagger - Sigma
+  // compute Rytov = W* (S^{-1}*Sigma*S^{-1}) * W^\dagger
+  //                   -(S^{-1}*Sigma*S^{-1})
+  //  (where W = inv( 1 + S^{-1} V S^-1 G ) )
   // in a series of steps:
   // (a) M1    <- G
   // (b) M2    <- SInverse*G
-  // (c) M3    <- M2*SInverse = SInverse*G*SInverse
-  // (d) M1    <- V
-  // (e) M2    <- V*M3 = V*SI*G*SI
-  // (f) M2    += 1
-  // (g) M3    <- M2 \ SInverse
+  // (c) M3    <- V
+  // (d) M1    <- M3*M2 = V*SInverse*G
+  // (e) M3    <- SInverse*M1 = SInverse*V*SInverse*G
+  // (f) M3    += 1
+  // (g) M3    <- inv(M3) = W
   // (h) M1    <- Sigma
-  // (i) M2    <- M3*M1 
-  // (j) Rytov <- M2*M3'
-  // (k) Rytov -= Sigma;
+  // (i) M2    <- SInverse*M1 = SInverse*Sigma
+  // (j) M1    <- M2*SInverse = SInverse*Sigma*SInverse
+  // (k) M2    <- W*M1 = M3*M1
+  // (l) M3    <- M2*W'
+  // (m) M3    -= M1
+
+  HMatrix *M1=WorkMatrix[0];
+  HMatrix *M2=WorkMatrix[1];
+  HMatrix *M3=WorkMatrix[2];
 
   // step (a)
-  HMatrix *M1=WorkMatrix[0];
   for(int no=0; no<NO; no++)
    for(int nop=no; nop<NO; nop++)
     {
@@ -282,54 +196,60 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
     };
 
   // step (b)
-  HMatrix *M2=WorkMatrix[1];
   SInverse->Multiply(M1, M2);
 
   // step (c)
-  HMatrix *M3=WorkMatrix[2];
-  M2->Multiply(SInverse, M3);
+  M3->Zero();
+  for(int no=0; no<NO; no++)
+   M3->AddBlock(VBlocks[no], Offset[no], Offset[no]);
 
   // step (d)
-  M1->Zero();
-  for(int no=0; no<NO; no++)
-   M1->AddBlock(VBlocks[no], Offset[no], Offset[no]);
+  M3->Multiply(M2, M1);
 
   // step (e)
-  M1->Multiply(M3, M2);
+  SInverse->Multiply(M1, M3);
 
   // step (f) 
-  for(int nbf=0; nbf<M2->NR; nbf++)
-   M2->AddEntry(nbf, nbf, 1.0);
+  for(int nbf=0; nbf<NBF; nbf++)
+   M3->AddEntry(nbf, nbf, 1.0);
 
-  // step (g)
-  M3->Copy(SInverse);
-  M2->LUFactorize();
-  M2->LUSolve(M3);
+  // step (g) 
+  M3->LUFactorize();
+  M3->LUInvert();
 
   // step (h)
   M1->Zero();
   M1->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
 
   // step (i)
-  M3->Multiply(M1, M2);
+  SInverse->Multiply(M1, M2);
 
   // step (j)
-  HMatrix *Rytov=M1;
-  M2->Multiply(M3, Rytov, "--transB C");
+  M2->Multiply(SInverse, M1);
+
+  // step (k)
+  M3->Multiply(M1, M2);
+  M2->Multiply(M3, M1, "--transB C");
 
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
   if ( !getenv("BUFF_SUBTRACT_SELFTERM") )
    { Log("Not subtracting self term foryaf.");
-     return Rytov;
+     return M1;
    };
   Log("Subtracting self term foryaf.");
 /*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-   
-  // step (k)
-  Rytov->AddBlock(Sigma[SourceObject],
-                  Offset[SourceObject], Offset[SourceObject], -1.0);
 
-  return Rytov;
+  // step (j) 
+  M2->Zero();
+  M2->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
+  SInverse->Multiply(M2, M3);
+  M3->Multiply(SInverse, M2);
+
+  for(int nbf=0; nbf<NBF; nbf++)
+   for(int nbfp=0; nbfp<NBF; nbfp++)
+    M1->AddEntry(nbf, nbfp, -1.0*M2->GetEntry(nbf, nbfp) );
+
+  return M1;
 
 }
 
