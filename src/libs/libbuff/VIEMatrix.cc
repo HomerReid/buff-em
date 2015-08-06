@@ -336,7 +336,8 @@ void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G, int RowOffset, int ColOffset)
+                                 HMatrix *G, 
+                                 int RowOffset, int ColOffset)
 {
   /***************************************************************/
   /***************************************************************/

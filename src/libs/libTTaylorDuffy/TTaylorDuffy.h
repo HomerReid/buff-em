@@ -104,7 +104,9 @@ typedef struct TTDArgStruct
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void TTaylorDuffy(TTDArgStruct *Args);
 void InitTTDArgs(TTDArgStruct *Args);
+void *CreateTTDWorkspace(TTDArgStruct *Args);
+void DestroyTTDWorkspace(void *TTDW);
+void TTaylorDuffy(TTDArgStruct *Args, void *pTTDW=0);
 
 #endif // TTAYLORDUFFY_H

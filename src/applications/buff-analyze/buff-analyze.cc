@@ -279,9 +279,9 @@ int main(int argc, char *argv[])
    { SWGVolume *O=new SWGVolume(MeshFile);
      if (WriteGCache)
       WriteCache(O, true, NumChunks, WhichChunk);
-     else if (WritedGCache)
+     if (WritedGCache)
       WriteCache(O, false, NumChunks, WhichChunk);
-     else 
+     if ( !WriteGCache && !WritedGCache)
       AnalyzeVolume( O );
    }
   else

@@ -315,10 +315,6 @@ void GetGMETTI_TaylorDuffy(SWGVolume *OA, int OVIA[4], int iQA,
      NumPKs=npk;
      for(int nnpk=0; nnpk<NumPKs; nnpk++)
       KIndex[nnpk] = TTD_RP;
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-if (NumPKs==54)
- NumPKs=30;
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
    };
 
   /***************************************************************/

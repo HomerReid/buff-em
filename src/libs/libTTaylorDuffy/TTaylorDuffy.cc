@@ -110,37 +110,37 @@ typedef struct TTDWorkspace
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetXAndJPrime(TTDWorkspace *TDW, const double *yVector,
+void GetXAndJPrime(TTDWorkspace *TTDW, const double *yVector,
                    double X[NUMREGIONS], double JPrime[NUMREGIONS]);
 
-void GetScriptP(TTDWorkspace *TDW, int WhichP,
+void GetScriptP(TTDWorkspace *TTDW, int WhichP,
                 const double *yVector,
                 double P[NUMREGIONS][NUMWPOWERS]);
 
 void ComputeGeometricParameters(TTDArgStruct *Args,
-                                TTDWorkspace *TDW);
+                                TTDWorkspace *TTDW);
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetUpsilon_CommonTet_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTet_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonTriangle_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_1(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_2(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_3(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_4(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_5(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
-void GetUpsilon_CommonEdge_TMuBDotBP_6(TTDWorkspace *TDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_1(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_2(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_3(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_4(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_5(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTet_TMuBDotBP_6(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_1(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_2(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_3(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_4(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_5(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonTriangle_TMuBDotBP_6(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_1(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_2(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_3(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_4(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_5(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
+void GetUpsilon_CommonEdge_TMuBDotBP_6(TTDWorkspace *TTDW, int Mu, double L1[3], double L2[3], double L3[3], double L1P[3], double L2P[3], double L3P[3], double D[3], double DP[3], double V0mXTorque[3], UpsilonVector Upsilon); 
 
 /***************************************************************/
 /***************************************************************/
@@ -154,12 +154,12 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   /*--------------------------------------------------------------*/
   /*- extract parameters from data structure ---------------------*/
   /*--------------------------------------------------------------*/
-  TTDWorkspace *TDW = (TTDWorkspace *)parms;
-  int NumPKs        = TDW->NumPKs;
-  int *PIndex       = TDW->PIndex;
-  int *KIndex       = TDW->KIndex;
-  cdouble *KParam   = TDW->KParam;
-  TDW->nCalls++;
+  TTDWorkspace *TTDW = (TTDWorkspace *)parms;
+  int NumPKs        = TTDW->NumPKs;
+  int *PIndex       = TTDW->PIndex;
+  int *KIndex       = TTDW->KIndex;
+  cdouble *KParam   = TTDW->KParam;
+  TTDW->nCalls++;
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -171,7 +171,7 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   /*- regions.                                                    */
   /*--------------------------------------------------------------*/
   double X[NUMREGIONS], JPrime[NUMREGIONS];
-  GetXAndJPrime(TDW, yVector, X, JPrime);
+  GetXAndJPrime(TTDW, yVector, X, JPrime);
 
   /*--------------------------------------------------------------*/
   /*- prefetch values of the scriptP vector for all P functions  -*/
@@ -179,8 +179,8 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   /*--------------------------------------------------------------*/
   double P[NUMPS][NUMREGIONS][NUMWPOWERS];
   for(int np=0; np<NUMPS; np++)
-   if (TDW->NeedP[np])
-    GetScriptP(TDW, np, yVector, P[np]);
+   if (TTDW->NeedP[np])
+    GetScriptP(TTDW, np, yVector, P[np]);
 
   /*--------------------------------------------------------------*/
   /*- assemble the integrand vector by adding all subregions and  */
@@ -191,8 +191,8 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   for(int npk=0; npk<NumPKs; npk++)
    { 
      int np = PIndex[npk];
-     int nMin = TDW->MinwPower[ np ];
-     int nMax = TDW->MaxwPower[ np ];
+     int nMin = TTDW->MinwPower[ np ];
+     int nMax = TTDW->MaxwPower[ np ];
 
      // attempt to skip the calculation of ScriptK
      // if we can use values from the previous loop iteration
@@ -227,7 +227,48 @@ void InitTTDArgs(TTDArgStruct *Args)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void TTaylorDuffy(TTDArgStruct *Args)
+void *CreateTTDWorkspace(TTDArgStruct *Args)
+{
+  TTDWorkspace *TTDW=(TTDWorkspace *)mallocEC(sizeof *TTDW);
+  TTDW->WhichCase = Args->WhichCase;
+  int NumPKs  = TTDW->NumPKs = Args->NumPKs;
+  int *PIndex = TTDW->PIndex = Args->PIndex;
+  int *KIndex = TTDW->KIndex = Args->KIndex;
+                TTDW->KParam = Args->KParam;
+
+  memset(TTDW->NeedP, 0, NUMPS*sizeof(bool));
+  memset(TTDW->NeedK, 0, NUMKS*sizeof(bool));
+  for(int npk=0; npk<NumPKs; npk++)
+   { if ( PIndex[npk]<0 || PIndex[npk]>=NUMPS )
+      ErrExit("invalid PIndex (%i) in TTaylorDuffy",PIndex[npk]);
+     if ( KIndex[npk]<0 || KIndex[npk]>=NUMKS )
+         ErrExit("invalid KIndex (%i) in TTaylorDuffy",KIndex[npk]);
+     TTDW->NeedP[PIndex[npk]] = true;
+     TTDW->NeedK[KIndex[npk]] = true;
+   };
+
+  memset(TTDW->NumCRs,0,NUMPS*sizeof(int));
+  memset(TTDW->CRList,0,NUMPS*sizeof(TTDW->CRList[0]));
+  return (void *)TTDW;
+
+}
+
+void DestroyTTDWorkspace(void *pTTDW)
+{
+  TTDWorkspace *TTDW=(TTDWorkspace *)pTTDW;
+  if (TTDW==0) return;
+ 
+  for(int np=0; np<NUMPS; np++)
+   if (TTDW->CRList[np])
+    free(TTDW->CRList[np]);
+  free(TTDW);
+  
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void TTaylorDuffy(TTDArgStruct *Args, void *pTTDW)
 {
   /***************************************************************/
   /* unpack fields from argument structure ***********************/
@@ -244,30 +285,16 @@ void TTaylorDuffy(TTDArgStruct *Args)
   double MaxEval   = Args->MaxEval;
 
   /***************************************************************/
-  /* initialize TDW structure to pass data to integrand routines */
+  /* initialize TTDW structure to pass data to integrand routines */
   /***************************************************************/
-  TTDWorkspace MyTDW, *TDW=&MyTDW;
-  TDW->WhichCase = WhichCase;
-  TDW->NumPKs    = NumPKs;
-  TDW->PIndex    = PIndex;
-  TDW->KIndex    = KIndex;
-  TDW->KParam    = KParam;
-
-  memset(TDW->NeedP, 0, NUMPS*sizeof(bool));
-  memset(TDW->NeedK, 0, NUMKS*sizeof(bool));
-  for(int npk=0; npk<NumPKs; npk++)
-   { if ( PIndex[npk]<0 || PIndex[npk]>=NUMPS )
-      ErrExit("invalid PIndex (%i) in TTaylorDuffy",PIndex[npk]);
-     if ( KIndex[npk]<0 || KIndex[npk]>=NUMKS )
-      ErrExit("invalid KIndex (%i) in TTaylorDuffy",KIndex[npk]);
-     TDW->NeedP[PIndex[npk]] = true;
-     TDW->NeedK[KIndex[npk]] = true;
+  bool OwnsTTDW=false;
+  TTDWorkspace *TTDW=(TTDWorkspace *)pTTDW;
+  if (TTDW==0)
+   { OwnsTTDW=true;
+     TTDW=(TTDWorkspace *)CreateTTDWorkspace(Args);
    };
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  ComputeGeometricParameters(Args,TDW);
+  ComputeGeometricParameters(Args,TTDW);
   
   /***************************************************************/
   /* evaluate the 2-, 3-, 4-, or 5- dimensional cubature         */
@@ -277,33 +304,29 @@ void TTaylorDuffy(TTDArgStruct *Args)
   int fDim=2*NumPKs;
   double *dResult=(double *)(Args->Result);
   double *dError=(double *)(Args->Error);
-  TDW->nCalls=0;
+  TTDW->nCalls=0;
   int IntegralDimension = 6 - WhichCase;
 
   if (IntegralDimension<=2)
-   pcubature(fDim, TTDIntegrand, (void *)TDW, IntegralDimension,
+   pcubature(fDim, TTDIntegrand, (void *)TTDW, IntegralDimension,
              Lower, Upper, MaxEval, AbsTol, RelTol,
              ERROR_INDIVIDUAL, dResult, dError);
   else
-   hcubature(fDim, TTDIntegrand, (void *)TDW, IntegralDimension,
+   hcubature(fDim, TTDIntegrand, (void *)TTDW, IntegralDimension,
              Lower, Upper, MaxEval, AbsTol, RelTol,
              ERROR_INDIVIDUAL, dResult, dError);
 
-  Args->nCalls = TDW->nCalls;
+  Args->nCalls = TTDW->nCalls;
 
-  /*--------------------------------------------------------------*/
-  /*- FIXME ------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  for(int np=0; np<NUMPS; np++)
-   if (TDW->CRList[np]) free(TDW->CRList[np]);
-  
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   for(int npk=0; npk<NumPKs; npk++)
-   if ( TDW->KIndex[npk]==TTD_HELMHOLTZ || TDW->KIndex[npk]==TTD_GRADHELMHOLTZ)
+   if ( TTDW->KIndex[npk]==TTD_HELMHOLTZ || TTDW->KIndex[npk]==TTD_GRADHELMHOLTZ)
     Args->Result[npk] /= (4.0*M_PI);
 
+  if (OwnsTTDW)
+   DestroyTTDWorkspace( (void *) TTDW );
 }
 
 /***************************************************************/
@@ -443,10 +466,10 @@ void GetuXiAndJPrime(double w, const double *yVector,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetXAndJPrime(TTDWorkspace *TDW, const double *yVector,
+void GetXAndJPrime(TTDWorkspace *TTDW, const double *yVector,
                    double X[NUMREGIONS], double JPrime[NUMREGIONS])
 {
-  int WhichCase = TDW->WhichCase;
+  int WhichCase = TTDW->WhichCase;
   double uXi[NUMREGIONS][6];
   GetuXiAndJPrime(1.0, yVector, WhichCase, uXi, JPrime);
  
@@ -455,7 +478,7 @@ void GetXAndJPrime(TTDWorkspace *TDW, const double *yVector,
   for(int m=0; m<uXiDim; m++)
    for(int n=m; n<uXiDim; n++)
     for(int d=0; d<NUMREGIONS; d++)
-     X[d] += uXi[d][m] * TDW->RMatrix[m][n] * uXi[d][n];
+     X[d] += uXi[d][m] * TTDW->RMatrix[m][n] * uXi[d][n];
 
   for(int d=0; d<NUMREGIONS; d++)
    X[d] = sqrt(X[d]);
@@ -484,10 +507,10 @@ void GetnMinMax(double P[NUMREGIONS][NUMWPOWERS], int nMinMax[2])
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetScriptP(TTDWorkspace *TDW, int WhichP, const double *yVector,
+void GetScriptP(TTDWorkspace *TTDW, int WhichP, const double *yVector,
                 double P[NUMREGIONS][NUMWPOWERS])
 {
-  int WhichCase=TDW->WhichCase;
+  int WhichCase=TTDW->WhichCase;
 
   /***************************************************************/
   /* initialize vectors of powers of Y variables                 */
@@ -496,7 +519,7 @@ void GetScriptP(TTDWorkspace *TDW, int WhichP, const double *yVector,
   yPowers[0][0]=yPowers[1][0]=yPowers[2][0]=yPowers[3][0]=1.0;
   int NumYs = 6 - WhichCase;
   for(int ny=0; ny<NumYs; ny++)
-   for(int np=1; np<=TDW->MaxyPower[WhichP][ny]; np++)
+   for(int np=1; np<=TTDW->MaxyPower[WhichP][ny]; np++)
     yPowers[ny][np]=yPowers[ny][np-1]*yVector[ny];
 
   /***************************************************************/
@@ -506,9 +529,9 @@ void GetScriptP(TTDWorkspace *TDW, int WhichP, const double *yVector,
   for(int d=0; d<NUMREGIONS; d++)
    memset(P[d], 0, NUMWPOWERS*sizeof(double));
 
-  for(int ncr=0; ncr<TDW->NumCRs[WhichP]; ncr++)
+  for(int ncr=0; ncr<TTDW->NumCRs[WhichP]; ncr++)
    { 
-     CoefficientRule *CR = &(TDW->CRList[WhichP][ncr]);
+     CoefficientRule *CR = &(TTDW->CRList[WhichP][ncr]);
      P[CR->Region][CR->wPower] += CR->Coefficient
                                   *yPowers[0][CR->y1Power]
                                   *yPowers[1][CR->y2Power]
@@ -535,9 +558,9 @@ void ZeroUpsilonVector(UpsilonVector *Upsilon)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-CoefficientRule *GetCRList(UpsilonVector *Upsilon,
-                           int MinwPower, int MaxwPower, int MaxyPower[MAXYDIM],
-                           int *pNumRules)
+void GetCRList(UpsilonVector *Upsilon,
+               int MinwPower, int MaxwPower, int MaxyPower[MAXYDIM],
+               CoefficientRule **pCRList, int *pCRListLength)
 {
 #define UPSTHRESH 1.0e-10
   /***************************************************/
@@ -556,7 +579,21 @@ CoefficientRule *GetCRList(UpsilonVector *Upsilon,
   /***************************************************/
   /* second pass to populate list of rules ***********/
   /***************************************************/
-  CoefficientRule *CRList=(CoefficientRule *)mallocEC(NumRules*sizeof(*CRList));
+  CoefficientRule *CRList = *pCRList;
+  int CRListLength        = *pCRListLength;
+  if ( CRList && CRListLength!=NumRules)
+   { 
+     Warn("%s:%i: mismatch in Taylor-Duffy workspace size (%i!=%i) (reallocating)...",__FILE__,__LINE__,CRListLength,NumRules);
+     free(CRList);
+     CRList=0;
+   };
+
+  if ( CRList==0 )
+   { CRList=(CoefficientRule *)mallocEC(NumRules*sizeof(*CRList));
+     *pCRList=CRList;
+     *pCRListLength=NumRules;
+   };
+ 
   for(int nr=0, d=0; d<NUMREGIONS; d++)
    for(int wPower=MinwPower; wPower<=MaxwPower; wPower++)
     for(int y1p=0; y1p<=MaxyPower[0]; y1p++)
@@ -574,15 +611,13 @@ CoefficientRule *GetCRList(UpsilonVector *Upsilon,
            nr++;
          };
 
-  *pNumRules=NumRules;
-  return CRList;
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
 void ComputeGeometricParameters(TTDArgStruct *Args,
-                                TTDWorkspace *TDW)
+                                TTDWorkspace *TTDW)
 { 
   double *V1       = Args->V1;
   double *V2       = Args->V2;
@@ -622,32 +657,32 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   VecSub(L2P,L2,DL2);
   VecSub(L3P,L3,DL3);
 
-  TDW->RMatrix[0][0] =     VecDot(L1P,L1P);
-  TDW->RMatrix[0][1] = 2.0*VecDot(L1P,L2P);
-  TDW->RMatrix[0][2] = 2.0*VecDot(L1P,L3P);
-  TDW->RMatrix[0][3] = 2.0*VecDot(L1P,DL3);
-  TDW->RMatrix[0][4] = 2.0*VecDot(L1P,DL2);
-  TDW->RMatrix[0][5] = 2.0*VecDot(L1P,DL1);
+  TTDW->RMatrix[0][0] =     VecDot(L1P,L1P);
+  TTDW->RMatrix[0][1] = 2.0*VecDot(L1P,L2P);
+  TTDW->RMatrix[0][2] = 2.0*VecDot(L1P,L3P);
+  TTDW->RMatrix[0][3] = 2.0*VecDot(L1P,DL3);
+  TTDW->RMatrix[0][4] = 2.0*VecDot(L1P,DL2);
+  TTDW->RMatrix[0][5] = 2.0*VecDot(L1P,DL1);
 
-  TDW->RMatrix[1][1] =     VecDot(L2P,L2P);
-  TDW->RMatrix[1][2] = 2.0*VecDot(L2P,L3P);
-  TDW->RMatrix[1][3] = 2.0*VecDot(L2P,DL3);
-  TDW->RMatrix[1][4] = 2.0*VecDot(L2P,DL2);
-  TDW->RMatrix[1][5] = 2.0*VecDot(L2P,DL1);
+  TTDW->RMatrix[1][1] =     VecDot(L2P,L2P);
+  TTDW->RMatrix[1][2] = 2.0*VecDot(L2P,L3P);
+  TTDW->RMatrix[1][3] = 2.0*VecDot(L2P,DL3);
+  TTDW->RMatrix[1][4] = 2.0*VecDot(L2P,DL2);
+  TTDW->RMatrix[1][5] = 2.0*VecDot(L2P,DL1);
 
-  TDW->RMatrix[2][2] =     VecDot(L3P,L3P);
-  TDW->RMatrix[2][3] = 2.0*VecDot(L3P,DL3);
-  TDW->RMatrix[2][4] = 2.0*VecDot(L3P,DL2);
-  TDW->RMatrix[2][5] = 2.0*VecDot(L3P,DL1);
+  TTDW->RMatrix[2][2] =     VecDot(L3P,L3P);
+  TTDW->RMatrix[2][3] = 2.0*VecDot(L3P,DL3);
+  TTDW->RMatrix[2][4] = 2.0*VecDot(L3P,DL2);
+  TTDW->RMatrix[2][5] = 2.0*VecDot(L3P,DL1);
 
-  TDW->RMatrix[3][3] =     VecDot(DL3,DL3);
-  TDW->RMatrix[3][4] = 2.0*VecDot(DL3,DL2);
-  TDW->RMatrix[3][5] = 2.0*VecDot(DL3,DL1);
+  TTDW->RMatrix[3][3] =     VecDot(DL3,DL3);
+  TTDW->RMatrix[3][4] = 2.0*VecDot(DL3,DL2);
+  TTDW->RMatrix[3][5] = 2.0*VecDot(DL3,DL1);
 
-  TDW->RMatrix[4][4] =     VecDot(DL2,DL2);
-  TDW->RMatrix[4][5] = 2.0*VecDot(DL2,DL1);
+  TTDW->RMatrix[4][4] =     VecDot(DL2,DL2);
+  TTDW->RMatrix[4][5] = 2.0*VecDot(DL2,DL1);
 
-  TDW->RMatrix[5][5] =     VecDot(DL1,DL1);
+  TTDW->RMatrix[5][5] =     VecDot(DL1,DL1);
 
   double D[3]={0.0, 0.0, 0.0};
   double DP[3]={0.0, 0.0, 0.0};
@@ -678,14 +713,14 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  memset(TDW->CRList, 0, NUMPS*sizeof(CoefficientRule *));
-  bool *NeedP   = TDW->NeedP;
-  int WhichCase = TDW->WhichCase;
+  memset(TTDW->CRList, 0, NUMPS*sizeof(CoefficientRule *));
+  bool *NeedP   = TTDW->NeedP;
+  int WhichCase = TTDW->WhichCase;
   UpsilonVector Upsilon;
   int MinwPower;
   int MaxwPower; 
   int MaxyPower[MAXYDIM];
-  if ( TDW->NeedP[TTD_UNITY] )
+  if ( TTDW->NeedP[TTD_UNITY] )
    { 
      ZeroUpsilonVector(&Upsilon);
 
@@ -703,20 +738,20 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
       };
 
      int WhichP=TTD_UNITY;
-     TDW->MinwPower[WhichP]=MinwPower;
-     TDW->MaxwPower[WhichP]=MaxwPower;
-     TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-     TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-     TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-     TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-     TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
-                                   MaxyPower, &(TDW->NumCRs[WhichP]));
+     TTDW->MinwPower[WhichP]=MinwPower;
+     TTDW->MaxwPower[WhichP]=MaxwPower;
+     TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+     TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+     TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+     TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+     GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+               TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
    };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( TDW->NeedP[TTD_BDOTBP] )
+  if ( TTDW->NeedP[TTD_BDOTBP] )
    { 
      ZeroUpsilonVector(&Upsilon);
 
@@ -734,21 +769,21 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
       };
 
      int WhichP=TTD_BDOTBP;
-     TDW->MinwPower[WhichP]=MinwPower;
-     TDW->MaxwPower[WhichP]=MaxwPower;
-     TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-     TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-     TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-     TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-     TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
-                                   MaxyPower, &(TDW->NumCRs[WhichP]));
+     TTDW->MinwPower[WhichP]=MinwPower;
+     TTDW->MaxwPower[WhichP]=MaxwPower;
+     TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+     TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+     TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+     TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+     GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+               TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
    };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   for(int WhichP=TTD_RXUNITY; WhichP<=TTD_RZUNITY; WhichP++)
-   if ( TDW->NeedP[WhichP] )
+   if ( TTDW->NeedP[WhichP] )
     {  
        ZeroUpsilonVector(&Upsilon);
 
@@ -769,21 +804,21 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
 #include "UpsilonFiles/Upsilon_CommonEdge_RMuUnity.cc"
         };
 
-       TDW->MinwPower[WhichP]=MinwPower;
-       TDW->MaxwPower[WhichP]=MaxwPower;
-       TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-       TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-       TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-       TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
-                                     MaxyPower, &(TDW->NumCRs[WhichP]));
+       TTDW->MinwPower[WhichP]=MinwPower;
+       TTDW->MaxwPower[WhichP]=MaxwPower;
+       TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+       TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+       TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+       TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+       GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+                 TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
     };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   for(int WhichP=TTD_RXBDOTBP; WhichP<=TTD_RZBDOTBP; WhichP++)
-   if ( TDW->NeedP[WhichP] )
+   if ( TTDW->NeedP[WhichP] )
     {  
        ZeroUpsilonVector(&Upsilon);
 
@@ -804,21 +839,21 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
 #include "UpsilonFiles/Upsilon_CommonEdge_RMuBDotBP.cc"
         };
 
-       TDW->MinwPower[WhichP]=MinwPower;
-       TDW->MaxwPower[WhichP]=MaxwPower;
-       TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-       TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-       TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-       TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
-                                     MaxyPower, &(TDW->NumCRs[WhichP]));
+       TTDW->MinwPower[WhichP]=MinwPower;
+       TTDW->MaxwPower[WhichP]=MaxwPower;
+       TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+       TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+       TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+       TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+       GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+                 TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
     };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   for(int WhichP=TTD_TXUNITY; WhichP<=TTD_TZUNITY; WhichP++)
-   if ( TDW->NeedP[WhichP] )
+   if ( TTDW->NeedP[WhichP] )
     {  
        ZeroUpsilonVector(&Upsilon);
 
@@ -848,22 +883,22 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
 #include "UpsilonFiles/Upsilon_CommonEdge_TMuUnity.cc"
       };
 
-       TDW->MinwPower[WhichP]=MinwPower;
-       TDW->MaxwPower[WhichP]=MaxwPower;
-       TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-       TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-       TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-       TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower, 
-                                     MaxyPower, &(TDW->NumCRs[WhichP]));
+       TTDW->MinwPower[WhichP]=MinwPower;
+       TTDW->MaxwPower[WhichP]=MaxwPower;
+       TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+       TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+       TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+       TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+       GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+                 TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
 
-    }; //  if ( TDW->NeedP[WhichP] )
+    }; //  if ( TTDW->NeedP[WhichP] )
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   for(int WhichP=TTD_TXBDOTBP; WhichP<=TTD_TZBDOTBP; WhichP++)
-   if ( TDW->NeedP[WhichP] )
+   if ( TTDW->NeedP[WhichP] )
     {
        int Mu=WhichP-TTD_TXBDOTBP;
        ZeroUpsilonVector(&Upsilon);
@@ -876,12 +911,12 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
           MaxyPower[2]=0;
           MaxyPower[3]=0;
 
-          GetUpsilon_CommonTet_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTet_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_1(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_2(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_3(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_4(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_5(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTet_TMuBDotBP_6(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
         }
        else if (WhichCase==TTD_COMMONTRIANGLE)
         { 
@@ -892,12 +927,12 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
           MaxyPower[2]=2;
           MaxyPower[3]=0;
 
-          GetUpsilon_CommonTriangle_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonTriangle_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_1(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_2(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_3(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_4(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_5(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonTriangle_TMuBDotBP_6(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
         }
        else if (WhichCase==TTD_COMMONEDGE )
         { 
@@ -908,23 +943,22 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
           MaxyPower[2]=4;
           MaxyPower[3]=2;
 
-          GetUpsilon_CommonEdge_TMuBDotBP_1(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_2(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_3(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_4(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_5(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
-          GetUpsilon_CommonEdge_TMuBDotBP_6(TDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_1(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_2(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_3(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_4(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_5(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
+          GetUpsilon_CommonEdge_TMuBDotBP_6(TTDW, Mu, L1, L2, L3, L1P, L2P, L3P, D, DP, V0mXTorque, Upsilon);
         };
 
-       TDW->MinwPower[WhichP]=MinwPower;
-       TDW->MaxwPower[WhichP]=MaxwPower;
-       TDW->MaxyPower[WhichP][0]=MaxyPower[0];
-       TDW->MaxyPower[WhichP][1]=MaxyPower[1];
-       TDW->MaxyPower[WhichP][2]=MaxyPower[2];
-       TDW->MaxyPower[WhichP][3]=MaxyPower[3];
-
-       TDW->CRList[WhichP]=GetCRList(&Upsilon, MinwPower, MaxwPower,
-                                     MaxyPower, &(TDW->NumCRs[WhichP]));
+       TTDW->MinwPower[WhichP]=MinwPower;
+       TTDW->MaxwPower[WhichP]=MaxwPower;
+       TTDW->MaxyPower[WhichP][0]=MaxyPower[0];
+       TTDW->MaxyPower[WhichP][1]=MaxyPower[1];
+       TTDW->MaxyPower[WhichP][2]=MaxyPower[2];
+       TTDW->MaxyPower[WhichP][3]=MaxyPower[3];
+       GetCRList(&Upsilon, MinwPower, MaxwPower, MaxyPower,
+                 TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
 
     };
 
