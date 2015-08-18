@@ -41,15 +41,11 @@
 
 namespace buff {
 
-void ComputeFIBBIData(SWGVolume *OA, int nfA,
-                      SWGVolume *OB, int nfB,
-                      double *GFI, double *dGFI);
-
 #define KEYLEN 27
 #define KEYSIZE (KEYLEN*sizeof(float))
 
-#define GDATA_LEN  6
-#define DGDATA_LEN 48
+#define DATALEN FIBBIDATALEN
+#define DATASIZE (DATALEN*sizeof(double))
 
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
@@ -78,12 +74,10 @@ long HashFunction(const float *Key)
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
-typedef struct { float  Key[KEYLEN];      } KeyStruct;
-typedef struct { double Data[GDATA_LEN];  } GDataStruct;
-typedef struct { double Data[DGDATA_LEN]; } dGDataStruct;
+typedef struct { float  Key[KEYLEN];    } KeyStruct;
+typedef struct { double Data[DATALEN];  } DataStruct;
 
-typedef std::pair<KeyStruct, GDataStruct>   GKDPair;
-typedef std::pair<KeyStruct, dGDataStruct> dGKDPair;
+typedef std::pair<KeyStruct, DataStruct> KDPair;
 
 struct KeyHash
  {
@@ -104,58 +98,44 @@ typedef struct
  } KeyCmp;
 
 typedef std::tr1::unordered_map< KeyStruct,
-                                 GDataStruct,
+                                 DataStruct,
                                  KeyHash,
-                                 KeyCmp> GKDMap;
-
-typedef std::tr1::unordered_map< KeyStruct,
-                                 dGDataStruct,
-                                 KeyHash,
-                                 KeyCmp> dGKDMap;
+                                 KeyCmp> KDMap;
 
 /*--------------------------------------------------------------*/
 /*- class constructor                                          -*/
 /*--------------------------------------------------------------*/
-FIBBICache::FIBBICache(char *MeshFileName, bool pIsGCache)
+FIBBICache::FIBBICache(char *MeshFileName)
 {
-  IsGCache=pIsGCache;
-
-  if (IsGCache)
-   { GKDMap *GKDM=new GKDMap;
-     opTable = (void *)GKDM;
-   }
-  else
-   { dGKDMap *dGKDM=new dGKDMap;
-     opTable = (void *)dGKDM;
-   };
+  KDMap *KDM=new KDMap;
+  opTable = (void *)KDM;
 
   pthread_rwlock_init(&lock,0);
 
   Hits=Misses=0;
 
   /*--------------------------------------------------------------*/
-  /*- attempt to preload -----------------------------------------*/
+  /*- attempt to preload cache                                   -*/
   /*--------------------------------------------------------------*/
   PreloadFileName=0;
   RecordsPreloaded=0;
   if (MeshFileName)
    { 
-     const char *Extension = IsGCache ? "GCache" : "dGCache";
      char CacheFileName[MAXSTR];
      int Status=0;
 
-     // first look for ${BUFF_CACHE_DIR}/MeshFile.GCache 
+     // first look for ${BUFF_CACHE_DIR}/MeshFile.cache 
      char *CacheDir=getenv("BUFF_CACHE_DIR");
      if (CacheDir)
-      { snprintf(CacheFileName, MAXSTR, "%s/%s.%s",
-                 CacheDir,GetFileBase(MeshFileName),Extension);
+      { snprintf(CacheFileName, MAXSTR, "%s/%s.cache",
+                 CacheDir,GetFileBase(MeshFileName));
         Status=PreLoad(CacheFileName);
       };
 
-     // next look for /path/to/MeshFile.vmsh/MeshFile.GCache
+     // next look for ./MeshFile.cache
      if (Status!=0)
-      { snprintf(CacheFileName, MAXSTR, "%s.%s",
-                 RemoveExtension(MeshFileName), Extension);
+      { snprintf(CacheFileName, MAXSTR, "%s.cache",
+                 GetFileBase(MeshFileName));
         Status=PreLoad(CacheFileName);
       };
    };
@@ -171,14 +151,8 @@ FIBBICache::~FIBBICache()
   if (PreloadFileName)
    free(PreloadFileName);
 
-  if (IsGCache)
-   { GKDMap *GKDM = (GKDMap *)opTable;
-     delete GKDM;
-   }
-  else
-   { dGKDMap *dGKDM = (dGKDMap *)opTable;
-     delete dGKDM;
-   };
+  KDMap *KDM = (KDMap *)opTable;
+  delete KDM;
 
 } 
 
@@ -243,22 +217,12 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
   KeyStruct Key;
   GetFIBBICacheKey(OA, nfA, OB, nfB, Key.Key);
 
-  GKDMap *GKDM    = (IsGCache) ? (GKDMap *)opTable : 0;
-  dGKDMap *dGKDM  = (IsGCache) ? 0 : (dGKDMap *)opTable;
-  int DataLen     = (IsGCache) ? GDATA_LEN : DGDATA_LEN;
-  size_t DataSize = DataLen * sizeof(double);
+  KDMap *KDM    = (KDMap *)opTable;
   bool Found;
   pthread_rwlock_rdlock(&lock);
-  if (IsGCache)
-   { GKDMap::iterator p=GKDM->find(Key);
-     Found = (p != (GKDM->end()) );
-     if (Found) memcpy(Data, p->second.Data, DataSize);
-   }
-  else
-   { dGKDMap::iterator p=dGKDM->find(Key);
-     Found = (p != (dGKDM->end()) );
-     if (Found) memcpy(Data, p->second.Data, DataSize);
-   };
+  KDMap::iterator p=KDM->find(Key);
+  Found = (p != (KDM->end()) );
+  if (Found) memcpy(Data, p->second.Data, DATASIZE);
   pthread_rwlock_unlock(&lock);
 
   if ( Found )
@@ -267,29 +231,15 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
    };
   
   /***************************************************************/
-  /* if it was not found, compute a new FIBBI data record...     */
+  /* if it was not found, compute a new FIBBI data record and add*/
+  /* it to the cache                                             */
   /***************************************************************/
   Misses++;
-  
-  GDataStruct GData; 
-  dGDataStruct dGData;
-  if (IsGCache)
-   { ComputeFIBBIData(OA, nfA, OB, nfB, GData.Data, 0);
-     memcpy(Data, GData.Data, DataSize);
-   }
-  else
-   { ComputeFIBBIData(OA, nfA, OB, nfB, 0, dGData.Data);
-     memcpy(Data, dGData.Data, DataSize);
-   };
-   
-  /***************************************************************/
-  /* ...and add this data record to the cache                    */
-  /***************************************************************/
+  ComputeFIBBIData(OA, nfA, OB, nfB, Data);
+  DataStruct DS;
+  memcpy(DS.Data, Data, DATASIZE);
   pthread_rwlock_wrlock(&lock);
-  if (IsGCache)
-   GKDM->insert( GKDPair(Key,GData) );
-  else 
-   dGKDM->insert( dGKDPair(Key,dGData) );
+  KDM->insert( KDPair(Key,DS) );
   pthread_rwlock_unlock(&lock);
 }
 
@@ -299,11 +249,15 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
 /* and subsequently pre-loading a FIBBI cache with the content */
 /* of a file created by this storage operation.                */
 /*                                                             */
+/* cache files have the canonical file name MeshFile.cache     */
+/* where MeshFile.vmsh is the tetrahedral mesh file.           */
+/* cache files are written to the directory ${BUFF_MESH_DIR}   */
+/* if that environment variable is defined, and otherwise to   */
+/* the current working directory.                              */
+/*                                                             */
 /* the file format is pretty simple (and non-portable w.r.t.   */
 /* endianness):                                                */
 /*  bytes 0--12:   'FIBBI_GCACHE' + 0                          */
-/*   or                                                        */
-/*                 'FIBBIdGCACHE' + 0                          */
 /*  next xx bytes:  first record                               */ 
 /*  next xx bytes:  second record                              */
 /*  ...             ...                                        */
@@ -315,16 +269,24 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
 /* note: FIBBICF = 'FIBBI cache file'                          */
 /***************************************************************/
 const char FIBBICF_GSignature[]  = "FIBBI_GCACHE";
-const char FIBBICF_dGSignature[] = "FIBBIdGCACHE";
 #define FIBBICF_SIGSIZE (sizeof(FIBBICF_GSignature))
 
-void FIBBICache::Store(const char *FileName)
+void FIBBICache::Store(const char *MeshFileName)
 {
-  if (!FileName)
+  if (!MeshFileName)
    return;
+  char MFNCopy[MAXSTR];
+  strncpy(MFNCopy,MeshFileName,MAXSTR);
 
-  GKDMap *GKDM    = (IsGCache) ? (GKDMap *)opTable : 0;
-  dGKDMap *dGKDM  = (IsGCache) ? 0 : (dGKDMap *)opTable;
+  char FileName[MAXSTR];
+  
+  char *s=getenv("BUFF_CACHE_DIR");
+  if (!s)
+   snprintf(FileName,MAXSTR,"%s.cache",GetFileBase(MFNCopy));
+  else
+   snprintf(FileName,MAXSTR,"%s/%s.cache",s,GetFileBase(MFNCopy));
+
+  KDMap *KDM = (KDMap *)opTable;
 
   /*--------------------------------------------------------------*/
   /*- pause to check if the following conditions are satisfied:  -*/
@@ -337,12 +299,12 @@ void FIBBICache::Store(const char *FileName)
   /*- the cache since the operation would result in a cache dump -*/
   /*- file identical to the one that already exists.             -*/
   /*--------------------------------------------------------------*/
-  unsigned int NumRecords = (IsGCache) ? GKDM->size() : dGKDM->size();
+  unsigned int NumRecords = KDM->size();
   if (     PreloadFileName
        && !strcmp(PreloadFileName, FileName)
        && NumRecords==RecordsPreloaded
      )
-   { Log("FIBBI cache unchanged since reading from %s (skipping cache dump)",FileName);
+   { Log("FC::S FIBBI cache unchanged since reading from %s (skipping cache dump)",FileName);
      return;
    };
 
@@ -354,57 +316,36 @@ void FIBBICache::Store(const char *FileName)
 
   FILE *f=fopen(FileName,"w");
   if (!f)
-   { Log("warning: could not open file %s (aborting cache dump)...",FileName);
+   { Log("FC::S warning: could not open file %s (aborting cache dump)...",FileName);
      return;
    };
-  Log("Writing FIBBI cache to file %s...",FileName);
+  Log("FC::S Writing FIBBI cache to file %s...",FileName);
 
   /*---------------------------------------------------------------------*/
   /*- write file signature ----------------------------------------------*/
   /*---------------------------------------------------------------------*/
-  if (IsGCache)
-   fwrite(FIBBICF_GSignature, FIBBICF_SIGSIZE,1,f);
-  else
-   fwrite(FIBBICF_dGSignature,FIBBICF_SIGSIZE,1,f);
+  fwrite(FIBBICF_GSignature, FIBBICF_SIGSIZE,1,f);
 
   /*---------------------------------------------------------------------*/
   /*- iterate through the table and write entries to the file one-by-one */
   /*---------------------------------------------------------------------*/
   int NumWritten=0;
-  int DataLen  = (IsGCache) ? GDATA_LEN: DGDATA_LEN;
-  int DataSize = DataLen * sizeof(double);
-  if (IsGCache)
+  KDMap::iterator it;
+  for ( it = KDM->begin(); it != KDM->end(); it++ )
    { 
-     GKDMap::iterator it;
-     for ( it = GKDM->begin(); it != GKDM->end(); it++ )
-      { 
-        const float *Key   = it->first.Key;
-        double *Data = it->second.Data;
-        if (    (1 != fwrite(Key,  KEYSIZE,  1, f )) 
-             || (1 != fwrite(Data, DataSize, 1, f ))
-           ) break;
-        NumWritten++;
-      };
-   }
-  else
-   { 
-     dGKDMap::iterator it;
-     for ( it = dGKDM->begin(); it != dGKDM->end(); it++ )
-      { 
-        const float *Key   = it->first.Key;
-        double *Data = it->second.Data;
-        if (    (1 != fwrite(Key,  KEYSIZE,  1, f )) 
-             || (1 != fwrite(Data, DataSize, 1, f ))
-           ) break;
-        NumWritten++;
-      };
+     const float *Key   = it->first.Key;
+     double *Data = it->second.Data;
+     if (    (1 != fwrite(Key,  KEYSIZE,  1, f )) 
+          || (1 != fwrite(Data, DATASIZE, 1, f ))
+        ) break;
+     NumWritten++;
    };
 
   /*---------------------------------------------------------------------*/
   /*- and that's it -----------------------------------------------------*/
   /*---------------------------------------------------------------------*/
   fclose(f);
-  Log(" ...wrote %i/%i FIBBI records.",NumWritten,NumRecords);
+  Log("FC::S ...wrote %i/%i FIBBI records.",NumWritten,NumRecords);
 
   //FCLock.read_unlock();
 }
@@ -417,15 +358,12 @@ int FIBBICache::PreLoad(const char *FileName)
   /*--------------------------------------------------------------*/
   FILE *f=fopen(FileName,"r");
   if (!f)
-   { Log("could not open file %s (skipping cache preload)",FileName);
+   { Log("FC::P could not open file %s (skipping cache preload)",FileName);
      return 1;
    };
 
-  GKDMap *GKDM     = (IsGCache) ? (GKDMap *)opTable : 0;
-  dGKDMap *dGKDM   = (IsGCache) ? 0 : (dGKDMap *)opTable;
-  int DataLen      = (IsGCache) ? GDATA_LEN: DGDATA_LEN;
-  int DataSize     =  DataLen * sizeof(double);
-  int RecordSize   = KEYSIZE + DataSize;
+  KDMap *KDM       = (KDMap *)opTable;
+  int RecordSize   = KEYSIZE + DATASIZE;
   int NumRecords   = 0; 
   int RecordsRead  = 0;
   unsigned long M0 = GetMemoryUsage();
@@ -455,19 +393,8 @@ int FIBBICache::PreLoad(const char *FileName)
    };
 
   // check that the file signature is one that we recognize
-  bool FileIsGCache;
-  if (      !strcmp(FileSignature, FIBBICF_GSignature)  )
-   FileIsGCache=true;
-  else if ( !strcmp(FileSignature, FIBBICF_dGSignature) )
-   FileIsGCache=false;
-  else 
+  if ( strcmp(FileSignature, FIBBICF_GSignature)  )
    { ErrMsg="invalid cache file";
-     goto fail;
-   };
-
-  // check that the file type agrees with what we are
-  if ( FileIsGCache!=IsGCache )
-   { ErrMsg="cache file is wrong type";
      goto fail;
    };
 
@@ -483,27 +410,22 @@ int FIBBICache::PreLoad(const char *FileName)
   /*- now just read records from the file one at a time and add   */
   /*- them to the table.                                          */
   /*--------------------------------------------------------------*/
-  Log("Preloading FIBBI records from file %s...",FileName);
+  Log("FC::P Preloading FIBBI records from file %s...",FileName);
   NumRecords = FileSize / RecordSize;
   for(int nr=0; nr<NumRecords; nr++)
    { 
      KeyStruct Key;
-     GDataStruct GData; 
-     dGDataStruct dGData;
-     double *Data = IsGCache ? GData.Data : dGData.Data;
+     DataStruct Data; 
      
-     if (    (fread( Key.Key, KEYSIZE,  1, f) != 1)
-          || (fread( Data,    DataSize, 1, f) != 1)
+     if (    (fread( Key.Key,    KEYSIZE,  1, f) != 1)
+          || (fread( Data.Data,  DATASIZE, 1, f) != 1)
         )
-      { Log("file %s: read only %i/%i records",FileName,RecordsRead,NumRecords);
+      { Log("FC::P file %s: read only %i/%i records",FileName,RecordsRead,NumRecords);
         fclose(f);
 	return 1;
       };
   
-     if (IsGCache)
-      GKDM->insert( GKDPair(Key,GData) );
-     else 
-      dGKDM->insert( dGKDPair(Key,dGData) );
+     KDM->insert( KDPair(Key,Data) );
      RecordsRead++;
    };
 
@@ -518,9 +440,9 @@ int FIBBICache::PreLoad(const char *FileName)
   PreloadFileName=strdupEC(FileName);
   RecordsPreloaded=RecordsRead;
 
-  Log(" ...successfully preloaded %i FIBBI records.",RecordsPreloaded);
+  Log("FC::P ...successfully preloaded %i FIBBI records.",RecordsPreloaded);
 #define ONEMEG (1<<20)
-  Log(" Cache memory use: %i MB.",(GetMemoryUsage() - M0)/(ONEMEG));
+  Log("FC::P Cache memory use: %i MB.",(GetMemoryUsage() - M0)/(ONEMEG));
   fclose(f);
   return 0;
 
@@ -528,7 +450,7 @@ int FIBBICache::PreLoad(const char *FileName)
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
  fail:
-  Log("warning: file %s: %s (skipping cache preload)",FileName,ErrMsg);
+  Log("FC::P warning: file %s: %s (skipping cache preload)",FileName,ErrMsg);
   fclose(f);
   return 1;
 }
@@ -539,15 +461,8 @@ int FIBBICache::PreLoad(const char *FileName)
 int FIBBICache::Size()
 { 
   if (opTable==0) return -1;
-
-  if (IsGCache)
-   { GKDMap *GKDM = (GKDMap *)opTable;
-     return GKDM->size();
-   }
-  else
-   { dGKDMap *dGKDM = (dGKDMap *)opTable;
-     return dGKDM->size();
-   };
+  KDMap *KDM = (KDMap *)opTable;
+  return KDM->size();
 
 }
 

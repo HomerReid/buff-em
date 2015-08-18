@@ -40,9 +40,17 @@
 
 using namespace scuff;
 
+// length of a FIBBI data record in units of sizeof(double)
+#define FIBBIDATALEN 6
+
 namespace buff { 
 
 class SWGVolume; // forward reference needed below
+
+// routine that computes a FIBBI data record for a given basis-function pair
+void ComputeFIBBIData(SWGVolume *OA, int nfA,
+                      SWGVolume *OB, int nfB,
+                      double FIBBIData[FIBBIDATALEN]);
 
 /*--------------------------------------------------------------*/
 /* 'FIBBICache' is a class that implements efficient storage    */
@@ -54,12 +62,13 @@ class FIBBICache
   public:
 
     // constructor, destructor 
-    FIBBICache(char *MeshFileName=0, bool IsGCache=true);
+    FIBBICache(char *MeshFileName=0);
     ~FIBBICache(); 
 
     // look up an entry 
-    void GetFIBBIData(SWGVolume *VA, int nfA, SWGVolume *VB, int nfB,
-                      double *Data);
+    void GetFIBBIData(SWGVolume *VA, int nfA,
+                      SWGVolume *VB, int nfB,
+                      double Data[FIBBIDATALEN]);
 
     // get the number of records
     int Size();
@@ -69,7 +78,6 @@ class FIBBICache
     int PreLoad(const char *FileName);
 
     int Hits, Misses;
-    bool IsGCache;
 
   private:
 

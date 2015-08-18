@@ -347,31 +347,30 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   int NFA = OA->NumInteriorFaces;
   int NFB = OB->NumInteriorFaces;
   int SameObject = (noa==nob) ? 1 : 0;
+  Log("AGB Assembling G(%i,%i)",noa,nob);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   FIBBICache *GCache   = 0;
-  int InitialCacheSize = 0;
   if (noa==nob)
    {
      int noMate=Mate[noa];
      int noCache = (noMate==-1) ? noa : noMate;
      if (ObjectGCaches[noCache]==0)
-      ObjectGCaches[noCache]=new FIBBICache(OA->MeshFileName, true);
+      ObjectGCaches[noCache]=new FIBBICache(OA->MeshFileName);
      GCache = ObjectGCaches[noCache];
-     InitialCacheSize = GCache->Size();
+     Log("AGB initial cache size %i ",GCache->Size());
    };
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  Log("Assembling G(%i,%i)",noa,nob);
 #ifndef USE_OPENMP
-  Log(" no multithreading...");
+  Log("AGB no multithreading...");
 #else
   int NumThreads=GetNumThreads();
-  Log(" OpenMP multithreading (%i threads...)",NumThreads);
+  Log("AGB OpenMP multithreading (%i threads...)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),		\
                          num_threads(NumThreads)
 #endif
@@ -392,11 +391,9 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if (GCache && GCache->Size()>InitialCacheSize)
-   { char CacheFileName[MAXSTR];
-     snprintf(CacheFileName, MAXSTR, "%s.GCache",
-              GetFileBase(OA->MeshFileName));
-     GCache->Store(CacheFileName);
+  if (GCache)
+   { Log("AGB final cache size %i ",GCache->Size());
+     GCache->Store(OA->MeshFileName);
    };
 
 }

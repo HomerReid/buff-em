@@ -78,8 +78,7 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
 // PFT by J \dot E method
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix,
-                   bool *NeedFT=0);
+                   HMatrix *Rytov, HMatrix *PFTMatrix);
 
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
@@ -161,8 +160,7 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
    }
   else if ( PFTMethod==SCUFF_PFT_EP )
    {
-     GetJDEPFT(this, Omega, IF, JVector, RHSVector, 
-               Rytov, PFTMatrix, Options->NeedQuantity+2);
+     GetJDEPFT(this, Omega, IF, JVector, RHSVector, Rytov, PFTMatrix);
    }
   else // ( PFTMethod==SCUFF_PFT_DSI )
    { 

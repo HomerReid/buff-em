@@ -62,11 +62,61 @@ cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb);
 typedef struct PFTIntegrandData
  {
    cdouble k;
-   bool NeedDerivatives;
    IncField *IF;
    double XTorque[3];
 
  } PFTIntegrandData;
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
+                       double *xB, double *bB, double DivbB,
+                       void *UserData, double *I)
+{
+  (void) DivbA; // unused
+  (void) DivbB; // unused
+
+  PFTIntegrandData *PFTIData=(PFTIntegrandData *)UserData;
+
+  double k    = real(PFTIData->k);
+
+  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+  double ScalarProduct = DivbA*DivbB;
+  double PEFIE         = DotProduct - ScalarProduct/(k*k);
+
+  double R[3];
+  VecSub(xA, xB, R);
+  double r=VecNorm(R);
+  if (r==0.0) 
+   { memset(I, 0, 6*sizeof(double));
+     return;
+   };
+
+  double kr = k*r, coskr=cos(kr), sinkr=sin(kr);
+  double f1 = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
+
+  I[0] = PEFIE * R[0] * f1;
+  I[1] = PEFIE * R[1] * f1;
+  I[2] = PEFIE * R[2] * f1;
+
+  double kr2 = kr*kr;
+  double f2  = (kr*coskr + (kr2-1.0)*sinkr) / (4.0*M_PI*kr2*r);
+  double f3  = (-3.0*kr*coskr + (3.0-kr2)*sinkr) / (4.0*M_PI*kr2*r*r*r);
+
+  double bAxbB[3], bAxR[3], bBdotR=0.0;
+  for(int Mu=0; Mu<3; Mu++)
+   { int MP1 = (Mu+1)%3, MP2=(Mu+2)%3;
+     bAxbB[Mu] = bA[MP1]*bB[MP2] - bA[MP2]*bB[MP1];
+     bAxR[Mu]  = bA[MP1]*R[MP2]  - bA[MP2]*R[MP1];
+     bBdotR   += bB[Mu]*R[Mu];
+   };
+
+  I[3] = f2*bAxbB[0] + f3*bBdotR*bAxR[0];
+  I[4] = f2*bAxbB[1] + f3*bBdotR*bAxR[1];
+  I[5] = f2*bAxbB[2] + f3*bBdotR*bAxR[2];
+
+}
 
 /***************************************************************/
 /***************************************************************/
@@ -109,7 +159,7 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
   VecSub(x, PFTIData->XTorque, XmXT);
 
   cdouble *zI = (cdouble *)I;
-  memset(zI, 0, NUMPFTIS*sizeof(cdouble));
+  memset(zI, 0, 7*sizeof(cdouble));
   for(int Mu=0; Mu<3; Mu++)
    { zI[0] += b[Mu]*EH[Mu];
      zI[1] += b[Mu]*dEH[0][Mu];
@@ -120,6 +170,10 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
      zI[6] += b[Mu]*(XmXT[0]*dEH[1][Mu]-XmXT[1]*dEH[0][Mu]);
    };
 
+  zI[4 + 0] += b[1]*EH[2] - b[2]*EH[1];
+  zI[4 + 1] += b[2]*EH[0] - b[0]*EH[2];
+  zI[4 + 2] += b[0]*EH[1] - b[1]*EH[0];
+
 }
 
 /***************************************************************/
@@ -127,7 +181,7 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
 /* external field                                              */
 /***************************************************************/
 void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
-                           cdouble Omega, cdouble IPFT[NUMPFTIS])
+                           cdouble Omega, cdouble IPFT[7])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
@@ -136,10 +190,26 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   if (O->OTGT) O->OTGT->Apply(PFTIData->XTorque);
   if (O->GT) O->GT->Apply(PFTIData->XTorque);
 
-  cdouble Error[NUMPFTIS];
+  cdouble Error[7];
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
-        2*NUMPFTIS, (double *)IPFT, (double *)Error,
-        33, 0, 0);
+        14, (double *)IPFT, (double *)Error, 33, 0, 0);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
+                          SWGVolume *Ob, int nbfb,
+                          cdouble Omega, double IPFT[6])
+{
+  PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
+  PFTIData->k  = Omega;
+
+  double Error[6];
+  int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
+  int NumPts = (ncv > 0 ) ? 33 : 16;
+  BFBFInt(Oa, nbfa, Ob, nbfb, PFTIntegrand_BFBF, (void *)PFTIData,
+          6, IPFT, Error, NumPts, 0, 0);
 }
 
 /***************************************************************/
@@ -147,11 +217,8 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix, bool *NeedFT)
+                   HMatrix *Rytov, HMatrix *PFTMatrix)
 { 
-  bool DefaultNeedFT[6]={true, true, true, true, true, true};
-  if (NeedFT==0) NeedFT=DefaultNeedFT;
-
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
@@ -163,13 +230,6 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
        || (PFTMatrix->NC != NUMPFT)
      )
    ErrExit("invalid PFTMatrix in GetJDEPFT");
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  for(int no=0; no<NO; no++)
-   if (G->ObjectdGCaches[no]==0)
-    G->ObjectdGCaches[no]=new FIBBICache(Objects[no]->MeshFileName,false);
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -185,9 +245,10 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
   /*--------------------------------------------------------------*/
-  int TotalBFs = G->TotalBFs;
-  int NumPairs = TotalBFs*(TotalBFs+1)/2;
-  cdouble IKZ  = II*Omega*ZVAC;
+  int TotalBFs    = G->TotalBFs;
+  int NumPairs    = TotalBFs*(TotalBFs+1)/2;
+  double PPreFac  = 0.5*real(Omega)*ZVAC;
+  double FTPreFac = 0.5*TENTHIRDS*ZVAC; 
 #ifdef USE_OPENMP
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      \
@@ -207,14 +268,11 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       cdouble JJ = GetJJ(JVector, Rytov, nbfa, nbfb);
       if (JJ==0.0) continue;
    
-      cdouble dG[6];
-      FIBBICache *GCache=0, *dGCache=0;
-      if (noa==nob)
-       { GCache=G->ObjectGCaches[noa];
-         dGCache=G->ObjectdGCaches[noa];
-       };
-      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega,
-                                   GCache, dG, dGCache);
+      FIBBICache *GCache = (noa==nob) ? G->ObjectGCaches[noa] : 0;
+      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega, GCache);
+
+      double ImdG[6];
+      GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, ImdG);
 
       int nt=0;
 #ifdef USE_OPENMP
@@ -222,15 +280,15 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #endif
       
        int Offset = nt*NONQ + noa*NQ;
-       DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*JJ*GG );
+       DeltaPFT[ Offset + 0 ] += PPreFac*real(II*JJ*GG);
        for(int Mu=0; Mu<6; Mu++)
-        DeltaPFT[ Offset + 2 + Mu ] += 0.5*TENTHIRDS*imag( IKZ*JJ*dG[Mu] ) / real(Omega);
+        DeltaPFT[ Offset + 2 + Mu ] += FTPreFac*imag(JJ)*ImdG[Mu];
 
        if (nbfb>nbfa)
         { Offset = nt*NONQ + nob*NQ;
-          DeltaPFT[ Offset + 0 ] += 0.5*real( IKZ*conj(JJ)*GG );
+          DeltaPFT[ Offset + 0 ] += PPreFac*real(II*conj(JJ)*GG);
           for(int Mu=0; Mu<6; Mu++)
-           DeltaPFT[ Offset + 2 + Mu ] -= 0.5*TENTHIRDS*imag( IKZ*conj(JJ)*dG[Mu] ) / real(Omega);
+           DeltaPFT[ Offset + 2 + Mu ] += FTPreFac*imag(JJ)*ImdG[Mu];
         };
 
     }; // end of multithreaded loop

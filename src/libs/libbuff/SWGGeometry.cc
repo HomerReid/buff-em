@@ -309,7 +309,6 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   ObjectGCaches  = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
-  ObjectdGCaches = (FIBBICache **)mallocEC(NumObjects * sizeof(FIBBICache *));
 
 }
 

@@ -34,6 +34,8 @@
 using namespace scuff;
 using namespace buff;
 
+#define FIBBIDATALEN 6
+
 /***************************************************************/
 /* quality factor for tetrahedron, defined as                  */
 /*  volume / ( (avg edge length) * (total surface area) )      */
@@ -119,14 +121,12 @@ void AnalyzeVolume(SWGVolume *V)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void WriteCache(SWGVolume *O, bool GCache=true,
-                int NumChunks=1, int WhichChunk=0)
+void WriteCache(SWGVolume *O, int NumChunks=1, int WhichChunk=0)
 {
-  FIBBICache *Cache = new FIBBICache(O->MeshFileName, GCache);
-  const char *CacheType = GCache ? "GCache" : "dGCache";
+  FIBBICache *Cache = new FIBBICache(O->MeshFileName);
 
   int NF     = O->NumInteriorFaces;
-  Log("Writing %s for %s",CacheType, O->MeshFileName);
+  Log("Writing GCache for %s", O->MeshFileName);
   if (NumChunks>1)
    LogC(" (chunk %i/%i)",WhichChunk,NumChunks);
 
@@ -161,7 +161,7 @@ void WriteCache(SWGVolume *O, bool GCache=true,
       if (ncv==0) continue;
 
       LogPercent(np-npMin, ChunkSize, 100);
-      double Data[48];
+      double Data[FIBBIDATALEN];
       Cache->GetFIBBIData(O, nfa, O, nfb, Data);
       NumRecords++;
     };
@@ -170,14 +170,13 @@ void WriteCache(SWGVolume *O, bool GCache=true,
   char FileName[MAXSTR];
   if (NumChunks>1)
    {
-     snprintf(FileName,MAXSTR,"%s.%s.%i.%i",
+     snprintf(FileName,MAXSTR,"%s.cache.%i.%i",
                                RemoveExtension(O->MeshFileName),
-                               CacheType, WhichChunk, NumChunks);
+                               WhichChunk, NumChunks);
    }
   else
    {
-     snprintf(FileName,MAXSTR,"%s.%s",RemoveExtension(O->MeshFileName),
-                               CacheType);
+     snprintf(FileName,MAXSTR,"%s.cache",RemoveExtension(O->MeshFileName));
    };
   Cache->Store(FileName);
 
@@ -228,7 +227,6 @@ int main(int argc, char *argv[])
   int PlotBF[10], nPlotBF;
   int PlotTet[10], nPlotTet;
   bool WriteGCache=false;
-  bool WritedGCache=false;
   int NumChunks=1;
   int WhichChunk=0;
   /* name, type, # args, max # instances, storage, count, description*/
@@ -241,10 +239,9 @@ int main(int argc, char *argv[])
 /**/
      {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
 /**/
-     {"WriteGCache",        PA_BOOL,   0, 1, (void *)&WriteGCache,      0, "write G cache file"},
-     {"WritedGCache",       PA_BOOL,   0, 1, (void *)&WritedGCache,      0, "write dG cache file"},
-     {"NumChunks",          PA_INT,    1, 1, (void *)&NumChunks,         0, "number of pieces into which to subdivide cache write (1)"},
-     {"WhichChunk",         PA_INT,    1, 1, (void *)&WhichChunk,        0, "which piece to write (0)"},
+     {"WriteGCache",        PA_BOOL,   0, 1, (void *)&WriteCache,       0, "write cache file"},
+     {"NumChunks",          PA_INT,    1, 1, (void *)&NumChunks,        0, "number of pieces into which to subdivide cache write (1)"},
+     {"WhichChunk",         PA_INT,    1, 1, (void *)&WhichChunk,       0, "which piece to write (0)"},
 /**/
      {"PlotPermittivity",   PA_BOOL,   0, 1, (void *)&PlotPermittivity, 0, "color tetrahedra by average local permittivity"},
      {"PlotBF",             PA_INT,    1, 10, (void *)PlotBF,    &nPlotBF, "draw an individual basis function"},
@@ -278,10 +275,8 @@ int main(int argc, char *argv[])
   else if (MeshFile)
    { SWGVolume *O=new SWGVolume(MeshFile);
      if (WriteGCache)
-      WriteCache(O, true, NumChunks, WhichChunk);
-     if (WritedGCache)
-      WriteCache(O, false, NumChunks, WhichChunk);
-     if ( !WriteGCache && !WritedGCache)
+      WriteCache(O, NumChunks, WhichChunk);
+     else
       AnalyzeVolume( O );
    }
   else

@@ -88,7 +88,7 @@ HVector *SWGGeometry::AssembleRHSVector(cdouble Omega, IncField *IF, HVector *RH
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  Log("Assembling RHS vector at Omega=%s\n",z2s(Omega));
+  Log("Assembling RHS vector at Omega=%s",z2s(Omega));
 #ifndef USE_OPENMP
   Log(" no multithreading...");
 #else

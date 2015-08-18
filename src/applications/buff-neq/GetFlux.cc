@@ -38,8 +38,7 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
 
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix, 
-                   bool *NeedFT=0);
+                   HMatrix *Rytov, HMatrix *PFTMatrix);
 
 void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
                     double PFT[NUMPFT],

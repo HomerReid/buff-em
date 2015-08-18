@@ -53,9 +53,6 @@ namespace buff {
 // number of PFT quantities
 #define NUMPFT 8
 
-// number of integrals needed to compute PFTs
-#define NUMPFTIS 7
-
 // SWG coordination number = maximum possible number
 // of SWG basis functions whose supports overlap
 // with any given basis function
@@ -257,7 +254,7 @@ class SWGGeometry
 
    char *GeoFileName;
 
-   FIBBICache **ObjectGCaches, **ObjectdGCaches;
+   FIBBICache **ObjectGCaches;
 
  }; // class SWGGeometry
 
@@ -282,13 +279,11 @@ void GetDQMoments(SWGVolume *O, int nf, double J[3], double Q[3][3],
 PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options);
 
 /***************************************************************/
-/* routine to compute matrix elements of the dyadic GF and its */
-/* derivatives                                                 */
+/* routine to compute matrix elements of the dyadic GF         */
 /***************************************************************/
 cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
                           SWGVolume *VB, int nfB,
-                          cdouble Omega, FIBBICache *Cache=0,
-                          cdouble *dG=0, FIBBICache *dGCache=0);
+                          cdouble Omega, FIBBICache *Cache=0);
 
 /***************************************************************/
 /***************************************************************/
