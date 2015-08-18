@@ -159,6 +159,67 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
  
 }
 
+/***************************************************************/
+/* 20150818 convenience hack to support special file names of  */
+/* the following forms                                         */
+/*  MESH#MyMesh.buffgeo                                        */
+/*  MESH#MyMesh#MAT#MatProp.buffgeo                            */
+/*  MESH#MyMesh#MAT#MatProp#MED#MatProp.buffgeo                */
+/***************************************************************/
+void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
+{
+  // check for a special geometry file name, which
+  //  begins with MESH# and ends with .buffgeo 
+  int N=strlen(GeoFileName);
+  if (    N<13
+       || strncmp(GeoFileName,"MESH#",5)
+       || strncasecmp(GeoFileName+N-8,".buffgeo",8)
+     )
+   return;
+
+  char *GFNCopy=strdup(GeoFileName);
+  GFNCopy[N-8]=0;
+  char *Tokens[4];
+  int NumTokens=Tokenize(GFNCopy,Tokens,4,"#");
+
+  if ( (NumTokens%2) || (NumTokens>4) )
+   ErrExit("wrong number of tokens in special file name");
+
+  char *MeshStr=0, *MatStr=0;
+  for(int nt=0; nt<NumTokens-1; nt++)
+   { if (!strcasecmp(Tokens[nt],"MESH")) 
+      MeshStr = Tokens[++nt];
+     else if (!strcasecmp(Tokens[nt],"MAT"))
+      MatStr  = Tokens[++nt];
+     else
+      ErrExit("invalid token %s in special file name",Tokens[nt]);
+   };
+
+  if (MeshStr==0)
+   ErrExit("no mesh found in special file name");
+
+  Log("Processing special file name: mesh=%s, mat=%s",MeshStr,
+       MatStr ? MatStr : "(none)");
+
+  FILE *f=fopen(GeoFileName,"w");
+
+  fprintf(f,"OBJECT %s\n",GetFileBase(MeshStr));
+  if (strstr(MeshStr,".vmsh"))
+   fprintf(f," MESHFILE %s\n",MeshStr);
+  else
+   fprintf(f," MESHFILE %s.vmsh\n",MeshStr);
+
+  if (MatStr) 
+   fprintf(f," MATERIAL %s\n",MatStr);
+
+  fprintf(f,"ENDOBJECT\n");
+  fclose(f);
+
+  free(GFNCopy);
+  return;
+
+}
+
 /***********************************************************************/
 /***********************************************************************/
 /***********************************************************************/
@@ -203,6 +264,7 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /* try to open input file **************************************/
   /***************************************************************/
+  ProcessSpecialBUFFGeoFileName(pGeoFileName);
   FILE *f=fopen(GeoFileName,"r");
   if (!f)
    ErrExit("could not open %s",GeoFileName);
