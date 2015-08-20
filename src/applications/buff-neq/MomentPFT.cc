@@ -166,7 +166,7 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   /***************************************************************/
   /***************************************************************/
   FILE *f=vfopen("%s.NEQMoments","a",BNEQD->FileBase);
-  fprintf(f,"**MMuNu(Omega=%e): ",Omega);
+  fprintf(f,"**MMuNu(Omega=%e):\n",Omega);
   fprintf(f," {%+.3e,%+.3e}  {%+.3e,%+.3e }  {%+.3e,%+.3e }\n",
           real(MMuNu[0][0]),imag(MMuNu[0][0]),
           real(MMuNu[0][1]),imag(MMuNu[0][1]),

@@ -163,12 +163,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
      nPFT++;
    };
-  if (DoMomentPFT)
-   { BNEQD->PFTMethods[nPFT]   = -1;
-     BNEQD->DSIPoints[nPFT]    = 0;
-     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.Moments",FileBase);
-     nPFT++;
-   };
   if (DSIPoints>0 || DSIMesh)
    { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_DSI;
      BNEQD->DSIPoints[nPFT]    = DSIPoints;

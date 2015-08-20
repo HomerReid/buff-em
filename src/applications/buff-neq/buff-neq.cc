@@ -150,21 +150,6 @@ int main(int argc, char *argv[])
   Log("buff-neq running on %s",GetHostName());
 
   /*******************************************************************/
-  /* determine which output quantities were requested ****************/
-  /*******************************************************************/
-  int QuantityFlags=0;
-  if (PAbs)    QuantityFlags|=QFLAG_PABS;
-  if (PRad)    QuantityFlags|=QFLAG_PRAD;
-  if (XForce)  QuantityFlags|=QFLAG_XFORCE;
-  if (YForce)  QuantityFlags|=QFLAG_YFORCE;
-  if (ZForce)  QuantityFlags|=QFLAG_ZFORCE;
-  if (XTorque) QuantityFlags|=QFLAG_XTORQUE;
-  if (YTorque) QuantityFlags|=QFLAG_YTORQUE;
-  if (ZTorque) QuantityFlags|=QFLAG_ZTORQUE;
-  if (QuantityFlags==0)
-   ErrExit("you must specify at least one quantity to compute");
-
-  /*******************************************************************/
   /* process frequency-related options to construct a list of        */
   /* frequencies at which to run simulations                         */
   /*******************************************************************/
@@ -195,6 +180,21 @@ int main(int argc, char *argv[])
       OmegaPoints->SetEntry(nFreq+nOV, OmegaVals[nOV]);
      Log("Read %i frequencies from command line.",nOmegaVals);
    };
+
+  /*******************************************************************/
+  /* determine which output quantities were requested ****************/
+  /*******************************************************************/
+  int QuantityFlags=0;
+  if (PAbs)    QuantityFlags|=QFLAG_PABS;
+  if (PRad)    QuantityFlags|=QFLAG_PRAD;
+  if (XForce)  QuantityFlags|=QFLAG_XFORCE;
+  if (YForce)  QuantityFlags|=QFLAG_YFORCE;
+  if (ZForce)  QuantityFlags|=QFLAG_ZFORCE;
+  if (XTorque) QuantityFlags|=QFLAG_XTORQUE;
+  if (YTorque) QuantityFlags|=QFLAG_YTORQUE;
+  if (ZTorque) QuantityFlags|=QFLAG_ZTORQUE;
+  if (NumFreqs==0 && QuantityFlags==0)
+   ErrExit("you must specify at least one quantity to compute");
 
   /*******************************************************************/
   /* check that the user didn't simultaneously ask for a discret set */
