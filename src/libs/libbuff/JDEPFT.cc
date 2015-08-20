@@ -296,6 +296,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*--------------------------------------------------------------*/
   /*- accumulate contributions of all threads                     */
   /*--------------------------------------------------------------*/
+  PFTMatrix->Zero();
   for(int no=0; no<NO; no++)
    for(int nq=0; nq<NQ; nq++)
     for(int nt=0; nt<NumThreads; nt++)
