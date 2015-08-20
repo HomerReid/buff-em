@@ -222,8 +222,7 @@ class SWGGeometry
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
    HMatrix *GetPFT(HVector *JVector, cdouble Omega,
-                   HMatrix *PFTMatrix, PFTOptions *Options=0,
-                   HMatrix *JxETorque=0);
+                   HMatrix *PFTMatrix, PFTOptions *Options=0);
 
    void AssembleOverlapBlocks(int no, cdouble Omega,
                               IHAIMatProp *Temperature,
