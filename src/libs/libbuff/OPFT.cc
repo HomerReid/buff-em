@@ -61,7 +61,7 @@ cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb);
 #define NUM_OPFT_INTEGRALS 20
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix, HMatrix *JxETorque)
+                 HMatrix *PFTMatrix)
 {
   /***************************************************************/
   /***************************************************************/
@@ -73,7 +73,6 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
      )
    ErrExit("invalid PFTMatrix in GetOPFT");
   PFTMatrix->Zero();
-  if (JxETorque) JxETorque->Zero();
 
   /***************************************************************/
   /***************************************************************/
@@ -110,15 +109,6 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                         );
               PFTMatrix->AddEntry(no, nq, imag(JJ*ME) );
             };
-
-           if (JxETorque)
-            for(int Mu=0; Mu<3; Mu++)
-             { ME = cdouble( OPFTIntegrals[14 + 2*Mu + 0][nnz],
-                             OPFTIntegrals[14 + 2*Mu + 1][nnz]
-                           );
-               JxETorque->AddEntry(no, Mu, imag(JJ*ME) );
-             };
-
          };
 
       }; // for(int nbfA=0; nbfA<NBF; nbfA++)

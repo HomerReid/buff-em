@@ -84,9 +84,13 @@ int main(int argc, char *argv[])
   int Intervals=25;
 
   /*--------------------------------------------------------------*/
+  bool DoOPFT      = false;
+  bool DoJDEPFT    = false;
+  bool DoMomentPFT = false;
+  int DSIPoints    = 0;
   char *DSIMesh    = 0;
   double DSIRadius = 10.0;
-  int DSIPoints    = 302;
+  int DSIPoints2   = 0;
 
   /*--------------------------------------------------------------*/
   char *FileBase=0;
@@ -96,6 +100,7 @@ int main(int argc, char *argv[])
   OptStruct OSArray[]=
    { 
      {"Geometry",        PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
+/**/     
      {"TransFile",       PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
      {"TemperatureFile", PA_STRING,  1, 1,       (void *)&TemperatureFile,  0, "file specifying position-dependent temperature"},
 /**/     
@@ -114,9 +119,13 @@ int main(int argc, char *argv[])
      {"OmegaMin",       PA_DOUBLE,  1, 1,       (void *)&OmegaMin,   &nOmegaMin,    "lower integration limit"},
      {"OmegaMax",       PA_DOUBLE,  1, 1,       (void *)&OmegaMax,   &nOmegaMax,    "upper integration limit"},
 /**/     
-     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "bounding surface .msh file for DSIPFT"},
-     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "bounding-sphere radius for DSIPFT"},
-     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for DSIPFT"},
+     {"OPFT",           PA_BOOL,    0, 1,       (void *)&DoOPFT,      0,            "do overlap PFT computation"},
+     {"JDEPFT",         PA_BOOL,    0, 1,       (void *)&DoJDEPFT,    0,            "do J dot E PFT computation"},
+     {"MomentPFT",      PA_BOOL,    0, 1,       (void *)&DoMomentPFT, 0,            "do J dot E PFT computation"},
+     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,   0,            "number of quadrature points for DSIPFT"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,     0,            "bounding surface .msh file for DSIPFT"},
+     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,   0,            "bounding-sphere radius for DSIPFT"},
+     {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints,   0,            "number of quadrature points for DSIPFT 2"},
 /**/     
      {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
 /**/     
@@ -209,27 +218,20 @@ int main(int argc, char *argv[])
      else
       Log("Integrating over range Omega=(%g,%g).",OmegaMin,OmegaMax);
    };
-  
-  /*******************************************************************/
-  /*******************************************************************/
-  /*******************************************************************/
-  PFTOptions MyOptions, *pftOptions=&MyOptions;
-  InitPFTOptions(pftOptions);
-  pftOptions->PFTMethod=SCUFF_PFT_DSI;
-  pftOptions->DSIMesh  =DSIMesh;
-  pftOptions->DSIRadius=DSIRadius;
-  pftOptions->DSIPoints=DSIPoints;
 
   /*******************************************************************/
   /* create the BNEQData structure that contains all the info needed */
   /* to evaluate the neq transfer at a single frequency              */
   /*******************************************************************/
   BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, TemperatureFile,
-                                 QuantityFlags, FileBase);
+                                 QuantityFlags, FileBase, 
+                                 DoOPFT, DoJDEPFT, DoMomentPFT,
+                                 DSIPoints, DSIRadius, DSIMesh, 
+                                 DSIPoints2);
+
   SWGGeometry *G=BNEQD->G;
   BNEQD->UseExistingData = UseExistingData;
-  BNEQD->pftOptions      = pftOptions;
-         
+
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
   /* perform the actual calculations                                 */

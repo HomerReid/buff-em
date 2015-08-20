@@ -59,6 +59,9 @@ using namespace buff;
 
 #define MAXQUANTITIES 8
 
+// maximum possible number of ways to do PFT computations
+#define MAXPFT 5
+
 /****************************************************************/
 /* BNEQData ('buff-neq data') is a structure that contains all */
 /* information needed to run computations a given frequency.    */
@@ -85,17 +88,20 @@ typedef struct BNEQData
    // Sigma[no]   = Sigma matrix for object #no
    SMatrix **VBlocks;
    SMatrix **Sigma;
-   bool SMatricesInitialized;
 
    HMatrix *SInverse;
-   HMatrix *ISVIS;
 
    // internally-stored buffers for linear algebra operations
    HMatrix *WorkMatrix[3];
 
    char *FileBase;
-   bool UseExistingData;
+   int NumPFTMethods;
+   int PFTMethods[MAXPFT];
+   char *PFTFileNames[MAXPFT];
+   int DSIPoints[MAXPFT];
    PFTOptions *pftOptions;
+
+   bool UseExistingData;
 
  } BNEQData;
 
@@ -104,7 +110,10 @@ typedef struct BNEQData
 /****************************************************************/
 BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
                          char *TemperatureFile, int QuantityFlags,
-                         char *pFileBase);
+                         char *FileBase, 
+                         bool DoOPFT, bool DoJDEPFT, bool DoMomentPFT,
+                         int DSIPoints, double DSIRadius, char *DSIMesh,
+                         int DSIPoints2);
 
 /***************************************************************/
 /***************************************************************/

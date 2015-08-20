@@ -73,7 +73,7 @@ namespace buff {
 // PFT by overlap method
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix, HMatrix *JxETorque=0);
+                 HMatrix *PFTMatrix);
 
 // PFT by J \dot E method
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
@@ -122,8 +122,7 @@ SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf)
 HMatrix *SWGGeometry::GetPFT(HVector *JVector,
                              cdouble Omega,
                              HMatrix *PFTMatrix,
-                             PFTOptions *Options,
-                             HMatrix *JxETorque)
+                             PFTOptions *Options)
 {
   /***************************************************************/
   /***************************************************************/
@@ -155,28 +154,22 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   /* computation                                                 */
   /***************************************************************/
   if ( PFTMethod==SCUFF_PFT_OVERLAP )
-   {
-     GetOPFT(this, Omega, JVector, Rytov, PFTMatrix, JxETorque);
-   }
+   GetOPFT(this, Omega, JVector, Rytov, PFTMatrix);
   else if ( PFTMethod==SCUFF_PFT_EP )
-   {
-     GetJDEPFT(this, Omega, IF, JVector, RHSVector, Rytov, PFTMatrix);
-   }
+   GetJDEPFT(this, Omega, IF, JVector, RHSVector, Rytov, PFTMatrix);
   else // ( PFTMethod==SCUFF_PFT_DSI )
-   { 
-     for(int no=0; no<NumObjects; no++)
-      { 
-        GTransformation *GT1=Objects[no]->OTGT;
-        GTransformation *GT2=Objects[no]->GT;
-        double PFT[NUMPFT];
-        if (Rytov==0)
-         GetDSIPFT(this, Omega, IF, JVector, PFT, GT1, GT2, Options);
-        else
-         GetDSIPFTTrace(this, Omega, Rytov, PFT, GT1, GT2, Options);
+   for(int no=0; no<NumObjects; no++)
+    { 
+      GTransformation *GT1=Objects[no]->OTGT;
+      GTransformation *GT2=Objects[no]->GT;
+      double PFT[NUMPFT];
+      if (Rytov==0)
+       GetDSIPFT(this, Omega, IF, JVector, PFT, GT1, GT2, Options);
+      else
+       GetDSIPFTTrace(this, Omega, Rytov, PFT, GT1, GT2, Options);
 
-        PFTMatrix->SetEntriesD(no, ":", PFT);
-      };
-   };
+      PFTMatrix->SetEntriesD(no, ":", PFT);
+    };
 
   return PFTMatrix;
  

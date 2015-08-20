@@ -30,21 +30,8 @@
 
 #define II cdouble(0.0,1.0)
 
-namespace buff { 
-
-HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
-                 HVector *JVector, HMatrix *Rytov,
-                 HMatrix *PFTMatrix, HMatrix *JxETorque);
-
-HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
-                   HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix);
-
-void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
-                    double PFT[NUMPFT],
-                    GTransformation *GT1, GTransformation *GT2,
-                    PFTOptions *Options);
-               } 
+void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
+                  HMatrix *RytovMatrix);
 
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/
@@ -266,13 +253,15 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /* extract fields from BNEQData structure **********************/
   /***************************************************************/
   SWGGeometry *G           = BNEQD->G;
-  SWGVolume **Objects      = G->Objects;
   IHAIMatProp *Temperature = BNEQD->Temperature;
   HMatrix ***GBlocks       = BNEQD->GBlocks;
   SMatrix **VBlocks        = BNEQD->VBlocks;
   SMatrix **Sigma          = BNEQD->Sigma;
+  int NumPFTMethods        = BNEQD->NumPFTMethods;
+  int *PFTMethods          = BNEQD->PFTMethods;
+  char **PFTFileNames      = BNEQD->PFTFileNames;
+  int *DSIPoints           = BNEQD->DSIPoints;
   PFTOptions *pftOptions   = BNEQD->pftOptions;
-  int QuantityFlags        = BNEQD->QuantityFlags;
 
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
@@ -281,16 +270,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   for(int no=0; no<NO; no++)
    { 
      Log(" Assembling V_{%i} and Sigma_{%i} ...",no,no);
-     if (BNEQD->SMatricesInitialized==false)
-      { VBlocks[no]->BeginAssembly(MAXOVERLAP);
-        Sigma[no]->BeginAssembly(MAXOVERLAP);
-      };
      G->AssembleOverlapBlocks(no, Omega, Temperature,
                               VBlocks[no], 0, Sigma[no]);
-     if (BNEQD->SMatricesInitialized==false)
-      { VBlocks[no]->EndAssembly();
-        Sigma[no]->EndAssembly();
-      };
 
      if (G->Mate[no]!=-1)
       { Log(" Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
@@ -299,7 +280,15 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      Log(" Assembling G_{%i,%i}...",no,no);
      G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
    };
-  BNEQD->SMatricesInitialized=true;
+
+  static bool FirstTime=true;
+  if (FirstTime)
+   { FirstTime=false;
+     for(int no=0; no<NO; no++) 
+      { VBlocks[no]->EndAssembly();
+        Sigma[no]->EndAssembly();
+      };
+   };
 
   /***************************************************************/
   /* now loop over transformations.                              */
@@ -323,77 +312,48 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      for(int no=0; no<NO; no++)
       for(int nop=no+1; nop<NO; nop++)
        G->AssembleGBlock(no, nop, Omega, GBlocks[no][nop]);
-       //if ( nt==0 || G->ObjectMoved[no] || G->ObjectMoved[nop] )
 
      /*--------------------------------------------------------------*/
      /*- compute the requested quantities for all objects           -*/
      /*- note: nos = 'num object, source'                           -*/
      /*-       nod = 'num object, destination'                      -*/
      /*--------------------------------------------------------------*/
-     FILE *f1=vfopen("%s.SIFlux.OPFT","a",BNEQD->FileBase);
-     FILE *f2=vfopen("%s.SIFlux.JDEPFT","a",BNEQD->FileBase);
-     FILE *f3=vfopen("%s.SIFlux.DSIPFT","a",BNEQD->FileBase);
-     static HMatrix *OPFT      = new HMatrix(NO, NUMPFT);
-     static HMatrix *JxETorque = new HMatrix(NO, 3);
-     static HMatrix *JDEPFT    = new HMatrix(NO, NUMPFT);
-     static HMatrix *DSIPFT    = new HMatrix(NO, NUMPFT);
+     static HMatrix *PFTMatrix = new HMatrix(NO, NUMPFT);
      for(int nos=0; nos<NO; nos++)
       { 
         // get the Rytov matrix for source object #nos
-        HMatrix *Rytov=ComputeRytovMatrix(BNEQD, nos);
-        
-        // get the PFT for all destination objects
-        GetOPFT(G, Omega, 0, Rytov, OPFT, JxETorque);
+        pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
 
-        GetJDEPFT(G, Omega, 0, 0, 0, Rytov, JDEPFT);
+GetMomentPFT(BNEQD, 0, real(Omega), pftOptions->RytovMatrix);
 
-        for(int nod=0; nod<NO; nod++)
-         { double PFT[NUMPFT];
-           GTransformation *GT1=Objects[nod]->OTGT;
-           GTransformation *GT2=Objects[nod]->GT;
-           GetDSIPFTTrace(G, Omega, Rytov, PFT, GT1, GT2, pftOptions);
-           DSIPFT->SetEntriesD(nod,":",PFT);
-         };
-
-        // write results to file
-        for(int nod=0; nod<NO; nod++)
+        // get the PFT for all destination objects using all
+        // requested methods
+        // note: the Flux vector will get filled in with the 
+        // results of whichever PFT computation comes last   
+        for(int nPFT=0; nPFT<NumPFTMethods; nPFT++)
          {
-           fprintf(f1,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
-           for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f1,"%e ",OPFT->GetEntryD(nod,nq));
-           for(int Mu=0; Mu<3; Mu++)
-            fprintf(f1,"%e ",JxETorque->GetEntryD(nod,Mu));
-           fprintf(f1,"\n");
-           fflush(f1);
+           pftOptions->PFTMethod  = PFTMethods[nPFT];
+           pftOptions->DSIPoints  = DSIPoints[nPFT];
+           G->GetPFT(0, Omega, PFTMatrix, pftOptions);
 
-           fprintf(f2,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
-           for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f2,"%e ",JDEPFT->GetEntryD(nod,nq));
-           fprintf(f2,"\n");
-           fflush(f2);
+           FILE *f=fopen(PFTFileNames[nPFT],"a");
+           for(int nod=0; nod<NO; nod++)
+            { fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
+              for(int nq=0; nq<NUMPFT; nq++) 
+               fprintf(f,"%e ",PFTMatrix->GetEntryD(nod,nq));
+              fprintf(f,"\n");
 
-           fprintf(f3,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
-           for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f3,"%e ",DSIPFT->GetEntryD(nod,nq));
-           fprintf(f3,"\n");
-           fflush(f3);
-
-           for(int nq=0; nq<NUMPFT; nq++)
-            { int Flag = 1 << nq;
-              if ( (QuantityFlags & Flag) == 0 )
-               continue;
-              int Index=GetIndex(BNEQD, nt, nos, nod, nq);
-              Flux[Index] = DSIPFT->GetEntryD(nod, nq);
+              for(int nq=0; nq<BNEQD->NQ; nq++)
+               { int Index=GetIndex(BNEQD, nt, nos, nod, nq);
+                 Flux[Index]=PFTMatrix->GetEntryD(nod,nq);
+               };
             };
+           fclose(f);
          };
-
-      };
-     fclose(f1);
-     fclose(f2);
-     fclose(f3);
+      }; 
 
      /*--------------------------------------------------------------*/
-     /* and untransform the geometry                                 */
+     /* untransform the geometry                                     */
      /*--------------------------------------------------------------*/
      G->UnTransform();
      Log(" ...done!");

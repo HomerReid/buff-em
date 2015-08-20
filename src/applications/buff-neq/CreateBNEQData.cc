@@ -34,7 +34,10 @@
 /***************************************************************/
 BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
                          char *TemperatureFile, int QuantityFlags,
-                         char *pFileBase)
+                         char *FileBase, 
+                         bool DoOPFT, bool DoJDEPFT, bool DoMomentPFT,
+                         int DSIPoints, double DSIRadius, char *DSIMesh, 
+                         int DSIPoints2)
 {
 
   BNEQData *BNEQD=(BNEQData *)mallocEC(sizeof(*BNEQD));
@@ -45,8 +48,8 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   SWGGeometry *G=new SWGGeometry(GeoFile);
   BNEQD->G=G;
   
-  if (pFileBase)
-   BNEQD->FileBase = strdup(pFileBase);
+  if (FileBase)
+   BNEQD->FileBase = strdup(FileBase);
   else
    BNEQD->FileBase = strdup(GetFileBase(G->GeoFileName));
 
@@ -102,6 +105,9 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
      BNEQD->VBlocks[no]  = new SMatrix(NBF, NBF, LHM_COMPLEX);
      BNEQD->Sigma[no]    = new SMatrix(NBF, NBF, LHM_REAL);
 
+     BNEQD->VBlocks[no]->BeginAssembly(MAXOVERLAP);
+     BNEQD->Sigma[no]->BeginAssembly(MAXOVERLAP);
+
      BNEQD->GBlocks[no]  = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
      int noMate=G->Mate[no];
      if (noMate!=-1)
@@ -114,7 +120,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
         BNEQD->GBlocks[no][nop] = new HMatrix(NBF, NBFP, LHM_COMPLEX);
       };
    };
-  BNEQD->SMatricesInitialized=false;
    
   int NBFTot=G->TotalBFs;
   for(int n=0; n<3; n++)
@@ -142,6 +147,51 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   SInverse->LUInvert();
 
   /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  BNEQD->NumPFTMethods=0;
+  int nPFT=0;
+  if (DoOPFT)
+   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_OVERLAP;
+     BNEQD->DSIPoints[nPFT]    = 0;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.OPFT",FileBase);
+     nPFT++;
+   };
+  if (DoJDEPFT)
+   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_OVERLAP;
+     BNEQD->DSIPoints[nPFT]    = 0;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
+     nPFT++;
+   };
+  if (DoMomentPFT)
+   { BNEQD->PFTMethods[nPFT]   = -1;
+     BNEQD->DSIPoints[nPFT]    = 0;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.Moments",FileBase);
+     nPFT++;
+   };
+  if (DSIPoints>0 || DSIMesh)
+   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_DSI;
+     BNEQD->DSIPoints[nPFT]    = DSIPoints;
+     if (DSIPoints>0)
+      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI%i",FileBase,DSIPoints);
+     else
+      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI.%s",FileBase,DSIMesh);
+     nPFT++;
+   };
+  if (DSIPoints2>0)
+   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_DSI;
+     BNEQD->DSIPoints[nPFT]    = DSIPoints2;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI%i",FileBase,DSIPoints2);
+     nPFT++;
+   };
+  BNEQD->NumPFTMethods=nPFT;
+
+  BNEQD->pftOptions = (PFTOptions *)malloc(sizeof(PFTOptions));
+  InitPFTOptions(BNEQD->pftOptions);
+  BNEQD->pftOptions->DSIMesh=DSIMesh;
+  BNEQD->pftOptions->DSIRadius=DSIRadius;
+  
+  /*--------------------------------------------------------------*/
   /* write file preambles ----------------------------------------*/
   /*--------------------------------------------------------------*/
   time_t MyTime;
@@ -150,32 +200,26 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   MyTime=time(0);
   MyTm=localtime(&MyTime);
   strftime(TimeString,30,"%D::%T",MyTm);
-  FILE *f=vfopen("%s.SIFlux","a",BNEQD->FileBase);
-  fprintf(f,"\n");
-  fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
-  fprintf(f,"# data file columns: \n");
-  fprintf(f,"# 1 omega \n");
-  fprintf(f,"# 2 transform tag\n");
-  fprintf(f,"# 3 (sourceObject,destObject) \n");
-  int nq=4;
-  if (BNEQD->QuantityFlags & QFLAG_PABS) 
-   fprintf(f,"# %i absorbed power spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_PRAD) 
-   fprintf(f,"# %i radiated power spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_XFORCE) 
-   fprintf(f,"# %i x-force flux spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_YFORCE) 
-   fprintf(f,"# %i y-force flux spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_ZFORCE) 
-   fprintf(f,"# %i z-force flux spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_XTORQUE) 
-   fprintf(f,"# %i x-torque flux spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_YTORQUE) 
-   fprintf(f,"# %i y-torque flux spectral density\n",nq++);
-  if (BNEQD->QuantityFlags & QFLAG_ZTORQUE) 
-   fprintf(f,"# %i z-torque flux spectral density\n",nq++);
-  fclose(f);
-  
+  for(int n=0; n<BNEQD->NumPFTMethods; n++)
+   { FILE *f=fopen(BNEQD->PFTFileNames[n],"a");
+     fprintf(f,"\n");
+     fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
+     fprintf(f,"# data file columns: \n");
+     fprintf(f,"# 1 omega \n");
+     fprintf(f,"# 2 transform tag\n");
+     fprintf(f,"# 3 (sourceObject,destObject) \n");
+     int nq=4;
+     fprintf(f,"# %i absorbed power spectral density\n",nq++);
+     fprintf(f,"# %i radiated power spectral density\n",nq++);
+     fprintf(f,"# %i x-force flux spectral density\n",nq++);
+     fprintf(f,"# %i y-force flux spectral density\n",nq++);
+     fprintf(f,"# %i z-force flux spectral density\n",nq++);
+     fprintf(f,"# %i x-torque flux spectral density\n",nq++);
+     fprintf(f,"# %i y-torque flux spectral density\n",nq++);
+     fprintf(f,"# %i z-torque flux spectral density\n",nq++);
+     fclose(f);
+   };
+
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
