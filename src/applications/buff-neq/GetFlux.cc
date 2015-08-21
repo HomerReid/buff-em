@@ -31,7 +31,7 @@
 #define II cdouble(0.0,1.0)
 
 void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
-                  HMatrix *RytovMatrix);
+                  HMatrix *Rytov);
 
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/

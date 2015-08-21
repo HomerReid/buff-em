@@ -103,6 +103,7 @@ void GetNEQMoments(BNEQData *BNEQD, int no, HMatrix *Rytov,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
+  Log("GNM Getting 1BF moments...");
   for(int n=0; n<N; n++)
    { 
      double JMu[3], JMuNu[3][3];
@@ -119,6 +120,7 @@ void GetNEQMoments(BNEQData *BNEQD, int no, HMatrix *Rytov,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
+  Log("GNM doing linear algebra...");
   for(int Mu=0; Mu<3; Mu++)
    { vTemp->Copy(vMu[Mu]);
      SInverse->Apply(vTemp, vMu[Mu]);
@@ -153,42 +155,29 @@ void GetNEQMoments(BNEQData *BNEQD, int no, HMatrix *Rytov,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetMomentPFT(BNEQData *BNEQD, int no, double Omega, 
+void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
                   HMatrix *Rytov)
 {
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   cdouble MMuNu[3][3], MMuNuRho[3][3][3];
+  Log("GMP getting NEQ moments...");
   GetNEQMoments(BNEQD, no, Rytov, MMuNu, MMuNuRho);
+  Log("GMP done...");
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  FILE *f=vfopen("%s.NEQMoments","a",BNEQD->FileBase);
-  fprintf(f,"**MMuNu(Omega=%e):\n",Omega);
-  fprintf(f," {%+.3e,%+.3e}  {%+.3e,%+.3e }  {%+.3e,%+.3e }\n",
-          real(MMuNu[0][0]),imag(MMuNu[0][0]),
-          real(MMuNu[0][1]),imag(MMuNu[0][1]),
-          real(MMuNu[0][2]),imag(MMuNu[0][2]));
-  fprintf(f," {%+.3e,%+.3e}  {%+.3e,%+.3e }  {%+.3e,%+.3e }\n",
-          real(MMuNu[1][0]),imag(MMuNu[1][0]),
-          real(MMuNu[1][1]),imag(MMuNu[1][1]),
-          real(MMuNu[1][2]),imag(MMuNu[1][2]));
-  fprintf(f," {%+.3e,%+.3e}  {%+.3e,%+.3e }  {%+.3e,%+.3e }\n",
-          real(MMuNu[2][0]),imag(MMuNu[2][0]),
-          real(MMuNu[2][1]),imag(MMuNu[2][1]),
-          real(MMuNu[2][2]),imag(MMuNu[2][2]));
-  fprintf(f,"\n");
-  fclose(f);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   double F1[3], F2[3], F3[3], Torque[3];
-  double FPF = TENTHIRDS*ZVAC*Omega*Omega*Omega/(120.0*M_PI);
   for(int Mu=0; Mu<3; Mu++)
-   F1[Mu]=F2[Mu]=F3[Mu]=0.0;
+   F1[Mu]=F2[Mu]=F3[Mu]=Torque[Mu]=0.0;
+
+  double FPF = TENTHIRDS*ZVAC*Omega*Omega*Omega/(120.0*M_PI);
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     { 
@@ -210,7 +199,87 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  f=vfopen("%s.MomentPFT","r",BNEQD->FileBase);
+#if 0
+  FILE *f=vfopen("%s.jl","a",GetFileBase(BNEQD->G->GeoFileName));
+  static int Count=1;
+  fprintf(f,"Omega_%i=%g;\n",Count,Omega);
+  fprintf(f,"JJ_%i=im*zeros(3,3);\n",Count);
+  fprintf(f,"MM_%i=im*zeros(3,3);\n",Count);
+  fprintf(f,"Force_%i=%e;\n",Count,(F1[2]+F2[2]+F3[2])/FPF);
+  fprintf(f,"Torque_%i=%e;\n",Count,Torque[2]/TPF);
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    { 
+      cdouble pp=Omega*Omega*MMuNu[Mu][Nu];
+      fprintf(f,"pp_%i[%i,%i]=%e + (%e)*im;\n",
+                 Count,Mu,Nu,real(pp),imag(pp));
+
+      int Rho=(Nu+1)%3, Sigma=(Nu+2)%3;
+      cdouble mp=II*Omega*(   MMuNuRho[Mu][Rho][Sigma]
+                            - MMuNuRho[Mu][Sigma][Rho]
+                          );
+      fprintf(f,"mp_%i[%i,%i]=%e + (%e)*im;\n",
+                 Count,Mu,Nu,real(mp),imag(mp));
+    };
+  fprintf(f,"\n");
+  fclose(f);
+  Count++;
+#endif
+
+  static HMatrix *ppMatrix = new HMatrix(3,3,LHM_COMPLEX);
+  static HMatrix *mpMatrix = new HMatrix(3,3,LHM_COMPLEX);
+  static HMatrix *U        = new HMatrix(3,3,LHM_COMPLEX);
+  static HMatrix *VT       = new HMatrix(3,3,LHM_COMPLEX);
+  static HVector *Lambda   = new HVector(3,LHM_REAL);
+  static HVector *Sigma    = new HVector(3,LHM_REAL);
+
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    ppMatrix->SetEntry(Mu,Nu, Omega*Omega*MMuNu[Mu][Nu]);
+
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    { int NP1=(Nu+1)%3, NP2=(Nu+2)%3;
+      mpMatrix->SetEntry(Mu,Nu, II*Omega*(  MMuNuRho[Mu][NP1][NP2]
+                                          - MMuNuRho[Mu][NP2][NP1]
+                                         )
+                        );
+    };
+
+  cdouble p[3][3];
+  ppMatrix->Eig(Lambda, U);
+  for(int a=0; a<3; a++)
+   for(int Mu=0; Mu<3; Mu++)
+    p[a][Mu] = sqrt(Lambda->GetEntryD(a))*U->GetEntry(Mu,a);
+
+  cdouble m[3][3];
+  mpMatrix->SVD(Sigma, U, VT);
+  for(int a=0; a<3; a++)
+   { cdouble DotProd = conj(VT->GetEntry(a,0)) * p[a][0]
+                      +conj(VT->GetEntry(a,1)) * p[a][1]
+                      +conj(VT->GetEntry(a,2)) * p[a][2];
+     cdouble ScaleFactor = Sigma->GetEntry(a) * DotProd / Lambda->GetEntry(a);
+     m[a][0] = ScaleFactor*DotProd*U->GetEntry(0,a);
+     m[a][1] = ScaleFactor*DotProd*U->GetEntry(1,a);
+     m[a][2] = ScaleFactor*DotProd*U->GetEntry(2,a);
+   };
+
+  double Fmxp[3]={0.0, 0.0, 0.0};
+  double Tpxp[3]={0.0, 0.0, 0.0};
+  
+  TPF = TENTHIRDS*ZVAC*Omega*Omega*Omega/(12.0*M_PI);
+  FPF = TPF*Omega;
+  for(int a=0; a<3; a++)
+   for(int Mu=0; Mu<3; Mu++)
+    { int Nu=(Mu+1)%3, Rho=(Mu+2)%3;
+      Fmxp[Mu]+=FPF*real( conj(m[a][Nu])*p[a][Rho] - conj(m[a][Rho])*p[a][Nu] );
+      Tpxp[Mu]+=TPF*imag( conj(p[a][Nu])*p[a][Rho] - conj(p[a][Rho])*p[a][Nu] );
+    };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  FILE *f=vfopen("%s.MomentPFT","r",BNEQD->FileBase);
   if (!f)
    { f=vfopen("%s.MomentPFT","w",BNEQD->FileBase);
      fprintf(f,"# 01       omega \n");
@@ -226,6 +295,8 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   fprintf(f,"%e %e %e ",F2[0],F2[1],F2[2]);
   fprintf(f,"%e %e %e ",F3[0],F3[1],F3[2]);
   fprintf(f,"%e %e %e ",Torque[0],Torque[1],Torque[2]);
+  fprintf(f,"%e %e %e ",Fmxp[0], Fmxp[1], Fmxp[2]);
+  fprintf(f,"%e %e %e ",Tpxp[0], Tpxp[1], Tpxp[2]);
   fprintf(f,"\n");
   fclose(f);
 
