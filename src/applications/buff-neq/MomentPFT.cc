@@ -295,4 +295,20 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   fprintf(f,"\n");
   fclose(f);
 
+  f=vfopen("%s.NEQMoments","a",BNEQD->FileBase);
+  fprintf(f,"%e ",Omega);
+  fprintf(f,"%e %e %e ",real(p[0][0]),real(p[0][1]),real(p[0][2]));
+  fprintf(f,"%e %e %e ",imag(p[0][0]),imag(p[0][1]),imag(p[0][2]));
+  fprintf(f,"%e %e %e ",real(p[1][0]),real(p[1][1]),real(p[1][2]));
+  fprintf(f,"%e %e %e ",imag(p[1][0]),imag(p[1][1]),imag(p[1][2]));
+  fprintf(f,"%e %e %e ",real(p[2][0]),real(p[2][1]),real(p[2][2]));
+  fprintf(f,"%e %e %e ",imag(p[2][0]),imag(p[2][1]),imag(p[2][2]));
+  fprintf(f,"%e %e %e ",real(m[0][0]),real(m[0][1]),real(m[0][2]));
+  fprintf(f,"%e %e %e ",imag(m[0][0]),imag(m[0][1]),imag(m[0][2]));
+  fprintf(f,"%e %e %e ",real(m[1][0]),real(m[1][1]),real(m[1][2]));
+  fprintf(f,"%e %e %e ",imag(m[1][0]),imag(m[1][1]),imag(m[1][2]));
+  fprintf(f,"%e %e %e ",real(m[2][0]),real(m[2][1]),real(m[2][2]));
+  fprintf(f,"%e %e %e ",imag(m[2][0]),imag(m[2][1]),imag(m[2][2]));
+  fclose(f);
+
 }
