@@ -51,7 +51,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   if (FileBase)
    BNEQD->FileBase = strdup(FileBase);
   else
-   BNEQD->FileBase = strdup(GetFileBase(G->GeoFileName));
+   FileBase = BNEQD->FileBase = strdup(GetFileBase(G->GeoFileName));
 
   /*--------------------------------------------------------------*/
   /*- read the transformation file if one was specified and check */
