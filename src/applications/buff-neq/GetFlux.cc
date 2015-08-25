@@ -323,9 +323,10 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
       { 
         // get the Rytov matrix for source object #nos
         pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
-
-        if (NO==1)
+#if 0
+        if (BNEQD->DoMomentPFT)
          GetMomentPFT(BNEQD, 0, real(Omega), pftOptions->RytovMatrix);
+#endif
 
         // get the PFT for all destination objects using all
         // requested methods

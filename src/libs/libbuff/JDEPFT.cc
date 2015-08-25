@@ -251,13 +251,15 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   double FTPreFac = 0.5*TENTHIRDS*ZVAC; 
 #ifdef USE_OPENMP
   Log("OpenMP multithreading (%i threads)",NumThreads);
-#pragma omp parallel for schedule(dynamic,1),      \
+#pragma omp parallel for schedule(dynamic,1),      	\
+                         collapse(2),			\
                          num_threads(NumThreads)
 #endif
-  for(int nbfa=0; nbfa<TotalBFs; nbfa++) 
+  for(int nbfa=0; nbfa<TotalBFs; nbfa++)
    for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++) 
     { 
-      if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
+      //if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
+      if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
 
       int noa, nfa;
       SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa); 
@@ -278,7 +280,6 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #ifdef USE_OPENMP
       nt=omp_get_thread_num();
 #endif
-      
        int Offset = nt*NONQ + noa*NQ;
        DeltaPFT[ Offset + 0 ] += PPreFac*real(II*JJ*GG);
        for(int Mu=0; Mu<6; Mu++)
