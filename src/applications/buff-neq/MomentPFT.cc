@@ -249,7 +249,7 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   ppMatrix->Eig(Lambda, U);
   for(int a=0; a<3; a++)
    for(int Mu=0; Mu<3; Mu++)
-    p[a][Mu] = sqrt(Lambda->GetEntryD(a))*U->GetEntry(Mu,a);
+    p[a][Mu] = sqrt(Lambda->GetEntry(a))*U->GetEntry(Mu,a);
 
   cdouble m[3][3];
   mpMatrix->SVD(Sigma, U, VT);
@@ -265,7 +265,7 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
 
   double Fmxp[3]={0.0, 0.0, 0.0};
   double Tpxp[3]={0.0, 0.0, 0.0};
-  TPF = TENTHIRDS*ZVAC*Omega*Omega*Omega/(12.0*M_PI);
+  TPF = TENTHIRDS*ZVAC/(12.0*M_PI*Omega);
   FPF = TPF*Omega;
   for(int a=0; a<3; a++)
    for(int Mu=0; Mu<3; Mu++)
