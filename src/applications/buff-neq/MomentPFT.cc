@@ -256,6 +256,12 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
 
   cdouble p[3][3];
   ppMatrix->Eig(Lambda, U);
+  double MaxEig=fmax( abs(Lambda->GetEntry(0)), abs(Lambda->GetEntry(1)));
+  MaxEig=fmax( MaxEig, abs(Lambda->GetEntry(2)));
+  for(int Mu=0.0; Mu<3.0; Mu++)
+   if( abs(Lambda->GetEntry(Mu)) < 1.0e-8*MaxEig )
+    Lambda->SetEntry(Mu, 0.0);
+
   for(int a=0; a<3; a++)
    for(int Mu=0; Mu<3; Mu++)
     p[a][Mu] = sqrt(Lambda->GetEntry(a))*U->GetEntry(Mu,a);
@@ -263,10 +269,13 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   cdouble m[3][3];
   mpMatrix->SVD(Sigma, U, VT);
   for(int a=0; a<3; a++)
-   { cdouble DotProd = conj(VT->GetEntry(a,0)) * p[a][0]
+   { 
+     cdouble DotProd = conj(VT->GetEntry(a,0)) * p[a][0]
                       +conj(VT->GetEntry(a,1)) * p[a][1]
                       +conj(VT->GetEntry(a,2)) * p[a][2];
-     cdouble ScaleFactor = Sigma->GetEntry(a) * DotProd / Lambda->GetEntry(a);
+     cdouble LambdaA=Lambda->GetEntry(a);
+     cdouble ScaleFactor 
+      = LambdaA==0.0 ? 0.0 : Sigma->GetEntry(a) * DotProd / LambdaA;
      m[a][0] = ScaleFactor*DotProd*U->GetEntry(0,a);
      m[a][1] = ScaleFactor*DotProd*U->GetEntry(1,a);
      m[a][2] = ScaleFactor*DotProd*U->GetEntry(2,a);
