@@ -232,9 +232,18 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
   static HVector *Lambda   = new HVector(3,LHM_REAL);
   static HVector *Sigma    = new HVector(3,LHM_REAL);
 
+/*
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     ppMatrix->SetEntry(Mu,Nu, Omega*Omega*MMuNu[Mu][Nu]);
+*/
+  for(int Mu=0; Mu<3; Mu++)
+   { ppMatrix->SetEntry(Mu, Mu, Omega*Omega*real(MMuNu[Mu][Mu]));
+     for(int Nu=Mu+1; Nu<3; Nu++)
+      { ppMatrix->SetEntry(Mu, Nu, Omega*Omega*MMuNu[Mu][Nu]);
+        ppMatrix->SetEntry(Nu, Mu, Omega*Omega*conj(MMuNu[Mu][Nu]));
+      };
+   };
 
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
