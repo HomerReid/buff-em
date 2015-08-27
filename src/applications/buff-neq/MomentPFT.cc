@@ -158,7 +158,7 @@ void GetNEQMoments(BNEQData *BNEQD, int no, HMatrix *Rytov,
 /***************************************************************/
 /***************************************************************/
 void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
-                  HMatrix *Rytov, FILE *f)
+                  HMatrix *Rytov, FILE *f, bool WritePPFile)
 {
   /***************************************************************/
   /***************************************************************/
@@ -275,10 +275,10 @@ void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
                       +conj(VT->GetEntry(a,2)) * p[a][2];
      cdouble LambdaA=Lambda->GetEntry(a);
      cdouble ScaleFactor 
-      = LambdaA==0.0 ? 0.0 : Sigma->GetEntry(a) * DotProd / LambdaA;
-     m[a][0] = ScaleFactor*DotProd*U->GetEntry(0,a);
-     m[a][1] = ScaleFactor*DotProd*U->GetEntry(1,a);
-     m[a][2] = ScaleFactor*DotProd*U->GetEntry(2,a);
+      = (LambdaA==0.0) ? 0.0 : Sigma->GetEntry(a) * DotProd/ LambdaA;
+     m[a][0] = ScaleFactor*U->GetEntry(0,a);
+     m[a][1] = ScaleFactor*U->GetEntry(1,a);
+     m[a][2] = ScaleFactor*U->GetEntry(2,a);
    };
 
   double Fmxp[3]={0.0, 0.0, 0.0};
@@ -349,5 +349,55 @@ double PPF = ZVAC*Omega*Omega/(12.0*M_PI);
   fprintf(f,"%e %e %e ",Fmxp[0], Fmxp[1], Fmxp[2]);
   fprintf(f,"%e %e %e ",Tpxp[0], Tpxp[1], Tpxp[2]);
   fprintf(f,"%e ",PAbs2);
+
+  if (WritePPFile)
+   {
+     SWGVolume *O=BNEQD->G->Objects[no];
+     double Radius=0.0;
+     for(int nv=0; nv<O->NumVertices; nv++)
+      Radius=fmax(Radius, VecNorm(O->Vertices + 3*nv));
+  
+     FILE *f2=vfopen("%s.Moments.pp","a",GetFileBase(BNEQD->G->GeoFileName));
+
+     for(int a=0; a<3; a++)
+      { 
+        double pNorm = sqrt( norm(p[a][0]) + norm(p[a][1]) + norm(p[a][2]));
+        double mNorm = sqrt( norm(m[a][0]) + norm(m[a][1]) + norm(m[a][2]));
+        double pScaleFac = 1.5*Radius/pNorm;
+        double mScaleFac = 1.5*Radius/mNorm;
+
+        fprintf(f2,"View \"Real p%i\" {\n",a);
+        fprintf(f2,"VP(0,0,0) {%e,%e,%e};\n",
+                   pScaleFac*real(p[a][0]),
+                   pScaleFac*real(p[a][1]),
+                   pScaleFac*real(p[a][2]));
+        fprintf(f2,"};\n");
+
+        fprintf(f2,"View \"Imag p%i\" {\n",a);
+        fprintf(f2,"VP(0,0,0) {%e,%e,%e};\n",
+                   pScaleFac*imag(p[a][0]),
+                   pScaleFac*imag(p[a][1]),
+                   pScaleFac*imag(p[a][2]));
+        fprintf(f2,"};\n");
+
+        fprintf(f2,"View \"Real m%i\" {\n",a);
+        fprintf(f2,"VP(0,0,0) {%e,%e,%e};\n",
+                   mScaleFac*real(m[a][0]),
+                   mScaleFac*real(m[a][1]),
+                   mScaleFac*real(m[a][2]));
+        fprintf(f2,"};\n");
+
+        fprintf(f2,"View \"Imag m%i\" {\n",a);
+        fprintf(f2,"VP(0,0,0) {%e,%e,%e};\n",
+                   mScaleFac*imag(m[a][0]),
+                   mScaleFac*imag(m[a][1]),
+                   mScaleFac*imag(m[a][2]));
+        fprintf(f2,"};\n");
+
+      }; // for(int a=0; a<3; a++)
+
+    fclose(f2);
+
+   };
 
 }
