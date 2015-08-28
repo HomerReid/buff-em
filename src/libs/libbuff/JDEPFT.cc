@@ -240,7 +240,13 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #endif
   int NQ = NUMPFT;
   int NONQ = NO*NQ;
-  double *DeltaPFT = (double *)mallocEC(NumThreads*NONQ*sizeof(double));
+  static int DeltaPFTSize=0;
+  static double *DeltaPFT=0;
+  if ( DeltaPFTSize != (NumThreads*NONQ) )
+   { DeltaPFTSize=NumThreads*NONQ;
+     if (DeltaPFT) free(DeltaPFT);
+     DeltaPFT = (double *)mallocEC(DeltaPFTSize*sizeof(double));
+   };
 
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
@@ -254,13 +260,14 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                          num_threads(NumThreads)
 #endif
   for(int nbfa=0; nbfa<TotalBFs; nbfa++)
-   for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++)
+   for(int nbfb=0;/*nbfa;*/ nbfb<TotalBFs; nbfb++)
     { 
       //if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
-      if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
+      //if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
+      //if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
 
       int noa, nfa;
-      SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa); 
+      SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa);
 
       int nob, nfb;
       SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
@@ -278,7 +285,8 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #ifdef USE_OPENMP
       nt=omp_get_thread_num();
 #endif
-       int Offset = nt*NONQ + noa*NQ;
+      int Offset = nt*NONQ + noa*NQ;
+/*
        if (nbfa==nbfb)
         DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*imag(GG);
        else // nbfb > nbfa
@@ -286,6 +294,10 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
           for(int Mu=0; Mu<6; Mu++)
            DeltaPFT[ Offset + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
         };
+*/
+       DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*imag(GG);
+       for(int Mu=0; Mu<6; Mu++)
+        DeltaPFT[ Offset + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
 
     }; // end of multithreaded loop
   

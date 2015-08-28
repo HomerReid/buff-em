@@ -329,8 +329,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
 
         if (1)
-         {
-           double QPF[3];
+         { double QPF[3];
            GetMomentPFT(G, 0, real(Omega), 0,
                         pftOptions->RytovMatrix, PFTMatrix,
                         true, QPF);
@@ -339,7 +338,6 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
            fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,1);
            for(int nq=0; nq<NUMPFT; nq++)
             fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
-           fprintf(f,"%e %e %e ",QPF[0],QPF[1],QPF[2]);
            fprintf(f,"\n");
            fclose(f);
          };
