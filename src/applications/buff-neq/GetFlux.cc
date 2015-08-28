@@ -329,17 +329,18 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
 
         if (1)
-         { double QPF[3];
-           GetMomentPFT(G, 0, real(Omega), 0,
-                        pftOptions->RytovMatrix, PFTMatrix,
-                        true, QPF);
-           FILE *f=vfopen("%s.SIFlux.Moments","a",
-                           GetFileBase(G->Objects[0]->MeshFileName));
-           fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,1);
-           for(int nq=0; nq<NUMPFT; nq++)
-            fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
-           fprintf(f,"\n");
-           fclose(f);
+         { for(int nod=0; nod<NO; nod++)
+            { double QPF[3];
+              GetMomentPFT(G, nod, real(Omega), 0,
+                           pftOptions->RytovMatrix, PFTMatrix,
+                           true, QPF);
+              FILE *f=vfopen("%s.SIFlux.Moments","a",BNEQD->FileBase);
+              fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
+              for(int nq=0; nq<NUMPFT; nq++)
+               fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
+              fprintf(f,"\n");
+              fclose(f);
+            };
          };
 
         // get the PFT for all destination objects using all
