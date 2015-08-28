@@ -304,24 +304,24 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
 
   PFTMatrix->Zero();
   for(int nm=0; nm<NumMoments; nm++)
-   for(int Mu=0; Mu<NumMoments; Mu++)
-   { 
-     PFTMatrix->AddEntry(no, PFT_PABS, 
-                             PPF*real( conj(p[nm][Mu])*p[nm][Mu] )
-                        );
+   for(int Mu=0; Mu<3; Mu++)
+    { 
+      PFTMatrix->AddEntry(no, PFT_PABS, 
+                              PPF*real( conj(p[nm][Mu])*p[nm][Mu] )
+                         );
 
-     int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
-     PFTMatrix->AddEntry(no, PFT_XFORCE + Mu,
-                             FPF1*real( conj(m[nm][MP1])*p[nm][MP2]
-                                       -conj(m[nm][MP2])*p[nm][MP1] ) 
-                        );
+      int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
+      PFTMatrix->AddEntry(no, PFT_XFORCE + Mu,
+                              FPF1*real( conj(m[nm][MP1])*p[nm][MP2]
+                                        -conj(m[nm][MP2])*p[nm][MP1] ) 
+                         );
 
-     PFTMatrix->AddEntry(no, PFT_XTORQUE + Mu,
-                             TPF*( real(p[nm][MP1]) * imag(p[nm][MP2])
-                                  -real(p[nm][MP2]) * imag(p[nm][MP1])
-                                 )
-                        );
-   };
+      PFTMatrix->AddEntry(no, PFT_XTORQUE + Mu,
+                              TPF*( real(p[nm][MP1]) * imag(p[nm][MP2])
+                                   -real(p[nm][MP2]) * imag(p[nm][MP1])
+                                  )
+                         );
+    };
 
   if (JVector && QPF)
    { QPF[0] = FPF2*imag(Qp[0]);
