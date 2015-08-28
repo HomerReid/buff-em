@@ -348,28 +348,28 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
         double pScaleFac = 1.5*Radius/pNorm;
         double mScaleFac = 1.5*Radius/mNorm;
 
-        fprintf(f,"View \"Real p%i\" {\n",nm+1);
+        fprintf(f,"View \"Real p%i_%g\" {\n",nm+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
                    pScaleFac*real(pn[0]),
                    pScaleFac*real(pn[1]),
                    pScaleFac*real(pn[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Imag p%i\" {\n",nm+1);
+        fprintf(f,"View \"Imag p%i_%g\" {\n",nm+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
                    pScaleFac*imag(pn[0]),
                    pScaleFac*imag(pn[1]),
                    pScaleFac*imag(pn[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Real m%i\" {\n",nm+1);
+        fprintf(f,"View \"Real m%i_%g\" {\n",nm+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
                    mScaleFac*real(mn[0]),
                    mScaleFac*real(mn[1]),
                    mScaleFac*real(mn[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Imag m%i\" {\n",nm+1);
+        fprintf(f,"View \"Imag m%i_%g\" {\n",nm+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
                    mScaleFac*imag(mn[0]),
                    mScaleFac*imag(mn[1]),

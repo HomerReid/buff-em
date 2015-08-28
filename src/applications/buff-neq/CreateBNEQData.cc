@@ -196,7 +196,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   strftime(TimeString,30,"%D::%T",MyTm);
   for(int n=0; n<BNEQD->NumPFTMethods; n++)
    { FILE *f=fopen(BNEQD->PFTFileNames[n],"a");
-     fprintf(f,"\n");
      fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
      fprintf(f,"# data file columns: \n");
      fprintf(f,"# 1 omega \n");
