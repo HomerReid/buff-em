@@ -263,11 +263,12 @@ void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3],
 }
 
 /***************************************************************/
-/***************************************************************/
+/* if FileBase=0 then no .moments or .pp files are written     */
 /***************************************************************/
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                   HVector *JVector, HMatrix *Rytov,
-                  HMatrix *PFTMatrix, bool WritePPFile, double QPF[3])
+                  HMatrix *PFTMatrix, double QPF[3],
+                  char *FileBase)
 {
   // p[a][Mu] = Muth component of ath principal p-vector
   // m[a][Mu] = Muth component of ath principal m-vector
@@ -314,7 +315,7 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
       int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
       PFTMatrix->AddEntry(no, PFT_XFORCE + Mu,
                               FPF1*real( conj(m[nm][MP1])*p[nm][MP2]
-                                        -conj(m[nm][MP2])*p[nm][MP1] ) 
+                                        -conj(m[nm][MP2])*p[nm][MP1] )
                          );
 
       PFTMatrix->AddEntry(no, PFT_XTORQUE + Mu,
@@ -330,50 +331,71 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
      QPF[2] = FPF2*imag(Qp[2]);
    };
 
-  if (WritePPFile)
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  if (FileBase)
+   {
+     FILE *f=vfopen("%s.Moments","a",FileBase);
+     fprintf(f,"%e ",real(Omega));
+     for(int a=0; a<NumMoments; a++)
+      for(int Mu=0; Mu<3; Mu++)
+       fprintf(f,"%e %e %e %e ",real(p[a][Mu]),imag(p[a][Mu]),
+                                real(m[a][Mu]),imag(m[a][Mu]));
+     fclose(f);
+   };
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  if (FileBase)
    {
      double Radius=0.0;
      SWGVolume *O=G->Objects[no];
      for(int nv=0; nv<O->NumVertices; nv++)
       Radius=fmax(Radius, VecNorm(O->Vertices + 3*nv));
+
+     // compute scaling factors
+     double pMax=0.0;
+     double mMax=0.0;
+     for(int a=0; a<NumMoments; a++)
+      { pMax=fmax(pMax, sqrt( norm(p[a][0]) + norm(p[a][1]) + norm(p[a][2]) ) );
+        mMax=fmax(mMax, sqrt( norm(m[a][0]) + norm(m[a][1]) + norm(m[a][2]) ) );
+      };
+     double pScale = 1.5*Radius/pMax;
+     double mScale = 1.5*Radius/mMax;
   
-     FILE *f=vfopen("%s.Moments.pp","a",O->Label);
-
-     for(int nm=0; nm<NumMoments; nm++)
+     FILE *f=vfopen("%s.%g.Moments.pp","w",FileBase,real(Omega));
+     for(int a=0; a<NumMoments; a++)
       { 
-        cdouble *pn=p[nm], *mn=m[nm];
+        cdouble *pa=p[a], *ma=m[a];
 
-        double pNorm = sqrt( norm(pn[0]) + norm(pn[1]) + norm(pn[2]) );
-        double mNorm = sqrt( norm(mn[0]) + norm(mn[1]) + norm(mn[2]) );
-        double pScaleFac = 1.5*Radius/pNorm;
-        double mScaleFac = 1.5*Radius/mNorm;
-
-        fprintf(f,"View \"Real p%i_%g\" {\n",nm+1,real(Omega));
+        fprintf(f,"View \"Real p%i_%g\" {\n",a+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
-                   pScaleFac*real(pn[0]),
-                   pScaleFac*real(pn[1]),
-                   pScaleFac*real(pn[2]));
+                   pScale*real(pa[0]),
+                   pScale*real(pa[1]),
+                   pScale*real(pa[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Imag p%i_%g\" {\n",nm+1,real(Omega));
+        fprintf(f,"View \"Imag p%i_%g\" {\n",a+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
-                   pScaleFac*imag(pn[0]),
-                   pScaleFac*imag(pn[1]),
-                   pScaleFac*imag(pn[2]));
+                   pScale*imag(pa[0]),
+                   pScale*imag(pa[1]),
+                   pScale*imag(pa[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Real m%i_%g\" {\n",nm+1,real(Omega));
+        fprintf(f,"View \"Real m%i_%g\" {\n",a+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
-                   mScaleFac*real(mn[0]),
-                   mScaleFac*real(mn[1]),
-                   mScaleFac*real(mn[2]));
+                   mScale*real(ma[0]),
+                   mScale*real(ma[1]),
+                   mScale*real(ma[2]));
         fprintf(f,"};\n");
 
-        fprintf(f,"View \"Imag m%i_%g\" {\n",nm+1,real(Omega));
+        fprintf(f,"View \"Imag m%i_%g\" {\n",a+1,real(Omega));
         fprintf(f,"VP(0,0,0) {%e,%e,%e};\n",
-                   mScaleFac*imag(mn[0]),
-                   mScaleFac*imag(mn[1]),
-                   mScaleFac*imag(mn[2]));
+                   mScale*imag(ma[0]),
+                   mScale*imag(ma[1]),
+                   mScale*imag(ma[2]));
         fprintf(f,"};\n");
 
       }; // for(int nm=0; nm<NumMoments; nm++)

@@ -34,7 +34,7 @@ namespace buff {
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                   HVector *JVector, HMatrix *Rytov,
                   HMatrix *PFTMatrix,
-                  bool WritePPFile, double QPF[3]);
+                  double QPF[3], char *FileBase);
                }
 
 /***************************************************************/
@@ -266,6 +266,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   char **PFTFileNames      = BNEQD->PFTFileNames;
   int *DSIPoints           = BNEQD->DSIPoints;
   PFTOptions *pftOptions   = BNEQD->pftOptions;
+  char *FileBase           = BNEQD->FileBase;
 
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
@@ -333,8 +334,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
             { double QPF[3];
               GetMomentPFT(G, nod, real(Omega), 0,
                            pftOptions->RytovMatrix, PFTMatrix,
-                           true, QPF);
-              FILE *f=vfopen("%s.SIFlux.Moments","a",BNEQD->FileBase);
+                           QPF, FileBase);
+              FILE *f=vfopen("%s.SIFlux.MomentPFT","a",FileBase);
               fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
               for(int nq=0; nq<NUMPFT; nq++)
                fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
