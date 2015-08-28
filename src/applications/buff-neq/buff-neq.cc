@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
      {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,   0,            "number of quadrature points for DSIPFT"},
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,     0,            "bounding surface .msh file for DSIPFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,   0,            "bounding-sphere radius for DSIPFT"},
-     {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints,   0,            "number of quadrature points for DSIPFT 2"},
+     {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints2,  0,            "number of quadrature points for DSIPFT 2"},
 /**/     
      {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
 /**/     
