@@ -247,6 +247,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
      if (DeltaPFT) free(DeltaPFT);
      DeltaPFT = (double *)mallocEC(DeltaPFTSize*sizeof(double));
    };
+  memset(DeltaPFT, 0, DeltaPFTSize*sizeof(double));
 
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
