@@ -30,8 +30,12 @@
 
 #define II cdouble(0.0,1.0)
 
-//void GetMomentPFT(BNEQData *BNEQD, int no, double Omega,
-//                  HMatrix *Rytov, FILE *f, bool WritePPFile=false);
+namespace buff {
+void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
+                  HVector *JVector, HMatrix *Rytov,
+                  HMatrix *PFTMatrix,
+                  bool WritePPFile, double QPF[3]);
+               }
 
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/
@@ -323,10 +327,22 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
       { 
         // get the Rytov matrix for source object #nos
         pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
-#if 0
-        if (BNEQD->DoMomentPFT)
-         GetMomentPFT(BNEQD, 0, real(Omega), pftOptions->RytovMatrix);
-#endif
+
+        if (1)
+         {
+           double QPF[3];
+           GetMomentPFT(G, 0, real(Omega), 0,
+                        pftOptions->RytovMatrix, PFTMatrix,
+                        true, QPF);
+           FILE *f=vfopen("%s.SIFlux.Moments","a",
+                           GetFileBase(G->Objects[0]->MeshFileName));
+           fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,1);
+           for(int nq=0; nq<NUMPFT; nq++)
+            fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
+           fprintf(f,"%e %e %e ",QPF[0],QPF[1],QPF[2]);
+           fprintf(f,"\n");
+           fclose(f);
+         };
 
         // get the PFT for all destination objects using all
         // requested methods

@@ -91,6 +91,11 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options);
 
+void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
+                  HVector *JVector, HMatrix *Rytov,
+                  HMatrix *PFTMatrix, bool WritePPFile,
+                  double QPF[3]);
+
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
