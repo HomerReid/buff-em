@@ -246,17 +246,15 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*- multithreaded loop over all basis functions in all volumes -*/
   /*--------------------------------------------------------------*/
   int TotalBFs    = G->TotalBFs;
-  int NumPairs    = TotalBFs*(TotalBFs+1)/2;
-  double PPreFac  = 0.5*real(Omega)*ZVAC;
-  double FTPreFac = 0.5*TENTHIRDS*ZVAC; 
+  double PPreFac  = real(Omega)*ZVAC;
+  double FTPreFac = TENTHIRDS*ZVAC;
 #ifdef USE_OPENMP
   Log("OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      	\
-                         collapse(2),			\
                          num_threads(NumThreads)
 #endif
   for(int nbfa=0; nbfa<TotalBFs; nbfa++)
-   for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++) 
+   for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++)
     { 
       //if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
       if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
@@ -281,15 +279,12 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       nt=omp_get_thread_num();
 #endif
        int Offset = nt*NONQ + noa*NQ;
-       DeltaPFT[ Offset + 0 ] += PPreFac*real(II*JJ*GG);
-       for(int Mu=0; Mu<6; Mu++)
-        DeltaPFT[ Offset + 2 + Mu ] += FTPreFac*imag(JJ)*ImdG[Mu];
-
-       if (nbfb>nbfa)
-        { Offset = nt*NONQ + nob*NQ;
-          DeltaPFT[ Offset + 0 ] += PPreFac*real(II*conj(JJ)*GG);
+       if (nbfa==nbfb)
+        DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*imag(GG);
+       else // nbfb > nbfa
+        { DeltaPFT[ Offset + PFT_PABS] -= PPreFac*real(JJ)*imag(GG);
           for(int Mu=0; Mu<6; Mu++)
-           DeltaPFT[ Offset + 2 + Mu ] += FTPreFac*imag(JJ)*ImdG[Mu];
+           DeltaPFT[ Offset + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
         };
 
     }; // end of multithreaded loop

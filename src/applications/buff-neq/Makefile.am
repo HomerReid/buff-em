@@ -3,7 +3,6 @@ bin_PROGRAMS = buff-neq
 buff_neq_SOURCES =	\
  buff-neq.cc		\
  CreateBNEQData.cc	\
- MomentPFT.cc     	\
  GetFlux.cc		\
  buff-neq.h
 

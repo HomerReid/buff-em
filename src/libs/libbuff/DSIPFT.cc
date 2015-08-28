@@ -120,9 +120,9 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /* get incident and scattered fields at the cubature points    */
   /***************************************************************/
   Log(" Computing incident fields at cubature points...");
-  HMatrix *FInc  = G->GetFields(IF, 0, Omega, SCRMatrix);
+  HMatrix *FInc  = IF ? G->GetFields(IF, 0, Omega, SCRMatrix) : 0;
   Log(" Computing scattered fields at cubature points...");
-  HMatrix *FScat = G->GetFields( 0, JVector, Omega, SCRMatrix);
+  HMatrix *FScat = JVector ? G->GetFields( 0, JVector, Omega, SCRMatrix) : 0;
 
   /***************************************************************/
   /* loop over points in the cubature rule                       */
@@ -139,11 +139,18 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
      double NMatrix[NUMPFT][3][3];
      GetNMatrices(nHat, X, XTorque, NMatrix);
 
-     cdouble ES[3], HS[3], ET[3], HT[3];
-     FScat->GetEntries(nr, "0:2", ES);
-     FScat->GetEntries(nr, "3:5", HS);
-     FInc ->GetEntries(nr, "0:2", ET);
-     FInc ->GetEntries(nr, "3:5", HT);
+     cdouble ES[3]={0.0,0.0,0.0};
+     cdouble HS[3]={0.0,0.0,0.0};
+     cdouble ET[3]={0.0,0.0,0.0};
+     cdouble HT[3]={0.0,0.0,0.0};
+     if (FScat)
+      { FScat->GetEntries(nr, "0:2", ES);
+        FScat->GetEntries(nr, "3:5", HS);
+      };
+     if (FInc)
+      { FInc->GetEntries(nr, "0:2", ET);
+        FInc->GetEntries(nr, "3:5", HT);
+      };
      for(int Mu=0; Mu<3; Mu++)
       { ET[Mu] += ES[Mu];
         HT[Mu] += HS[Mu];
@@ -165,8 +172,8 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
    };
   Log(" Done!");
 
-  delete FInc;
-  delete FScat;
+  if (FInc) delete FInc;
+  if (FScat) delete FScat;
   delete SCRMatrix;
 
 }

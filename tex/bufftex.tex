@@ -1,0 +1,157 @@
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{dsfont}
+\usepackage{bbm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+\usepackage{psfrag}
+\usepackage{mathdots}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+\usepackage{fancybox}
+\usepackage{fancyvrb}
+\usepackage{arydshln}
+\usepackage{verbatim}
+
+%--------------------------------------------------
+%- primed variables 
+%--------------------------------------------------
+\newcommand\kp{k^\prime}
+\newcommand\rp{r^\prime}
+\newcommand\kk{k^\prime}
+
+%--------------------------------------------------
+%- boldface greek letters 
+%--------------------------------------------------
+\newcommand\vbphi{\mathbf{\phi}}
+\newcommand\vbPhi{\mathbf{\Phi}}
+\newcommand{\vbDelta}{\boldsymbol{\Delta}}
+\newcommand{\vbLambda}{\boldsymbol{\Lambda}}
+\newcommand{\vbGamma}{\boldsymbol{\Gamma}}
+\newcommand\vbtheta{\vec{\theta}}
+\newcommand\vbbeta{\vec{\beta}}
+\newcommand\vbsigma{\vec{\sigma}}
+\newcommand{\vbrho}{\boldsymbol{\rho}}
+\newcommand\bsigma{\overline{\sigma}}
+
+%--------------------------------------------------
+%- field theory stuff 
+%--------------------------------------------------
+\newcommand\ub{\overline{u}}
+\newcommand\ubar{\overline{u}}
+\newcommand\vbar{\overline{v}}
+\newcommand\psibar{\overline{\psi}}
+\newcommand\ps{\FMSlash{p}}
+\newcommand\ks{\FMSlash{k}}
+\newcommand\qs{\FMSlash{q}}
+\newcommand\ls{\FMSlash{l}}
+\newcommand\ds{\FMSlash{\partial}}
+\newcommand\pps{\FMSlash{p}^\prime}
+\newcommand\kps{\FMSlash{k}^\prime}
+\newcommand\MM{\mathcal{M}}
+\newcommand\btu{\bigtriangleup}
+
+%--------------------------------------------------
+%- colors -----------------------------------------
+%--------------------------------------------------
+\newcommand{\red}[1]{\textcolor{red}{#1}}
+\newcommand{\blue}[1]{\textcolor{blue}{#1}}
+\newcommand{\green}[1]{\textcolor{green}{#1}}
+\newcommand{\atan}{\text{atan}}
+\definecolor{cyan}{rgb}{0.0,1.00,1.00}
+%\newcommand{\cyan}[1]{\textcolor{cyan}{#1}}
+\definecolor{lightblue}{rgb}{0.0,0.00,0.75}
+\newcommand{\lightblue}[1]{\textcolor{lightblue}{#1}}
+
+%--------------------------------------------------
+% general commands
+%--------------------------------------------------
+\newcommand{\ccdot}{\, \cdot \,}
+\newcommand{\eps}{\epsilon}
+\newcommand{\ez}{\epsilon_0}
+\newcommand{\unit}[1]{\, \hbox{#1} \, }
+\newcommand{\qtext}[1]{\quad \hbox{#1} \quad }
+\newcommand{\curl}[0]{\nabla \times \vb}
+\newcommand{\divv}[0]{\nabla \cdot \vb}
+\newcommand{\uv}[1]{\vb{\hat{#1}}}
+\newcommand{\lab}{<\!} 
+\newcommand{\rab}{\!>} 
+\newcommand{\bra}[1]{\left<#1\right|}
+\newcommand{\ket}[1]{\left|#1\right>}
+\newcommand{\ketb}[1]{\big|#1\big>}
+\newcommand{\ketB}[1]{\Big|#1\Big>}
+\newcommand{\inp}[2]{\left<#1\right|\left.#2\right>}
+\newcommand{\Inp}[2]{\big<#1\big|\big.#2\big>}
+\newcommand{\INP}[2]{\Big<#1\Big|\Big.#2\Big>}
+\newcommand{\Inpb}[2]{\big<#1\big|\big.#2\big>}
+\newcommand{\inpB}[2]{\Big<#1\Big|\Big.#2\Big>}
+\newcommand{\inpv}[2]{\left<\vp #1\right|\left.#2\right>}
+\newcommand{\expval}[1]{\left< #1 \right>}
+\newcommand{\expvalv}[1]{\left<\vp #1 \right>}
+\newcommand{\exptwo}[3]{\left<#1\right|#2\left|#3\right>} 
+\newcommand{\ExpTwo}[3]{\big<#1\big|#2\big|#3\big>} 
+\newcommand{\EXPTWO}[3]{\Big<#1\Big|#2\Big|#3\Big>} 
+\newcommand{\exptwob}[3]{\big<#1\big|#2\big|#3\big>} 
+\newcommand{\exptwoB}[3]{\Big<#1\Big|#2\Big|#3\Big>} 
+\newcommand{\exptwov}[3]{\left<\vp#1\right|#2\left|\vp#3\right>} 
+\newcommand{\exptwoi}[3]{\left<\vi#1\right|#2\left|\vi#3\right>} 
+\newcommand{\union}{\cup}
+\newcommand\unitmatrix{\mathds{1}}
+\newcommand\Tr{\hbox{Tr }}
+\newcommand\tbtm[4]{\left(\begin{array}{ll}#1 & #2 \\ #3 & #4\end{array}\right)}
+\newcommand\sups[1]{^{\hbox{\scriptsize{#1}}}}
+\newcommand\supt[1]{^{\hbox{\tiny{#1}}}}
+\newcommand\subs[1]{_{\hbox{\scriptsize{#1}}}}
+\newcommand\subt[1]{_{\hbox{\tiny{#1}}}}
+\newcommand{\nn}{\nonumber \\}
+\newcommand{\vb}[1]{\mathbf{#1}}
+\newcommand{\eq}[1]{\begin{equation} #1 \end{equation}}
+\newcommand{\numeq}[2]{\begin{equation} #2 \label{#1} \end{equation}}
+\newcommand{\BE}{\begin{equation}}
+\newcommand{\EE}{\end{equation}}
+\newcommand{\pard}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pardn}[3]{\frac{\partial^{#1} #2}{\partial #3^{#1}}}
+\newcommand{\pf}[2]{\left(\frac{#1}{#2}\right)}
+\newcommand{\vp}{\vphantom\sum}
+\newcommand{\vi}{\vphantom{\sum_{-\infty^\infty}}}
+\newcommand{\evalat}[2]{\left. #1 \right|_{#2}}
+\newcommand{\evalatl}[2]{\left| #1 \right|_{#2}}
+\newcommand{\pp}{{\prime\prime}}
+\newcommand{\vbhat}[1]{\vb{\hat #1}}
+\newcommand{\vbhatt}[1]{\boldsymbol{\widehat #1}}
+\newcommand{\mc}[1]{\mathcal{#1}}
+\newcommand{\bmc}[1]{\boldsymbol{\mathcal{#1}}}
+\newcommand{\mb}[1]{\mathbb{#1}}
+\newcommand{\primedsum}{\sideset{}{'}{\sum}}
+
+\graphicspath{{figures/}}
+\definecolor{shadecolor}{rgb}{0.85,0.85,0.85}
+
+%--------------------------------------------------
+%-- \text with a built-in font size specifier   
+%--------------------------------------------------
+\newcommand\ts[1]{\text{\scriptsize{#1}}}
+\newcommand\ty[1]{\text{\tiny{#1}}}
+
+\newcommand{\prob}[3]{\section*{Problem #1}} 
+
+%--------------------------------------------------
+%- shaded verbatim for code inclusions
+%--------------------------------------------------
+\definecolor{lightgrey}{rgb}{0.75,0.75,0.75}
+\newenvironment{verbcode}{\VerbatimEnvironment% 
+  \noindent
+  %      {\columnwidth-\leftmargin-\rightmargin-2\fboxsep-2\fboxrule-4pt} 
+  \begin{Sbox} 
+  \begin{minipage}{\linewidth-2\fboxsep-2\fboxrule-4pt}    
+  \begin{Verbatim}
+}{% 
+  \end{Verbatim}  
+  \end{minipage}   
+  \end{Sbox} 
+  \fcolorbox{black}{lightgrey}{\textcolor{black}{\TheSbox}}
+} 
+

@@ -18,6 +18,7 @@ libbuff_la_SOURCES = 	\
  OPFT.cc         	\
  JDEPFT.cc         	\
  DSIPFT.cc       	\
+ MomentPFT.cc     	\
  GetPFT.cc          	\
  IHAIMatProp.h		\
  FIBBICache.h		\
