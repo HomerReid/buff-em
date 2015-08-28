@@ -158,7 +158,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
      nPFT++;
    };
   if (DoJDEPFT)
-   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_OVERLAP;
+   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_EP;
      BNEQD->DSIPoints[nPFT]    = 0;
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
      nPFT++;
