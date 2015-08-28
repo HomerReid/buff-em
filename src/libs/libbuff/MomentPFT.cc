@@ -215,11 +215,12 @@ void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3],
   static HVector *Lambda   = new HVector(3,LHM_REAL);
   static HVector *Sigma    = new HVector(3,LHM_REAL);
 
+  double w2=real(Omega)*real(Omega);
   for(int Mu=0; Mu<3; Mu++)
-   { ppMatrix->SetEntry(Mu, Mu, Omega*Omega*real(MMuNu[Mu][Mu]));
+   { ppMatrix->SetEntry(Mu, Mu, real(MMuNu[Mu][Mu])/w2);
      for(int Nu=Mu+1; Nu<3; Nu++)
-      { ppMatrix->SetEntry(Mu, Nu, Omega*Omega*MMuNu[Mu][Nu]);
-        ppMatrix->SetEntry(Nu, Mu, Omega*Omega*conj(MMuNu[Mu][Nu]));
+      { ppMatrix->SetEntry(Mu, Nu, MMuNu[Mu][Nu]       / w2 );
+        ppMatrix->SetEntry(Nu, Mu, conj(MMuNu[Mu][Nu]) / w2 );
       };
    };
 
