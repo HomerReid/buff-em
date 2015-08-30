@@ -38,7 +38,7 @@
 #include <libIncField.h>
 
 #include "GTransformation.h"
-#include "IHAIMatProp.h"
+#include "SVTensor.h"
 #include "FIBBICache.h"
 #include "PFTOptions.h"
 
@@ -161,7 +161,7 @@ class SWGVolume
    char *Label;                    /* unique label identifying the volume*/
 
    char *MatFileName;              /* saved name of material property file */
-   IHAIMatProp *MP;                /* material property */
+   SVTensor *MP;                   /* material property tensors */
 
    int Index;                      /* index of this volume in the SWGGeometry */
 
@@ -225,7 +225,7 @@ class SWGGeometry
                    HMatrix *PFTMatrix, PFTOptions *Options=0);
 
    void AssembleOverlapBlocks(int no, cdouble Omega,
-                              IHAIMatProp *Temperature,
+                              SVTensor *Temperature,
                               SMatrix *V, SMatrix *VInv,
                               SMatrix *Sigma, HMatrix *TInv=0,
                               int Offset=0);
@@ -290,13 +290,13 @@ cdouble GetGMatrixElement(SWGVolume *VA, int nfA,
 typedef void (*OverlapIntegrand)(double x[3],
                                  double bA[3], double DivbA,
                                  double bB[3], double DivbB,
-                                 IHAIMatProp *MP, cdouble Omega,
+                                 SVTensor *MP, cdouble Omega,
                                  void *UserData, double *Integrand);
 
 void OverlapIntegrand_PFT(double x[3],
                           double bA[3], double DivbA,
                           double bB[3], double DivbB,
-                          IHAIMatProp *MP, cdouble Omega,
+                          SVTensor *MP, cdouble Omega,
                           void *UserData, double *Integrand);
 
 int GetOverlapEntries(SWGVolume *O, int nfA,

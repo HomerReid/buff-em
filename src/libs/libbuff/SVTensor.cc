@@ -17,11 +17,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 /*
- * IHAIMatProp.cc -- implementation of IHAIMatProp class
+ * SVTensor.cc -- implementation of SVTensor class describing
+ *             -- spatially-varying tensors
  *
- * homer reid     -- 12/2009
+ * homer reid  -- 12/2009
  */
 
 #include <stdlib.h>
@@ -30,7 +30,7 @@
 
 #include <libhrutil.h>
 
-#include "IHAIMatProp.h"
+#include "SVTensor.h"
 #include "cmatheval.h"
 
 #define MAXSTR 200
@@ -38,9 +38,9 @@
 /***************************************************************/
 /* constructor *************************************************/
 /***************************************************************/
-IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName, bool IsMatProp)
+SVTensor::SVTensor(const char *FileName, bool IsMatProp)
 {
-   Name=strdupEC(IHAIMatFileName);
+   Name=strdupEC(FileName);
    ErrMsg=0;
    NumConstants=0;
    for(int nx=0; nx<3; nx++)
@@ -120,7 +120,7 @@ IHAIMatProp::IHAIMatProp(const char *IHAIMatFileName, bool IsMatProp)
 /***************************************************************/
 /* constructor helper function *********************************/
 /***************************************************************/
-char *IHAIMatProp::Parse(FILE *f)
+char *SVTensor::Parse(FILE *f)
 {
   /*--------------------------------------------------------------*/
   /*- parse lines one at a time ----------------------------------*/
@@ -212,7 +212,7 @@ char *IHAIMatProp::Parse(FILE *f)
 /***************************************************************/
 /* destructor **************************************************/
 /***************************************************************/
-IHAIMatProp::~IHAIMatProp()
+SVTensor::~SVTensor()
 {
   free(Name);
 
@@ -235,8 +235,8 @@ IHAIMatProp::~IHAIMatProp()
 /***************************************************************/
 /* get eps and mu at a given frequency and location  ***********/
 /***************************************************************/
-void IHAIMatProp::GetEpsMu(cdouble Omega, double x[3],
-                           cdouble Eps[3][3], cdouble Mu[3][3])
+void SVTensor::Evaluate(cdouble Omega, double x[3],
+                        cdouble Eps[3][3], cdouble Mu[3][3])
 { 
   /***************************************************************/
   /***************************************************************/
@@ -325,8 +325,8 @@ void IHAIMatProp::GetEpsMu(cdouble Omega, double x[3],
    };
 }
 
-void IHAIMatProp::GetEps(cdouble Omega, double x[3],
-                         cdouble Eps[3][3])
+void SVTensor::Evaluate(cdouble Omega, double x[3],
+                        cdouble Eps[3][3])
 { cdouble Mu[3][3];
-  GetEpsMu(Omega, x, Eps, Mu);
+  Evaluate(Omega, x, Eps, Mu);
 }

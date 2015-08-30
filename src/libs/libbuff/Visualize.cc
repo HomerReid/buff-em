@@ -217,7 +217,7 @@ void SWGGeometry::WritePPMesh(const char *FileName,
         if (O->OTGT) O->OTGT->UnApply(x0);
 
         cdouble Eps[3][3];
-        O->MP->GetEps(1.0, x0, Eps);
+        O->MP->Evaluate(1.0, x0, Eps);
 
         EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
       };
@@ -261,7 +261,7 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
          if (O->OTGT) O->OTGT->UnApply(x0);
  
          cdouble Eps[3][3];
-         O->MP->GetEps(1.0, x0, Eps);
+         O->MP->Evaluate(1.0, x0, Eps);
 
          EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
        };

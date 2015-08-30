@@ -18,15 +18,14 @@
  */
 
 /*
- * IHAIMatProp.h  -- a simple C++ class for managing material
- *                -- properties for InHomogeneous, AnIsotropic
- *                -- materials
+ * SVTensor.h  -- a simple C++ class for managing
+ *             -- Spatially Varying Tensors
  *
- * homer reid    -- 5/2014
+ * homer reid  -- 5/2014
  */
 
-#ifndef IHAIMATPROP_H
-#define IHAIMATPROP_H
+#ifndef SVTENSOR_H
+#define SVTENSOR_H
 
 #define MAXCONSTANTS 25
 
@@ -35,7 +34,7 @@
 /***************************************************************/
 /* MatProp class definition ************************************/
 /***************************************************************/
-class IHAIMatProp
+class SVTensor
  { 
   public:  
 
@@ -43,15 +42,15 @@ class IHAIMatProp
    /* public class methods ****************************************/
    /***************************************************************/
    /* constructor */
-   IHAIMatProp(const char *IHAIMatFileName, bool IsMatProp=false);
+   SVTensor(const char *FileName, bool IsMatProp=false);
 
   /* destructor */
-   ~IHAIMatProp();
+   ~SVTensor();
 
    /* get epsilon and mu at a given frequency and position */
-   void GetEpsMu(cdouble Omega, double x[3], 
+   void Evaluate(cdouble Omega, double x[3],
                  cdouble Eps[3][3], cdouble Mu[3][3]);
-   void GetEps(cdouble Omega, double x[3], cdouble Eps[3][3]);
+   void Evaluate(cdouble Omega, double x[3], cdouble Eps[3][3]);
 
    /* if ErrMsg is not NULL after the class constructor is invoked, there  */
    /* was an error.                                                        */

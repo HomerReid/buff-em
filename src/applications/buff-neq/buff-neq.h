@@ -70,7 +70,7 @@ typedef struct BNEQData
  {
    SWGGeometry *G;
 
-   IHAIMatProp *Temperature;
+   SVTensor *Temperature;
 
    GTComplex **GTCList;
    int NumTransformations;

@@ -1,11 +1,11 @@
 lib_LTLIBRARIES = libbuff.la
-pkginclude_HEADERS = libbuff.h IHAIMatProp.h FIBBICache.h
+pkginclude_HEADERS = libbuff.h SVTensor.h FIBBICache.h
 libbuff_la_SOURCES = 	\
  GetFields.cc    	\
  GMatrixElements.cc	\
  Cubature.cc     	\
  FIBBICache.cc   	\
- IHAIMatProp.cc  	\
+ SVTensor.cc     	\
  InitFaceList.cc 	\
  ReadGMSHFile.cc 	\
  RHSVector.cc    	\
@@ -20,7 +20,7 @@ libbuff_la_SOURCES = 	\
  DSIPFT.cc       	\
  MomentPFT.cc     	\
  GetPFT.cc          	\
- IHAIMatProp.h		\
+ SVTensor.h    		\
  FIBBICache.h		\
  libbuff.h
 

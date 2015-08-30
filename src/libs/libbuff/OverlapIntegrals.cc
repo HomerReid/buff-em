@@ -42,7 +42,7 @@ using namespace scuff;
 typedef void (*OverlapIntegrand)(double x[3],
                                  double bA[3], double DivbA,
                                  double bB[3], double DivbB,
-                                 IHAIMatProp *MP, cdouble Omega,
+                                 SVTensor *MP, cdouble Omega,
                                  void *UserData, double *Integrand);
 
 namespace buff {
@@ -69,25 +69,25 @@ double GetThetaFactor(double Omega, double T)
 void OverlapIntegrand_VVInvSigma(double x[3],
                                  double bA[3],  double DivbAlpha,
                                  double bB[3],  double DivbBeta,
-                                 IHAIMatProp *MP, cdouble Omega,
+                                 SVTensor *MP, cdouble Omega,
                                  void *UserData, double *I)
 {
   (void) DivbAlpha; 
   (void) DivbBeta; // unused
 
   cdouble EpsM1[3][3], InvEpsM1[3][3];
-  MP->GetEps( Omega, x, EpsM1 );
+  MP->Evaluate( Omega, x, EpsM1 );
   EpsM1[0][0] -= 1.0;
   EpsM1[1][1] -= 1.0;
   EpsM1[2][2] -= 1.0;
   Invert3x3Matrix(EpsM1, InvEpsM1);
 
   double Theta=1.0;
-  IHAIMatProp *Temperature = (IHAIMatProp *)UserData;
+  SVTensor *Temperature = (SVTensor *)UserData;
   if (Temperature)
    { 
      cdouble TT[3][3];
-     Temperature->GetEps(0,x,TT);
+     Temperature->Evaluate(0,x,TT);
      double T=real(TT[0][0]);
      Theta=GetThetaFactor(real(Omega), T);
    };
@@ -116,14 +116,14 @@ void OverlapIntegrand_VVInvSigma(double x[3],
 /***************************************************************/
 /***************************************************************/
 void GetInvChiDotbB(double X[3], double bB[3],
-                    IHAIMatProp *MP, cdouble Omega,
+                    SVTensor *MP, cdouble Omega,
                     cdouble E[3])
 {
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   cdouble Chi[3][3], InvChi[3][3];
-  MP->GetEps( Omega, X, Chi);
+  MP->Evaluate( Omega, X, Chi);
   Chi[0][0] -= 1.0;
   Chi[1][1] -= 1.0;
   Chi[2][2] -= 1.0;
@@ -142,7 +142,7 @@ void GetInvChiDotbB(double X[3], double bB[3],
 void OverlapIntegrand_PFT(double X[3],
                           double bA[3],  double DivbA,
                           double bB[3],  double DivbB,
-                          IHAIMatProp *MP, cdouble Omega,
+                          SVTensor *MP, cdouble Omega,
                           void *UserData, double *I)
 {
   (void) DivbA; 
@@ -176,7 +176,7 @@ void OverlapIntegrand_PFT(double X[3],
   /***************************************************************/
   /***************************************************************/
   cdouble Chi[3][3], InvChi[3][3];
-  MP->GetEps( Omega, X, Chi);
+  MP->Evaluate( Omega, X, Chi);
   Chi[0][0] -= 1.0;
   Chi[1][1] -= 1.0;
   Chi[2][2] -= 1.0;
@@ -258,7 +258,7 @@ void GetOverlapIntegrals(SWGVolume *O, int nt,
   VecSub(V2, QA, L2);
   VecSub(V3, QA, L3);
 
-  IHAIMatProp *MP = O->MP;
+  SVTensor *MP = O->MP;
 
   /***************************************************/
   /***************************************************/

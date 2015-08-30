@@ -69,7 +69,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   if (TemperatureFile)
-   BNEQD->Temperature = new IHAIMatProp(TemperatureFile);
+   BNEQD->Temperature = new SVTensor(TemperatureFile);
   else
    BNEQD->Temperature = 0;
 

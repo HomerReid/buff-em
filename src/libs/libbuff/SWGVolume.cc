@@ -133,7 +133,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
    }
   else
    { MatFileName=strdup(pMatFileName);
-     MP=new IHAIMatProp(MatFileName,IsMatProp);
+     MP=new SVTensor(MatFileName,IsMatProp);
      if (MP->ErrMsg)
       ErrExit(MP->ErrMsg);
    };

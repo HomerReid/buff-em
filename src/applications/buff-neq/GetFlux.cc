@@ -257,7 +257,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /* extract fields from BNEQData structure **********************/
   /***************************************************************/
   SWGGeometry *G           = BNEQD->G;
-  IHAIMatProp *Temperature = BNEQD->Temperature;
+  SVTensor *Temperature    = BNEQD->Temperature;
   HMatrix ***GBlocks       = BNEQD->GBlocks;
   SMatrix **VBlocks        = BNEQD->VBlocks;
   SMatrix **Sigma          = BNEQD->Sigma;

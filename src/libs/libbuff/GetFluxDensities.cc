@@ -41,7 +41,6 @@ void GetFluxDensities(TGFData *Data, cdouble Omega, double *Densities)
   /***************************************************************/
   int NumObjects      = Data->NumObjects;
   SWGVolume **Objects = Data->Objects;
-  IHAIMatProp **MPs   = Data->MPs;
 
   HMatrix **TMatrices  = Data->TMatrices;
   HMatrix ***UMatrices = Data->UMatrices;

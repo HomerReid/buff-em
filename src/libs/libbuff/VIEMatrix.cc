@@ -93,8 +93,8 @@ typedef struct GOData
    double *QB;
    double PreFacB;
    cdouble Omega;
-   IHAIMatProp *MP;
-   IHAIMatProp *Temperature;
+   SVTensor *MP;
+   SVTensor *Temperature;
 
  } GOData;
 
@@ -110,11 +110,11 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   double *QB               = Data->QB;
   double PreFacB           = Data->PreFacB;
   cdouble Omega            = Data->Omega;
-  IHAIMatProp *MP          = Data->MP;
-  IHAIMatProp *Temperature = Data->Temperature;
+  SVTensor *MP             = Data->MP;
+  SVTensor *Temperature    = Data->Temperature;
 
   cdouble EpsM1[3][3], InvEpsM1[3][3];
-  MP->GetEps( Omega, x, EpsM1 );
+  MP->Evaluate( Omega, x, EpsM1 );
   EpsM1[0][0] -= 1.0;
   EpsM1[1][1] -= 1.0;
   EpsM1[2][2] -= 1.0;
@@ -132,7 +132,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   if (Temperature)
    { 
      cdouble TT[3][3];
-     Temperature->GetEps(0,x,TT);
+     Temperature->Evaluate(0,x,TT);
      double T=real(TT[0][0]);
      Theta=GetThetaFactor(real(Omega), T);
    };
@@ -171,7 +171,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /* If Temperature==NULL then Theta(T) is set to 1.             */
 /***************************************************************/
 int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
-                IHAIMatProp *Temperature,
+                SVTensor *Temperature,
                 int Indices[MAXOVERLAP],
                 cdouble VEntries[MAXOVERLAP],
                 cdouble VInvEntries[MAXOVERLAP],
@@ -288,7 +288,7 @@ int GetVInvEntries(SWGVolume *O, int nfA, cdouble Omega,
 {
   cdouble VEntries[MAXOVERLAP];
   double SigmaEntries[MAXOVERLAP];
-  IHAIMatProp *Temperature=0;
+  SVTensor *Temperature=0;
   return GetOverlaps(O, nfA, Omega, Temperature, Indices,
                      VEntries, VInvEntries, SigmaEntries);
 }
@@ -297,7 +297,7 @@ int GetVInvEntries(SWGVolume *O, int nfA, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
-                                        IHAIMatProp *Temperature,
+                                        SVTensor *Temperature,
                                         SMatrix *V, SMatrix *VInv,
                                         SMatrix *Sigma, HMatrix *TInv,
                                         int Offset)
