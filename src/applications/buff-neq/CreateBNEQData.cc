@@ -185,6 +185,8 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   BNEQD->pftOptions->DSIMesh=DSIMesh;
   BNEQD->pftOptions->DSIRadius=DSIRadius;
   
+  BNEQD->DoMomentPFT=DoMomentPFT;
+  
   /*--------------------------------------------------------------*/
   /* write file preambles ----------------------------------------*/
   /*--------------------------------------------------------------*/

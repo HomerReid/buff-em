@@ -98,6 +98,70 @@ void PutInThetaFactors(BNEQData *BNEQD, double Omega,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void WriteDataToOutputFile(BNEQData *BNEQD, double *I, double *E)
+{
+  time_t MyTime;
+  struct tm *MyTm;
+  char TimeString[30];
+  
+  MyTime=time(0);
+  MyTm=localtime(&MyTime);
+  strftime(TimeString,30,"%D::%T",MyTm);
+  FILE *f=vfopen("%s.out","a",BNEQD->FileBase);
+  fprintf(f,"\n");
+  fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
+  fprintf(f,"# data file columns: \n");
+  fprintf(f,"# 1 transform tag\n");
+  fprintf(f,"# 2 (sourceObject, destObject) \n");
+  int nq=3;
+  if (BNEQD->QuantityFlags & QFLAG_PABS)
+   { fprintf(f,"# (%i,%i) power (value,error)\n",nq,nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_XFORCE) 
+   { fprintf(f,"# (%i,%i) x-force (value,error)\n",nq, nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_YFORCE) 
+   { fprintf(f,"# (%i,%i) y-force (value,error)\n",nq, nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_ZFORCE) 
+   { fprintf(f,"# (%i,%i) z-force (value,error)\n",nq, nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_XTORQUE) 
+   { fprintf(f,"# (%i,%i) x-torque (value,error)\n",nq, nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_YTORQUE) 
+   { fprintf(f,"# (%i,%i) y-torque (value,error)\n",nq, nq+1); nq+=2; }
+  if (BNEQD->QuantityFlags & QFLAG_ZTORQUE) 
+   { fprintf(f,"# (%i,%i) z-torque (value,error)\n",nq, nq+1); nq+=2; }
+
+  int NO = BNEQD->G->NumObjects;
+  int NT = BNEQD->NumTransformations;
+  int NQ = BNEQD->NQ;
+  double TotalQuantity[MAXQUANTITIES], TotalError[MAXQUANTITIES];
+  for(int nt=0; nt<NT; nt++)
+   for(int nsd=0; nsd<NO; nsd++)
+    { 
+      memset(TotalQuantity,0,NQ*sizeof(double));
+      memset(TotalError,   0,NQ*sizeof(double));
+      for(int nss=0; nss<NO; nss++)
+       { fprintf(f,"%s %i%i ",BNEQD->GTCList[nt]->Tag,nss+1,nsd+1);
+         for(nq=0; nq<NQ; nq++)
+          { int i = GetIndex(BNEQD, nt, nss, nsd, nq);
+            fprintf(f,"%+16.8e %+16.8e ", I[i], E[i] );
+            TotalQuantity[nq] += I[i];
+            TotalError[nq] += E[i];
+          };
+         fprintf(f,"\n");
+       };
+
+      fprintf(f,"%s 0%i ",BNEQD->GTCList[nt]->Tag,nsd+1);
+      for(nq=0; nq<NQ; nq++)
+       fprintf(f,"%e %e ",TotalQuantity[nq],TotalError[nq]);
+      fprintf(f,"\n");
+
+    };
+  fclose(f);   
+}
+
+#if 0
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 typedef struct FIData 
  {
    BNEQData *BNEQD;
@@ -149,72 +213,9 @@ int SGJCIntegrand(unsigned ndim, const double *x, void *params,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void WriteDataToOutputFile(BNEQData *BNEQD, double *I, double *E)
-{
-  time_t MyTime;
-  struct tm *MyTm;
-  char TimeString[30];
-  
-  MyTime=time(0);
-  MyTm=localtime(&MyTime);
-  strftime(TimeString,30,"%D::%T",MyTm);
-  FILE *f=vfopen("%s.out","a",BNEQD->FileBase);
-  fprintf(f,"\n");
-  fprintf(f,"# buff-neq run on %s (%s)\n",GetHostName(),TimeString);
-  fprintf(f,"# data file columns: \n");
-  fprintf(f,"# 1 transform tag\n");
-  fprintf(f,"# 2 (sourceObject, destObject) \n");
-  int nq=3;
-  if (BNEQD->QuantityFlags & QFLAG_POWER) 
-   { fprintf(f,"# (%i,%i) power (value,error)\n",nq,nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_XFORCE) 
-   { fprintf(f,"# (%i,%i) x-force (value,error)\n",nq, nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_YFORCE) 
-   { fprintf(f,"# (%i,%i) y-force (value,error)\n",nq, nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_ZFORCE) 
-   { fprintf(f,"# (%i,%i) z-force (value,error)\n",nq, nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_XTORQUE) 
-   { fprintf(f,"# (%i,%i) x-torque (value,error)\n",nq, nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_YTORQUE) 
-   { fprintf(f,"# (%i,%i) y-torque (value,error)\n",nq, nq+1); nq+=2; }
-  if (BNEQD->QuantityFlags & QFLAG_ZTORQUE) 
-   { fprintf(f,"# (%i,%i) z-torque (value,error)\n",nq, nq+1); nq+=2; }
-
-  int NO = BNEQD->G->NumObjects;
-  int NT = BNEQD->NumTransformations;
-  int NQ = BNEQD->NQ;
-  double TotalQuantity[MAXQUANTITIES], TotalError[MAXQUANTITIES];
-  for(int nt=0; nt<NT; nt++)
-   for(int nsd=0; nsd<NO; nsd++)
-    { 
-      memset(TotalQuantity,0,NQ*sizeof(double));
-      memset(TotalError,   0,NQ*sizeof(double));
-      for(int nss=0; nss<NO; nss++)
-       { fprintf(f,"%s %i%i ",BNEQD->GTCList[nt]->Tag,nss+1,nsd+1);
-         for(nq=0; nq<NQ; nq++)
-          { int i = GetIndex(BNEQD, nt, nss, nsd, nq);
-            fprintf(f,"%+16.8e %+16.8e ", I[i], E[i] );
-            TotalQuantity[nq] += I[i];
-            TotalError[nq] += E[i];
-          };
-         fprintf(f,"\n");
-       };
-
-      fprintf(f,"%s 0%i ",BNEQD->GTCList[nt]->Tag,nsd+1);
-      for(nq=0; nq<NQ; nq++)
-       fprintf(f,"%e %e ",TotalQuantity[nq],TotalError[nq]);
-      fprintf(f,"\n");
-
-    };
-  fclose(f);   
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void EvaluateFrequencyIntegral(BNEQData *BNEQD, 
+void EvaluateFrequencyIntegral(BNEQData *BNEQD,
                                double OmegaMin, double OmegaMax,
-                               double *TObjects, double TEnvironment, 
+                               double *TObjects, double TEnvironment,
                                double AbsTol, double RelTol,
                                double *I, double *E)
 { 
@@ -253,6 +254,7 @@ void EvaluateFrequencyIntegral(BNEQData *BNEQD,
   WriteDataToOutputFile(BNEQD, I, E);
 
 }
+#endif
 
 /***************************************************************/
 /***************************************************************/

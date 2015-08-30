@@ -100,6 +100,7 @@ typedef struct BNEQData
    char *PFTFileNames[MAXPFT];
    int DSIPoints[MAXPFT];
    PFTOptions *pftOptions;
+   bool DoMomentPFT;
 
    bool UseExistingData;
 
@@ -118,6 +119,14 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+/***************************************************************/
+int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq);
 void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
 
+void EvaluateFrequencyIntegral2(BNEQData *BNEQD,
+                                double OmegaMin, double OmegaMax,
+                                double *TObjects,
+                                double TEnvironment,
+                                int NumIntervals,
+                                double *I, double *E);
 #endif

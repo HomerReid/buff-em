@@ -243,16 +243,16 @@ int main(int argc, char *argv[])
       GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), I);
    }
   else
-   ErrExit("not supported");
-#if 0
    { 
       double *E = new double[ OutputVectorLength ];
+      double TObjects[1]={300.0};
+      double TEnvironment=0.0;
       EvaluateFrequencyIntegral2(BNEQD, OmegaMin, OmegaMax,
+                                 TObjects, TEnvironment,
                                  Intervals, I, E);
       delete[] E;
    };
   delete[] I;
-#endif
 
   /***************************************************************/
   /***************************************************************/

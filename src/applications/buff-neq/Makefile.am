@@ -2,6 +2,7 @@ bin_PROGRAMS = buff-neq
 
 buff_neq_SOURCES =	\
  buff-neq.cc		\
+ Quadrature.cc		\
  CreateBNEQData.cc	\
  GetFlux.cc		\
  buff-neq.h
