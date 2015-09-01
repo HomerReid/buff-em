@@ -274,18 +274,20 @@ int main(int argc, char *argv[])
      SVTensor *SVT=O->SVT;
      cdouble Eps[3][3];
      SVT->Evaluate(Omega, XYZ, Eps);
-     printf("For object %s (%s): \n",O->Label,O->MeshFileName);
-     printf(" Epsilon at Omega=%e, {x,y,z}={%.2e,%.2e,%.2e} = ",
+     printf("For object %s (%s): \n\n",O->Label,O->MeshFileName);
+     printf(" Epsilon at Omega=%g, {x,y,z}={%.2e,%.2e,%.2e} = \n",
               real(Omega),XYZ[0],XYZ[1],XYZ[2]);
      SetDefaultCD2SFormat("{%+.2e, %+.2e}");
      if (SVT->Isotropic)
-      printf("%s",CD2S(Eps[0][0]));
+      printf("  %s\n",CD2S(Eps[0][0]));
      else
       { printf("\n");
         for(int Mu=0; Mu<3; Mu++)
          printf("   %s     %s     %s \n", CD2S(Eps[Mu][0]), CD2S(Eps[Mu][1]), CD2S(Eps[Mu][2]));
       };
+     printf("\n");
      printf("Thank you for your support.\n");
+     exit(0);
    };
 
   /***************************************************************/
