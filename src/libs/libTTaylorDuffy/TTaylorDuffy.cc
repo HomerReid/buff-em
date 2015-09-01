@@ -782,6 +782,7 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+#if 0
   for(int WhichP=TTD_RXUNITY; WhichP<=TTD_RZUNITY; WhichP++)
    if ( TTDW->NeedP[WhichP] )
     {  
@@ -961,5 +962,6 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
                  TTDW->CRList + WhichP, TTDW->NumCRs + WhichP);
 
     };
+#endif
 
 } // GetGeometricParameters routine
