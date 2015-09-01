@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
   /***************************************************************/
   if (GeoFile && nXYZ)
    { 
-     G = new SWGGeometry(GeoFile);
+     SWGGeometry *G = new SWGGeometry(GeoFile);
      SWGVolume *O=G->Objects[0];
      SVTensor *SVT=O->SVT;
      cdouble Eps[3][3];
