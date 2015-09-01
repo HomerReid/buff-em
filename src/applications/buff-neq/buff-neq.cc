@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "buff-neq.h"
+#include "SVTensor.h"
 #include <libhrutil.h>
 
 /***************************************************************/
@@ -70,18 +71,19 @@ int main(int argc, char *argv[])
   bool ZTorque=false;
 
   /*--------------------------------------------------------------*/
-  cdouble OmegaVals[MAXFREQ];        int nOmegaVals;
-  char *OmegaFile;                   int nOmegaFiles;
-  double OmegaMin=0.00;              int nOmegaMin;
-  double OmegaMax=-1.0;              int nOmegaMax;
-
-  /*--------------------------------------------------------------*/
-  char *TemperatureFile=0;
-
-  /*--------------------------------------------------------------*/
+  cdouble OmegaVals[MAXFREQ];           int nOmegaVals;
+  char *OmegaFile;
+  double OmegaMin=0.01;                 int nOmegaMin;
+  double OmegaMax=10.0;                 int nOmegaMax;
+  char *OmegaQuadrature="adaptive";
   double AbsTol=0.0;
-  double RelTol=5.0e-2;
+  double RelTol=1.0e-2;
   int Intervals=25;
+
+  /*--------------------------------------------------------------*/
+  #define MAXOBJS    10
+  char *TempArgs[2*MAXOBJS];            int nTempArgs;
+  char *TempFileArgs[2*MAXOBJS];        int nTempFileArgs;
 
   /*--------------------------------------------------------------*/
   bool DoOPFT      = false;
@@ -99,10 +101,12 @@ int main(int argc, char *argv[])
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
    { 
-     {"Geometry",        PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
+     {"Geometry",       PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
 /**/     
-     {"TransFile",       PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
-     {"TemperatureFile", PA_STRING,  1, 1,       (void *)&TemperatureFile,  0, "file specifying position-dependent temperature"},
+     {"TransFile",      PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
+/**/     
+     {"TempArgs",       PA_STRING,  2, MAXOBJS, (void *)TempArgs,     &nTempArgs,     ""},
+     {"TempFileArgs",   PA_STRING,  2, MAXOBJS, (void *)TempFileArgs, &nTempFileArgs, ""},
 /**/     
      {"Power",          PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "compute power transfer"},
      {"PAbs",           PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "(synonym for --power)"},
@@ -115,9 +119,13 @@ int main(int argc, char *argv[])
      {"ZTorque",        PA_BOOL,    0, 1,       (void *)&ZTorque,    0,             "compute Z-torque"},
 /**/     
      {"Omega",          PA_CDOUBLE, 1, MAXFREQ, (void *)OmegaVals,   &nOmegaVals,   "(angular) frequency"},
-     {"OmegaFile",      PA_STRING,  1, 1,       (void *)&OmegaFile,  &nOmegaFiles,  "list of (angular) frequencies"},
+     {"OmegaFile",      PA_STRING,  1, 1,       (void *)&OmegaFile,   0,            "list of (angular) frequencies"},
      {"OmegaMin",       PA_DOUBLE,  1, 1,       (void *)&OmegaMin,   &nOmegaMin,    "lower integration limit"},
      {"OmegaMax",       PA_DOUBLE,  1, 1,       (void *)&OmegaMax,   &nOmegaMax,    "upper integration limit"},
+     {"OmegaQuadrature",PA_STRING,  1, 1,       (void *)&OmegaQuadrature, 0,        "adaptive | trapsimp"},
+     {"AbsTol",         PA_DOUBLE,  1, 1,       (void *)&AbsTol,      0,            "absolute integration tolerance"},
+     {"RelTol",         PA_DOUBLE,  1, 1,       (void *)&RelTol,      0,            "relative integration tolerance"},
+     {"Intervals",      PA_INT,     1, 1,       (void *)&Intervals,  0,             "number of intervals for frequency quadrature"},
 /**/     
      {"OPFT",           PA_BOOL,    0, 1,       (void *)&DoOPFT,      0,            "do overlap PFT computation"},
      {"JDEPFT",         PA_BOOL,    0, 1,       (void *)&DoJDEPFT,    0,            "do J dot E PFT computation"},
@@ -128,10 +136,6 @@ int main(int argc, char *argv[])
      {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints2,  0,            "number of quadrature points for DSIPFT 2"},
 /**/     
      {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
-/**/     
-     {"AbsTol",         PA_DOUBLE,  1, 1,       (void *)&AbsTol,     0,             "absolute tolerance for frequency quadrature"},
-     {"RelTol",         PA_DOUBLE,  1, 1,       (void *)&RelTol,     0,             "relative tolerance for frequency quadrature"},
-     {"Intervals",      PA_INT,     1, 1,       (void *)&Intervals,  0,             "number of intervals for frequency quadrature"},
 /**/
      {"UseExistingData", PA_BOOL,   0, 1,       (void *)&UseExistingData, 0,        "read existing data from .flux files"},
 /**/
@@ -155,7 +159,7 @@ int main(int argc, char *argv[])
   /*******************************************************************/
   HVector *OmegaPoints=0, *OmegaPoints0;
   int NumFreqs=0;
-  if (nOmegaFiles==1) // first process --OmegaFile option if present
+  if (OmegaFile) // first process --OmegaFile option if present
    { 
      OmegaPoints=new HVector(OmegaFile,LHM_TEXT);
      if (OmegaPoints->ErrMsg)
@@ -223,14 +227,39 @@ int main(int argc, char *argv[])
   /* create the BNEQData structure that contains all the info needed */
   /* to evaluate the neq transfer at a single frequency              */
   /*******************************************************************/
-  BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, TemperatureFile,
-                                 QuantityFlags, FileBase, 
+  BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, QuantityFlags, FileBase,
                                  DoOPFT, DoJDEPFT, DoMomentPFT,
-                                 DSIPoints, DSIRadius, DSIMesh, 
+                                 DSIPoints, DSIRadius, DSIMesh,
                                  DSIPoints2);
 
   SWGGeometry *G=BNEQD->G;
   BNEQD->UseExistingData = UseExistingData;
+
+  /*******************************************************************/
+  /*******************************************************************/
+  /*******************************************************************/
+  for(int n=0; n<nTempArgs; n++)
+   { int no;
+     G->GetObjectByLabel(TempArgs[2*n],&no);
+     if (no==-1) 
+      ErrExit("unknown object %s in --Temperature specification",TempArgs[2*n]);
+     double T;
+     if (1!=sscanf(TempArgs[2*n+1],"%le",&T))
+      ErrExit("invalid temperature %s in --Temperature specification",TempArgs[2*n+1]);
+     char Name[100];
+     snprintf(Name,100,"CONST_EPS_%e",T);
+     BNEQD->TemperatureSVTs[no]=new SVTensor(Name,true);
+     Log("Setting temperature of object %s to T=%e Kelvin.",TempArgs[2*n],T);
+   };
+
+  for(int n=0; n<nTempFileArgs; n++)
+   { int no;
+     G->GetObjectByLabel(TempArgs[2*n],&no);
+     if (no==-1) 
+      ErrExit("unknown object %s in --TempFile specification",TempFileArgs[2*n]);
+     BNEQD->TemperatureSVTs[no]=new SVTensor(TempFileArgs[2*n+1],true);
+     Log("Read temperature SVT for object %s from %s.",TempFileArgs[2*n],TempFileArgs[2*n+1]);
+   };
 
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
@@ -245,11 +274,11 @@ int main(int argc, char *argv[])
   else
    { 
       double *E = new double[ OutputVectorLength ];
-      double TObjects[1]={300.0};
-      double TEnvironment=0.0;
-      EvaluateFrequencyIntegral2(BNEQD, OmegaMin, OmegaMax,
-                                 TObjects, TEnvironment,
-                                 Intervals, I, E);
+      if ( !strcasecmp(OmegaQuadrature,"adaptive") )
+       EvaluateFrequencyIntegral_Adaptive(BNEQD, OmegaMin, OmegaMax, AbsTol, RelTol, I, E);
+      else
+       EvaluateFrequencyIntegral_TrapSimp(BNEQD, OmegaMin, OmegaMax,
+                                          Intervals, I, E);
       delete[] E;
    };
   delete[] I;

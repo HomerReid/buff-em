@@ -32,8 +32,7 @@
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
-                         char *TemperatureFile, int QuantityFlags,
+BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
                          char *FileBase, 
                          bool DoOPFT, bool DoJDEPFT, bool DoMomentPFT,
                          int DSIPoints, double DSIRadius, char *DSIMesh, 
@@ -64,14 +63,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   char *ErrMsg=G->CheckGTCList(BNEQD->GTCList, BNEQD->NumTransformations);
   if (ErrMsg)
    ErrExit("file %s: %s",TransFile,ErrMsg);
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  if (TemperatureFile)
-   BNEQD->Temperature = new SVTensor(TemperatureFile);
-  else
-   BNEQD->Temperature = 0;
 
   /*--------------------------------------------------------------*/
   /*- figure out which quantities were specified                 -*/
@@ -126,7 +117,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
    BNEQD->WorkMatrix[n] = new HMatrix(NBFTot, NBFTot, LHM_COMPLEX);
 
   /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
+  /*- compute and invert the overlap matrix (gram matrix)---------*/
   /*--------------------------------------------------------------*/
   HMatrix *SInverse=BNEQD->SInverse=new HMatrix(NBFTot, NBFTot, LHM_COMPLEX);
   SInverse->Zero();
@@ -186,6 +177,12 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
   BNEQD->pftOptions->DSIRadius=DSIRadius;
   
   BNEQD->DoMomentPFT=DoMomentPFT;
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  BNEQD->TEnvironment=0.0;
+  BNEQD->TemperatureSVTs=(SVTensor **)mallocEC(NO*sizeof(SVTensor *));
   
   /*--------------------------------------------------------------*/
   /* write file preambles ----------------------------------------*/

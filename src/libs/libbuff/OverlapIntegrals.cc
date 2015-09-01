@@ -89,7 +89,7 @@ void OverlapIntegrand_VVInvSigma(double x[3],
      cdouble TT[3][3];
      TemperatureSVT->Evaluate(0,x,TT);
      double T=real(TT[0][0]);
-     Theta=GetThetaFactor(real(Omega), T);
+     Theta = GetThetaFactor(real(Omega), T) - GetThetaFactor(real(Omega), 0.0);
    };
 
   cdouble V=0.0, VInv=0.0;

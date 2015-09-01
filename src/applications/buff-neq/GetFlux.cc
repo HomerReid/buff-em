@@ -256,17 +256,18 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /***************************************************************/
   /* extract fields from BNEQData structure **********************/
   /***************************************************************/
-  SWGGeometry *G           = BNEQD->G;
-  SVTensor *Temperature    = BNEQD->Temperature;
-  HMatrix ***GBlocks       = BNEQD->GBlocks;
-  SMatrix **VBlocks        = BNEQD->VBlocks;
-  SMatrix **Sigma          = BNEQD->Sigma;
-  int NumPFTMethods        = BNEQD->NumPFTMethods;
-  int *PFTMethods          = BNEQD->PFTMethods;
-  char **PFTFileNames      = BNEQD->PFTFileNames;
-  int *DSIPoints           = BNEQD->DSIPoints;
-  PFTOptions *pftOptions   = BNEQD->pftOptions;
-  char *FileBase           = BNEQD->FileBase;
+  SWGGeometry *G             = BNEQD->G;
+  SVTensor **TemperatureSVTs = BNEQD->TemperatureSVTs;
+  double TEnvironment        = BNEQD->TEnvironment;
+  HMatrix ***GBlocks         = BNEQD->GBlocks;
+  SMatrix **VBlocks          = BNEQD->VBlocks;
+  SMatrix **Sigma            = BNEQD->Sigma;
+  int NumPFTMethods          = BNEQD->NumPFTMethods;
+  int *PFTMethods            = BNEQD->PFTMethods;
+  char **PFTFileNames        = BNEQD->PFTFileNames;
+  int *DSIPoints             = BNEQD->DSIPoints;
+  PFTOptions *pftOptions     = BNEQD->pftOptions;
+  char *FileBase             = BNEQD->FileBase;
 
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
@@ -275,8 +276,11 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   for(int no=0; no<NO; no++)
    { 
      Log(" Assembling V_{%i} and Sigma_{%i} ...",no,no);
-     G->AssembleOverlapBlocks(no, Omega, Temperature,
+     G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
                               VBlocks[no], 0, Sigma[no]);
+
+     if (TEnvironment!=0.0) 
+      ErrExit("nonzero environment temperature not yet supported");
 
      if (G->Mate[no]!=-1)
       { Log(" Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
@@ -294,6 +298,11 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         Sigma[no]->EndAssembly();
       };
    };
+
+  double PreFactor=1.0;
+  for(int no=0; no<NO; no++)
+   if (TemperatureSVTs[no])
+    PreFactor=HBAROMEGA02/M_PI;
 
   /***************************************************************/
   /* now loop over transformations.                              */
@@ -335,6 +344,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
               GetMomentPFT(G, nod, real(Omega), 0,
                            pftOptions->RytovMatrix, PFTMatrix,
                            QPF, FileBase);
+              PFTMatrix->Scale(PreFactor);
               FILE *f=vfopen("%s.SIFlux.MomentPFT","a",FileBase);
               fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
               for(int nq=0; nq<NUMPFT; nq++)
@@ -353,6 +363,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
            pftOptions->PFTMethod  = PFTMethods[nPFT];
            pftOptions->DSIPoints  = DSIPoints[nPFT];
            G->GetPFT(0, Omega, PFTMatrix, pftOptions);
+           PFTMatrix->Scale(PreFactor);
 
            FILE *f=fopen(PFTFileNames[nPFT],"a");
            for(int nod=0; nod<NO; nod++)

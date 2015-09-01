@@ -62,6 +62,28 @@ using namespace buff;
 // maximum possible number of ways to do PFT computations
 #define MAXPFT 5
 
+// methods for evaluating frequency integrals
+#define QMETHOD_ADAPTIVE 1
+#define QMETHOD_TRAPSIMP 2
+
+// how this works: 
+//  a. temperature in eV = kT = 8.6173e-5 * (T in kelvin)
+//  b. temperature in our internal energy units
+//     = (kT in eV) / (0.1973 eV)
+//     = (8.6173e-5 / 0.1973 ) * (T in Kelvin)
+#define BOLTZMANNK 4.36763e-4
+
+// for example: suppose in the real world we have 
+// omega=3e14 rad/sec, T = 300 kelvin. then
+// \hbar \omega / (kT) 
+//   = (6.6e-16 ev s )(3e14 s^{-1}) / (0.026 ev) 
+//   = 7.6
+// whereas in this code we would have Omega==1, T=300, and hence
+// Omega/(BOLTZMANNK*T) = (1/(4.36763e-4*300)) = 7.6. 
+
+// \hbar * \omega_0^2 in units of watts
+#define HBAROMEGA02 9.491145534e-06
+
 /****************************************************************/
 /* BNEQData ('buff-neq data') is a structure that contains all */
 /* information needed to run computations a given frequency.    */
@@ -70,7 +92,8 @@ typedef struct BNEQData
  {
    SWGGeometry *G;
 
-   SVTensor *Temperature;
+   SVTensor **TemperatureSVTs; // one for each object in G
+   double TEnvironment;
 
    GTComplex **GTCList;
    int NumTransformations;
@@ -109,9 +132,8 @@ typedef struct BNEQData
 /****************************************************************/
 /****************************************************************/
 /****************************************************************/
-BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
-                         char *TemperatureFile, int QuantityFlags,
-                         char *FileBase, 
+BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
+                         char *FileBase,
                          bool DoOPFT, bool DoJDEPFT, bool DoMomentPFT,
                          int DSIPoints, double DSIRadius, char *DSIMesh,
                          int DSIPoints2);
@@ -123,10 +145,15 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile,
 int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq);
 void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
 
-void EvaluateFrequencyIntegral2(BNEQData *BNEQD,
-                                double OmegaMin, double OmegaMax,
-                                double *TObjects,
-                                double TEnvironment,
-                                int NumIntervals,
-                                double *I, double *E);
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
+                                        double OmegaMin, double OmegaMax, 
+                                        double AbsTol, double RelTol,
+                                        double *I, double *E);
+
+void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD,
+                                        double OmegaMin, double OmegaMax, int NumIntervals,
+                                        double *I, double *E);
 #endif

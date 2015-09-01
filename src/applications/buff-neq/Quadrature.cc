@@ -29,21 +29,6 @@
 #include <libSGJC.h>
 #include "buff-neq.h"
 
-// how this works: 
-//  a. temperature in eV = kT = 8.6173e-5 * (T in kelvin)
-//  b. temperature in our internal energy units
-//     = (kT in eV) / (0.1973 eV)
-//     = (8.6173e-5 / 0.1973 ) * (T in Kelvin)
-#define BOLTZMANNK 4.36763e-4
-
-// for example: suppose in the real world we have 
-// omega=3e14 rad/sec, T = 300 kelvin. then
-// \hbar \omega / (kT) 
-//   = (6.6e-16 ev s )(3e14 s^{-1}) / (0.026 ev) 
-//   = 7.6
-// whereas in this code we would have Omega==1, T=300, and hence
-// Omega/(BOLTZMANNK*T) = (1/(4.36763e-4*300)) = 7.6. 
-
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
@@ -52,47 +37,6 @@ double Theta(double Omega, double T)
   if (T==0.0)
    return 0.0;
   return Omega / ( exp( Omega/(BOLTZMANNK*T) ) - 1.0 );
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void PutInThetaFactors(BNEQData *BNEQD, double Omega,
-                       double *TObjects, double TEnvironment,
-                       double *FluxVector)
-{
-  /*--------------------------------------------------------------*/
-  /*- quantities arising from sources inside object nss are       */
-  /*- weighted by a factor [Theta(T) - Theta(TEnv)]               */
-  /*- note: nss = 'num surface, source'                           */
-  /*-       nsd = 'num surface, destination'                      */
-  /*--------------------------------------------------------------*/
-  int NO = BNEQD->G->NumObjects;
-  int NT = BNEQD->NumTransformations;
-  int NQ = BNEQD->NQ;
-  for(int nss=0; nss<NO; nss++)
-   { double DeltaTheta = Theta(Omega, TObjects[nss]) - Theta(Omega, TEnvironment);
-     for(int nt=0; nt<NT; nt++)
-      for(int nsd=0; nsd<NO; nsd++)
-       for(int nq=0; nq<NQ; nq++)
-        FluxVector[ GetIndex(BNEQD, nt, nss, nsd, nq) ]*= DeltaTheta/M_PI;
-   };
-
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  FILE *f=vfopen("%s.integrand","a",BNEQD->FileBase);
-  for(int nt=0; nt<NT; nt++)
-   for(int nss=0; nss<NO; nss++)
-    for(int nsd=0; nsd<NO; nsd++)
-     { 
-       fprintf(f,"%s %e %i%i ",BNEQD->GTCList[nt]->Tag,Omega,nss+1,nsd+1);
-       for(int nq=0; nq<NQ; nq++)
-        fprintf(f,"%.8e ",FluxVector[ GetIndex(BNEQD, nt, nss, nsd, nq) ] );
-       fprintf(f,"\n");
-     };
-  fclose(f);
-
 }
 
 /***************************************************************/
@@ -158,7 +102,6 @@ void WriteDataToOutputFile(BNEQData *BNEQD, double *I, double *E)
   fclose(f);   
 }
 
-#if 0
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
@@ -167,8 +110,6 @@ typedef struct FIData
    BNEQData *BNEQD;
    double OmegaMin;
    int Infinite;
-   double *TObjects;
-   double TEnvironment;
 
  } FIData;
 
@@ -183,8 +124,6 @@ int SGJCIntegrand(unsigned ndim, const double *x, void *params,
   BNEQData *BNEQD     = FID->BNEQD; 
   double OmegaMin     = FID->OmegaMin;
   int Infinite        = FID->Infinite;
-  double *TObjects    = FID->TObjects;
-  double TEnvironment = FID->TEnvironment;
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -205,19 +144,17 @@ int SGJCIntegrand(unsigned ndim, const double *x, void *params,
   GetFlux(BNEQD, Omega, fval);
   for(unsigned int nf=0; nf<fdim; nf++)
    fval[nf]*=Jacobian;
-  PutInThetaFactors(BNEQD, Omega, TObjects, TEnvironment, fval);
 
-  return 0.0;
+  return 0;
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void EvaluateFrequencyIntegral(BNEQData *BNEQD,
-                               double OmegaMin, double OmegaMax,
-                               double *TObjects, double TEnvironment,
-                               double AbsTol, double RelTol,
-                               double *I, double *E)
+void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
+                                        double OmegaMin, double OmegaMax,
+                                        double AbsTol, double RelTol,
+                                        double *I, double *E)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -233,9 +170,6 @@ void EvaluateFrequencyIntegral(BNEQData *BNEQD,
    }
   else
    FID->Infinite=0;
-
-  FID->TObjects=TObjects;
-  FID->TEnvironment=TEnvironment;
 
   /***************************************************************/
   /***************************************************************/
@@ -254,14 +188,12 @@ void EvaluateFrequencyIntegral(BNEQData *BNEQD,
   WriteDataToOutputFile(BNEQD, I, E);
 
 }
-#endif
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMax,
-                                double *TObjects, double TEnvironment, int NumIntervals,
-                                double *I, double *E)
+void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double OmegaMax,
+                                        int NumIntervals, double *I, double *E)
 { 
   int NO = BNEQD->G->NumObjects;
   int NT = BNEQD->NumTransformations;
@@ -272,6 +204,7 @@ void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMa
   double *fRight = new double[fdim];
   double Omega;
 
+#if 0
   if ( OmegaMax == -1.0 )
    { 
      // if the user didn't specify an upper frequency bound, we choose 
@@ -295,6 +228,7 @@ void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMa
      Log("Integrating to a maximum frequency of k=%e um^{-1} (w=%e rad/sec)\n",OmegaMax,OmegaMax*3.0e14);
 
    };
+#endif
 
   /*--------------------------------------------------------------*/
   /*- evaluate integrand at leftmost point.  ---------------------*/
@@ -309,7 +243,6 @@ void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMa
    { 
      Omega=OMEGAMIN;
      GetFlux(BNEQD, Omega, fLeft);
-     PutInThetaFactors(BNEQD, Omega, TObjects, TEnvironment, fLeft);
      for(int nf=0; nf<fdim; nf++)
       { I[nf] = fLeft[nf] * (OMEGAMIN-OmegaMin);
         E[nf] = 0.0;
@@ -320,7 +253,6 @@ void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMa
    { 
      Omega=OmegaMin;
      GetFlux(BNEQD, Omega, fLeft);
-     PutInThetaFactors(BNEQD, Omega, TObjects, TEnvironment, fLeft);
      memset(I, 0, fdim*sizeof(double));
      memset(E, 0, fdim*sizeof(double));
    };
@@ -337,12 +269,10 @@ void EvaluateFrequencyIntegral2(BNEQData *BNEQD, double OmegaMin, double OmegaMa
      // evaluate integrand at midpoint of interval 
      Omega += 0.5*Delta;
      GetFlux(BNEQD, Omega, fMid);
-     PutInThetaFactors(BNEQD, Omega, TObjects, TEnvironment, fMid);
 
      // evaluate integrand at right end of interval 
      Omega += 0.5*Delta;
      GetFlux(BNEQD, Omega, fRight);
-     PutInThetaFactors(BNEQD, Omega, TObjects, TEnvironment, fRight);
 
      // compute the simpson's rule and trapezoidal rule
      // estimates of the integral over this interval  
