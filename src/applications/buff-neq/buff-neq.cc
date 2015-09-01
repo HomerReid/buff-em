@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 
   /*--------------------------------------------------------------*/
   cdouble OmegaVals[MAXFREQ];           int nOmegaVals;
-  char *OmegaFile;
+  char *OmegaFile=0;
   double OmegaMin=0.01;                 int nOmegaMin;
   double OmegaMax=10.0;                 int nOmegaMax;
   char *OmegaQuadrature="adaptive";
