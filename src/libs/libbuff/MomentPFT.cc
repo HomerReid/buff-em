@@ -227,9 +227,9 @@ void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3],
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     { int NP1=(Nu+1)%3, NP2=(Nu+2)%3;
-      mpMatrix->SetEntry(Mu,Nu, II*Omega*(  MMuNuRho[Mu][NP1][NP2]
-                                          - MMuNuRho[Mu][NP2][NP1]
-                                         )
+      mpMatrix->SetEntry(Mu,Nu, (  MMuNuRho[NP2][Nu][NP1]
+                                 - MMuNuRho[NP1][Nu][NP2]
+                                ) / (II*Omega)
                         );
     };
 
