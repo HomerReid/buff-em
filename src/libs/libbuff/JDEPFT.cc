@@ -89,16 +89,20 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
   VecSub(xA, xB, R);
   double r=VecNorm(R);
   if (r==0.0) 
-   { memset(I, 0, 6*sizeof(double));
+   { 
+     I[0] = PEFIE * k/(4.0*M_PI);
+     memset(I+1, 0, 6*sizeof(double));
      return;
    };
 
   double kr = k*r, coskr=cos(kr), sinkr=sin(kr);
+  double ImG = sinkr/(4.0*M_PI*r);
   double f1 = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
 
-  I[0] = PEFIE * R[0] * f1;
-  I[1] = PEFIE * R[1] * f1;
-  I[2] = PEFIE * R[2] * f1;
+  I[0] = PEFIE * ImG;
+  I[1] = PEFIE * R[0] * f1;
+  I[2] = PEFIE * R[1] * f1;
+  I[3] = PEFIE * R[2] * f1;
 
   double kr2 = kr*kr;
   double f2  = (kr*coskr + (kr2-1.0)*sinkr) / (4.0*M_PI*kr2*r);
@@ -112,9 +116,9 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
      bBdotR   += bB[Mu]*R[Mu];
    };
 
-  I[3] = f2*bAxbB[0] + f3*bBdotR*bAxR[0];
-  I[4] = f2*bAxbB[1] + f3*bBdotR*bAxR[1];
-  I[5] = f2*bAxbB[2] + f3*bBdotR*bAxR[2];
+  I[4] = f2*bAxbB[0] + f3*bBdotR*bAxR[0];
+  I[5] = f2*bAxbB[1] + f3*bBdotR*bAxR[1];
+  I[6] = f2*bAxbB[2] + f3*bBdotR*bAxR[2];
 
 }
 
@@ -200,16 +204,16 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
                           SWGVolume *Ob, int nbfb,
-                          cdouble Omega, double IPFT[6])
+                          cdouble Omega, double IPFT[7])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
 
-  double Error[6];
+  double Error[7];
   int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
   int NumPts = (ncv > 0 ) ? 33 : 16;
   BFBFInt(Oa, nbfa, Ob, nbfb, PFTIntegrand_BFBF, (void *)PFTIData,
-          6, IPFT, Error, NumPts, 0, 0);
+          7, IPFT, Error, NumPts, 0, 0);
 }
 
 /***************************************************************/
@@ -274,12 +278,15 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
    
       cdouble JJ = GetJJ(JVector, Rytov, nbfa, nbfb);
       if (JJ==0.0) continue;
-   
+
+/*   
       FIBBICache *GCache = (noa==nob) ? G->ObjectGCaches[noa] : 0;
       cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega, GCache);
-
-      double ImdG[6];
-      GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, ImdG);
+*/   
+      double ImGdG[7];
+      GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, ImGdG);
+      double ImG=ImGdG[0];
+      double *ImdG=ImGdG+1;
 
       int nt=0;
 #ifdef USE_OPENMP
@@ -288,9 +295,9 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       int Offset = nt*NONQ + noa*NQ;
 
        if (nbfa==nbfb)
-        DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*imag(GG);
+        DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*ImG;
        else // nbfb > nbfa
-        { DeltaPFT[ Offset + PFT_PABS] -= PPreFac*real(JJ)*imag(GG);
+        { DeltaPFT[ Offset + PFT_PABS] -= PPreFac*real(JJ)*ImG;
           for(int Mu=0; Mu<6; Mu++)
            DeltaPFT[ Offset + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
         };
