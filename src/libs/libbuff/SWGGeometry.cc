@@ -43,8 +43,6 @@ namespace buff{
 /***************************************************************/
 /* initialization of static class variables                    */
 /***************************************************************/
-int SWGGeometry::NumMeshDirs=0;
-char **SWGGeometry::MeshDirs=0;
 double SWGGeometry::TaylorDuffyTolerance=1.0e-6;
 int SWGGeometry::MaxTaylorDuffyEvals=10000;
 
@@ -243,23 +241,7 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  char *s=getenv("BUFF_MESH_PATH");
-  if ( NumMeshDirs==0 && s!=0 )
-   { char MeshPathCopy[1000];
-     strncpy(MeshPathCopy, s, 1000);
-     char *Tokens[10];
-     int NumTokens=Tokenize(MeshPathCopy, Tokens, 10, ":");
-     NumMeshDirs=NumTokens;
-     MeshDirs = (char **)malloc(NumTokens * sizeof(char *));
-     for(int nt=0; nt<NumTokens; nt++)
-      { MeshDirs[nt] = strdup(Tokens[nt]);
-        Log("Added %s to mesh search path.",MeshDirs[nt]);
-      };
-   };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
+  char *s;
   if ( (s=getenv("BUFF_TAYLORDUFFY_EVALS")) )
    { sscanf(s,"%i",&MaxTaylorDuffyEvals);
      Log("Setting max TaylorDuffy evals=%i.",MaxTaylorDuffyEvals);
@@ -300,10 +282,10 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
      if ( !StrCaseCmp(Tokens[0],"MESHPATH") )
       { 
         if ( nTokens!=2 )
-         ErrExit("%s:%i: invalid MESHPATH specification",GeoFileName,LineNum);
-        NumMeshDirs++;
-        MeshDirs=(char **)realloc(MeshDirs,NumMeshDirs*sizeof(char *));
-        MeshDirs[NumMeshDirs-1]=strdup(Tokens[1]);
+         ErrExit("%s:%i: invalid MESHPATH specification",GeoFileName,LineNum);  
+        char *OldPath=getenv("BUFF_MESH_PATH");
+        char *NewPath=vstrappend( OldPath, ":%s",Tokens[1] );
+        setenv("BUFF_MESH_PATH", NewPath, 1);
       }
      else if ( !StrCaseCmp(Tokens[0],"OBJECT") )
       { 

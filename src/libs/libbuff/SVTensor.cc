@@ -70,19 +70,13 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    /*--------------------------------------------------------------*/
    /*- try to open the file ---------------------------------------*/
    /*--------------------------------------------------------------*/
-   FILE *f=fopen(Name,"r");
+   char *WhichDir;
+   FILE *f=fopenPath(getenv("BUFF_SVTENSOR_PATH"),Name,"r",&WhichDir);
    if (!f)
-    { char *s=getenv("BUFF_SVTENSOR_DIR");
-      if (s)
-       { f=vfopen("%s/%s","r",s,Name);
-         if (f) 
-          Log("Found SVTensor file %s/%s",s,Name);
-       };
-    };
-   if (!f)
-    { ErrMsg = vstrdup("could not open file %s",Name);
+    { ErrMsg = vstrdup("could not find file %s",Name);
       return;
     };
+   Log("Found SVTensor file %s/%s",WhichDir,Name);
 
    /*--------------------------------------------------------------*/
    /*- parse the file ---------------------------------------------*/

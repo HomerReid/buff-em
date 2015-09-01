@@ -96,23 +96,16 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   ErrMsg=0;
 
   /*------------------------------------------------------------*/
-  /*- try to open the mesh file. we look in several places:     */
-  /*- (a) the current working directory                         */
-  /*- (b) any directories that may have been specified by       */
-  /*-     MESHPATH statements in .scuffgeo files or via the     */
-  /*-     BUFF_MESH_PATH environment variable                   */
+  /*- try to open the mesh file, searching all directories in   */
+  /*- the MeshPath.                                             */
   /*------------------------------------------------------------*/
   MeshFileName=strdup(pMeshFileName);
-  FILE *MeshFile=fopen(MeshFileName,"r");
-  if (!MeshFile)
-   { for(int nmd=0; MeshFile==0 && nmd<SWGGeometry::NumMeshDirs; nmd++)
-      { MeshFile=vfopen("%s/%s","r",SWGGeometry::MeshDirs[nmd],MeshFileName);
-        if (MeshFile) 
-         Log("Found mesh file %s/%s",SWGGeometry::MeshDirs[nmd],MeshFileName);
-      };
-   };
+  char *WhichDir=".";
+  FILE *MeshFile=fopenPath(getenv("BUFF_MESH_PATH"),MeshFileName,"r",
+                           &WhichDir);
   if (!MeshFile)
    ErrExit("could not open file %s",MeshFileName);
+  Log("Found mesh file %s/%s",WhichDir,MeshFile);
    
   /*------------------------------------------------------------*/
   /*- initialize simple fields ---------------------------------*/

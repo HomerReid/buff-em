@@ -236,8 +236,6 @@ class SWGGeometry
    SWGVolume *GetObjectByLabel(const char *Label, int *pno=0);
 
    // directories within which to search for mesh files
-   static int NumMeshDirs;
-   static char **MeshDirs;
    static double TaylorDuffyTolerance;
    static int MaxTaylorDuffyEvals;
 
