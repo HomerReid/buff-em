@@ -129,13 +129,13 @@ SWGVolume::SWGVolume(char *pMeshFileName,
 
   if (pMatFileName==0)
    { MatFileName=0;
-     MP=0;
+     SVT=0;
    }
   else
    { MatFileName=strdup(pMatFileName);
-     MP=new SVTensor(MatFileName,IsMatProp);
-     if (MP->ErrMsg)
-      ErrExit(MP->ErrMsg);
+     SVT=new SVTensor(MatFileName,IsMatProp);
+     if (SVT->ErrMsg)
+      ErrExit(SVT->ErrMsg);
    };
 
   /*------------------------------------------------------------*/

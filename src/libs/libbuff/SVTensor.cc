@@ -46,35 +46,25 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
      EpsExpression[nx][ny]=MuExpression[nx][ny]=0;
-   ConstEps=0.0;
-   MP=0;
+   NumMPs=0;
+   Homogeneous=false;
+   Isotropic=false;
 
    /*--------------------------------------------------------------*/
-   /*- detect filenames of the form CONST_EPS_xx-------------------*/
+   /*- detect cases in which the material is homogeneous and       */
+   /*- described by a MatProp                                      */
    /*--------------------------------------------------------------*/
-   if (!strncasecmp(Name,"CONST_EPS_",10))
-    { int Status=S2CD(Name+10,&ConstEps);
-      if (Status!=0 || ConstEps==0.0)
-       { ErrMsg = vstrdup("invalid material specification %s",Name);
-         return;
-       };
-      Log("Created constant-epsilon material with Eps=%s",z2s(ConstEps));
-      return;
-    };
-
-   /*--------------------------------------------------------------*/
-   /*--------------------------------------------------------------*/
-   /*--------------------------------------------------------------*/
-   MP=0;
    if (IsMatProp)
-    { MP=new MatProp(Name);
-      if (MP->ErrMsg == 0 )
-       { 
-         Log("Created isotropic material with MatProp=%s",MP->Name);
-         MatProp::SetLengthUnit(1.0e-6);
-         return;
-       };
-      delete MP;
+    { 
+      MPs[0]=new MatProp(Name);
+      if ( MPs[0]->ErrMsg)
+       ErrExit(MPs[0]->ErrMsg);
+      
+      Log("Created isotropic material with MatProp=%s",Name);
+      MatProp::SetLengthUnit(1.0e-6);
+      Homogeneous=Isotropic=true;
+      NumMPs=1;
+      return;
     };
  
    /*--------------------------------------------------------------*/
@@ -82,7 +72,7 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    /*--------------------------------------------------------------*/
    FILE *f=fopen(Name,"r");
    if (!f)
-    { char *s=getenv("BUFF_SVTENSOR_PATH");
+    { char *s=getenv("BUFF_SVTENSOR_DIR");
       if (s)
        { f=vfopen("%s/%s","r",s,Name);
          if (f) 
@@ -106,15 +96,71 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    /*--------------------------------------------------------------*/
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
-     { void *Expr = EpsExpression[nx][ny];
+     { 
+       void *Expr = EpsExpression[nx][ny];
        if (Expr==0) continue;
-       cevaluator_set_var_index(Expr, "x", 0);
-       cevaluator_set_var_index(Expr, "y", 1);
-       cevaluator_set_var_index(Expr, "z", 2);
-       cevaluator_set_var_index(Expr, "w", 3);
+
+       cevaluator_set_var_index(Expr, "w",     0);
+       cevaluator_set_var_index(Expr, "x",     1);
+       cevaluator_set_var_index(Expr, "y",     2);
+       cevaluator_set_var_index(Expr, "z",     3);
+       cevaluator_set_var_index(Expr, "r",     4);
+       cevaluator_set_var_index(Expr, "Theta", 5);
+       cevaluator_set_var_index(Expr, "Phi",   6);
+       // add variables named Eps1, Eps2, ... for scuff-em matprops
+       for(int nmp=0; nmp<NumMPs; nmp++)
+        { char str[10];
+          snprintf(str,10,"Eps%i",nmp+1);
+          cevaluator_set_var_index(Expr, str, 7+nmp);
+        };
+
        for(int nc=0; nc<NumConstants; nc++)
         cevaluator_set_var(Expr,ConstantNames[nc],ConstantValues[nc]);
      };
+}
+
+/*--------------------------------------------------------------*/
+/*- if the function specification contains any strings of the   */
+/*- form MAT_XX, then replace them with Eps1, Eps2, etc. and    */
+/*- add scuff-em material properties for material XX            */
+/*--------------------------------------------------------------*/
+void SVTensor::ExtractMPs(char *str, char *FileName, int LineNum)
+{ 
+  while( char *p=strstr(str, "MP_") )
+   {
+     // get the portion of the string between _ and the next space
+     // into MPName
+     char MPName[MAXSTR], *q=p+3;
+     int n=0;
+     while( *q && *q!=' ' && n<(MAXSTR-1))
+      { MPName[n++]=*q;
+        *q++ = ' ';
+      };
+     MPName[n]=0;
+
+     // see if we already have an MP with this name
+     int MPIndex=0;
+     for(int nmp=0; MPIndex==0 && nmp<NumMPs; nmp++)
+      if ( !strcasecmp(MPs[nmp]->Name,MPName) )
+       MPIndex=nmp+1;
+
+     // if not, try to create one 
+     if (MPIndex==0)
+      { if (NumMPs==MAXMPS)
+         ErrExit("%s:%i: ",FileName,LineNum,"too many MP_ statements");
+        MPs[NumMPs] = new MatProp(MPName);
+        if (MPs[NumMPs]->ErrMsg)
+         ErrExit("%s:%i: ",FileName,LineNum,MPs[NumMPs]->ErrMsg);
+        MPIndex=++NumMPs;
+        MatProp::SetLengthUnit(1.0e-6);
+      };
+
+     // replace the string e.g. "MP_Gold" with e.g. "Eps1"
+     snprintf(MPName,MAXSTR,"Eps%i",MPIndex);
+     strncpy(p, MPName, strlen(MPName));
+
+   };
+ 
 }
 
 /***************************************************************/
@@ -127,6 +173,7 @@ char *SVTensor::Parse(FILE *f)
   /*--------------------------------------------------------------*/
   int LineNum=0;
   char Line[MAXSTR];
+  char *FileName=Name;
   while ( fgets(Line,MAXSTR,f) )
    { 
      LineNum++;
@@ -140,44 +187,75 @@ char *SVTensor::Parse(FILE *f)
      if ( *p==0 || *p=='#' )
       continue;
 
+     /*--------------------------------------------------------------*/
+     /*- strip off trailing semicolon and/or carriage return       --*/
+     /*--------------------------------------------------------------*/
      int Len=strlen(p);
-     char *pp=strchr(p,'=');
-     if (pp) // strip off trailing semicolon and/or carriage return
-      { char *ppp;
-        if ( (ppp=strchr(pp,';')) )
-         *ppp=0;
-        if ( (ppp=strchr(pp,'\n')) )
-         *ppp=0;
+     char *pp;
+     if ( (pp=strchr(p,';')) )
+      *pp=0;
+     if ( (pp=strchr(p,'\n')) )
+      *pp=0;
+
+     /*--------------------------------------------------------------*/
+     /*- hand off to the MatProp constructor to parse any            */
+     /*- MATERIAL...ENDMATERIAL sections                             */
+     /*--------------------------------------------------------------*/
+     if ( !strncmp(p,"MATERIAL",8) )
+      {
+        char *Tokens[2];
+        int nTokens=Tokenize(p, Tokens, 2);
+
+        if ( nTokens==1 )
+         ErrExit("%s:%i: no name given for MATERIAL ",FileName,LineNum);
+        else if ( nTokens>2 )
+         ErrExit("%s:%i: syntax error",FileName,LineNum);
+         
+        ErrMsg=AddMaterialToMatPropDataBase(f, FileName, Tokens[1], &LineNum);
+        if (ErrMsg)
+         ErrExit("%s:%i: %s",FileName,LineNum,ErrMsg);
+
+        continue;
       };
 
      /*--------------------------------------------------------------*/
      /*- detect lines of the form -----------------------------------*/
-     /*-  Eps(w,x,y,z) = ...      -----------------------------------*/
+     /*-  Eps =                   -----------------------------------*/
      /*--------------------------------------------------------------*/
-     if ( pp && Len>=12 && !strncasecmp(p,"Eps(w,x,y,z)",12 ) )
-      { EpsExpression[0][0] = cevaluator_create(pp+1);
+     pp=strchr(p,'=');
+     if ( pp && Len>=4 && !strncasecmp(p,"Eps",3 )
+             && (p[4]=='=' || p[4]==' ')
+        )
+      { 
+        Isotropic=true;
+        ExtractMPs(pp+1,FileName,LineNum);
+        EpsExpression[0][0] = cevaluator_create(pp+1);
         if (!EpsExpression[0][0])
-         return vstrdup("%s:%i: invalid expression",Name,LineNum);
+         return vstrdup("%s:%i: invalid expression",FileName,LineNum);
       }
      /*--------------------------------------------------------------*/
      /*- detect lines of the form -----------------------------------*/
-     /*-  EpsMN(w,x,y,z) = ...    -----------------------------------*/
+     /*-  EpsXY =                 -----------------------------------*/
      /*--------------------------------------------------------------*/
-     else if ( pp && Len>=14 && !strncasecmp(p,  "Eps",3 )
-               && !strncasecmp(p+5,"(w,x,y,z)",9 )
-             )
+     else if ( pp && Len>=5 && !strncasecmp(p, "Eps",3 ))
       { 
-        // the '-1' here allows users to use one-based indexing
-        // for tensor indices
-        int M=p[3] - '0' - 1;
-        int N=p[4] - '0' - 1;
+        ExtractMPs(pp+1,FileName,LineNum);
 
-        if ( M<0 || M>3 || N<0 || N>3)
-         return vstrdup("%s:%i: invalid indices %c%c",Name,LineNum,p[3],p[4]);
+        // the user can specify either e.g. EpsXY or Eps12
+        int MN[2];
+        for(int n=0; n<2; n++)
+         { if( p[3+n]>='X' && p[3+n]<='Z')
+            MN[n] = p[3+n] - 'X';
+           else if (p[3+n]>=1 && p[3+n]<=3)
+            MN[n] = p[3+n] - '1';
+           else 
+            return vstrdup("%s:%i: invalid expression",FileName,LineNum);
+         };
 
+        int M=MN[0], N=MN[1];
         EpsExpression[M][N]=cevaluator_create(pp+1);
         if (!EpsExpression[M][N])
-         return vstrdup("%s:%i: invalid expression",Name,LineNum);
+         return vstrdup("%s:%i: invalid expression",FileName,LineNum);
       }
      /*--------------------------------------------------------------*/
      /*- detect constant specifications of the form NAME = [number] -*/
@@ -186,10 +264,10 @@ char *SVTensor::Parse(FILE *f)
       { 
         double CV;
         if ( 1!=sscanf(pp+1,"%le",&CV) )
-         return vstrdup("%s:%i: invalid constant value",Name,LineNum);
+         return vstrdup("%s:%i: invalid constant value",FileName,LineNum);
 
         if ( NumConstants==MAXCONSTANTS )
-         return vstrdup("%s:%i: too many constants (max allowed is %i)",Name,LineNum,MAXCONSTANTS);
+         return vstrdup("%s:%i: too many constants (max allowed is %i)",FileName,LineNum,MAXCONSTANTS);
 
         while ( isspace (*(pp-1) ) ) 
           pp--;
@@ -202,7 +280,8 @@ char *SVTensor::Parse(FILE *f)
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      else
-      return vstrdup("%s:%i: syntax error",Name,LineNum);
+      return vstrdup("%s:%i: syntax error",FileName,LineNum);
+
     }; // while ( fgets(Line,MAXSTR,f) )
 
   return 0;
@@ -224,8 +303,8 @@ SVTensor::~SVTensor()
        cevaluator_destroy(MuExpression[nx][ny]);
     };
 
-  if (MP)
-   delete MP;
+  for(int nmp=0; nmp<NumMPs; nmp++)
+   delete MPs[nmp];
 
   for(int nc=0; nc<NumConstants; nc++)
    free(ConstantNames[nc]);
@@ -241,22 +320,10 @@ void SVTensor::Evaluate(cdouble Omega, double x[3],
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if (ConstEps!=0.0)
-   { for(int nx=0; nx<3; nx++)
-      for(int ny=0; ny<3; ny++)
-       { Eps[nx][ny] = (nx==ny) ? ConstEps : 0.0;
-          Mu[nx][ny] = (nx==ny) ? 1.0      : 0.0;
-       };
-     return;
-   };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  if (MP)
+  if (Homogeneous && Isotropic)
    { cdouble EpsMP, MuMP;
-     MP->GetEpsMu(Omega, &EpsMP, &MuMP);
-      for(int nx=0; nx<3; nx++)
+     MPs[0]->GetEpsMu(Omega, &EpsMP, &MuMP);
+     for(int nx=0; nx<3; nx++)
       for(int ny=0; ny<3; ny++)
        { Eps[nx][ny] = (nx==ny) ? EpsMP : 0.0;
           Mu[nx][ny] = (nx==ny) ? MuMP  : 0.0;
@@ -264,13 +331,28 @@ void SVTensor::Evaluate(cdouble Omega, double x[3],
      return;
    };
 
-  static char *VNames[4] = {"x", "y", "z", "w"};
-  cdouble VValues[4];
+  /***************************************************************/
+  /* elsewhere I wrote things so that the maximum number of MP_  */
+  /* inclusions is the variable MAXMPS, but here I have hard-    */
+  /* coded it to 3                                               */
+  /***************************************************************/
+  if (MAXMPS!=3) ErrExit("%s:%i: internal error",__FILE__,__LINE__);
+  int NumVars=10;
+  static const char *VNames[10] = {"w",
+                                   "x", "y", "z",
+                                   "r", "Theta", "Phi",
+                                   "Eps1", "Eps2", "Eps3"};
+  cdouble VValues[10];
 
-  VValues[0] = x[0];
-  VValues[1] = x[1];
-  VValues[2] = x[2];
-  VValues[3] = Omega;
+  VValues[0] = Omega;
+  VValues[1] = x[0];
+  VValues[2] = x[1];
+  VValues[3] = x[2];
+  VValues[4] = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
+  VValues[5] = atan2( sqrt(x[0]*x[0] + x[1]*x[1]), x[2] );
+  VValues[6] = atan2( x[1], x[2] );
+  for(int nmp=0; nmp<NumMPs; nmp++)
+   VValues[7 + nmp] = MPs[nmp]->GetEps(Omega);
   
   /***************************************************************/
   /***************************************************************/
@@ -284,43 +366,52 @@ void SVTensor::Evaluate(cdouble Omega, double x[3],
   /***************************************************************/
   if ( EpsExpression[0][0] )
    Eps[0][0]=Eps[1][1]=Eps[2][2]
-    =cevaluator_evaluate(EpsExpression[0][0], 4, VNames, VValues);
+    =cevaluator_evaluate(EpsExpression[0][0], NumVars, 
+                         const_cast<char **>(VNames), VValues);
 
   if ( EpsExpression[1][1] )
    Eps[1][1]
-    =cevaluator_evaluate(EpsExpression[1][1], 4, VNames, VValues);
+    =cevaluator_evaluate(EpsExpression[1][1], NumVars,
+                         const_cast<char **>(VNames), VValues);
 
   if ( EpsExpression[2][2] )
    Eps[2][2]
-    =cevaluator_evaluate(EpsExpression[2][2], 4, VNames, VValues);
+    =cevaluator_evaluate(EpsExpression[2][2], NumVars,
+                         const_cast<char **>(VNames), VValues);
 
   if ( EpsExpression[0][1] )
-   { Eps[0][1]=cevaluator_evaluate(EpsExpression[0][1], 4, VNames, VValues);
+   { Eps[0][1]=cevaluator_evaluate(EpsExpression[0][1], NumVars,
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[1][0]) Eps[1][0]=Eps[0][1];
    };
 
   if ( EpsExpression[1][0] )
-   { Eps[1][0]=cevaluator_evaluate(EpsExpression[1][0], 4, VNames, VValues);
+   { Eps[1][0]=cevaluator_evaluate(EpsExpression[1][0], NumVars,
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[0][1]) Eps[0][1]=Eps[1][0];
    };
 
   if ( EpsExpression[0][2] )
-   { Eps[0][2]=cevaluator_evaluate(EpsExpression[0][2], 4, VNames, VValues);
+   { Eps[0][2]=cevaluator_evaluate(EpsExpression[0][2], NumVars, 
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[2][0]) Eps[2][0]=Eps[0][2];
    };
 
   if ( EpsExpression[2][0] )
-   { Eps[2][0]=cevaluator_evaluate(EpsExpression[2][0], 4, VNames, VValues);
+   { Eps[2][0]=cevaluator_evaluate(EpsExpression[2][0], NumVars, 
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[0][2]) Eps[0][2]=Eps[2][0];
    };
 
   if ( EpsExpression[1][2] )
-   { Eps[1][2]=cevaluator_evaluate(EpsExpression[1][2], 4, VNames, VValues);
+   { Eps[1][2]=cevaluator_evaluate(EpsExpression[1][2], NumVars,
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[2][1]) Eps[2][1]=Eps[1][2];
    };
 
   if ( EpsExpression[2][1] )
-   { Eps[2][1]=cevaluator_evaluate(EpsExpression[2][1], 4, VNames, VValues);
+   { Eps[2][1]=cevaluator_evaluate(EpsExpression[2][1], NumVars,
+                                   const_cast<char **>(VNames), VValues);
      if (!EpsExpression[1][2]) Eps[1][2]=Eps[2][1];
    };
 }

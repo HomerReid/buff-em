@@ -93,8 +93,8 @@ typedef struct GOData
    double *QB;
    double PreFacB;
    cdouble Omega;
-   SVTensor *MP;
-   SVTensor *Temperature;
+   SVTensor *EpsSVT;
+   SVTensor *TemperatureSVT;
 
  } GOData;
 
@@ -103,18 +103,18 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 {
   (void) DivB;
   (void) b;
-
-  GOData *Data            = (GOData *)UserData;
+ 
+  GOData *Data             = (GOData *)UserData;
   double *QA               = Data->QA;
   double PreFacA           = Data->PreFacA;
   double *QB               = Data->QB;
   double PreFacB           = Data->PreFacB;
   cdouble Omega            = Data->Omega;
-  SVTensor *MP             = Data->MP;
-  SVTensor *Temperature    = Data->Temperature;
+  SVTensor *EpsSVT         = Data->EpsSVT;
+  SVTensor *TemperatureSVT = Data->TemperatureSVT;
 
   cdouble EpsM1[3][3], InvEpsM1[3][3];
-  MP->Evaluate( Omega, x, EpsM1 );
+  EpsSVT->Evaluate( Omega, x, EpsM1 );
   EpsM1[0][0] -= 1.0;
   EpsM1[1][1] -= 1.0;
   EpsM1[2][2] -= 1.0;
@@ -129,10 +129,10 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   FB[2] = PreFacB * (x[2] - QB[2]);
 
   double Theta=1.0;
-  if (Temperature)
+  if (TemperatureSVT)
    { 
      cdouble TT[3][3];
-     Temperature->Evaluate(0,x,TT);
+     TemperatureSVT->Evaluate(0,x,TT);
      double T=real(TT[0][0]);
      Theta=GetThetaFactor(real(Omega), T);
    };
@@ -171,7 +171,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /* If Temperature==NULL then Theta(T) is set to 1.             */
 /***************************************************************/
 int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
-                SVTensor *Temperature,
+                SVTensor *TemperatureSVT,
                 int Indices[MAXOVERLAP],
                 cdouble VEntries[MAXOVERLAP],
                 cdouble VInvEntries[MAXOVERLAP],
@@ -185,9 +185,9 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
 
   SWGFace *FA = O->Faces[nfA];
   struct GOData MyGOData, *Data=&MyGOData;
-  Data->Omega       = Omega;
-  Data->MP          = O->MP;
-  Data->Temperature = Temperature;
+  Data->Omega          = Omega;
+  Data->EpsSVT         = O->SVT;
+  Data->TemperatureSVT = TemperatureSVT;
 
   /*--------------------------------------------------------------*/
   /* handle interactions between face #nfA and face #nfB, where   */

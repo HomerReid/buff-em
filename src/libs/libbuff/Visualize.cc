@@ -217,7 +217,7 @@ void SWGGeometry::WritePPMesh(const char *FileName,
         if (O->OTGT) O->OTGT->UnApply(x0);
 
         cdouble Eps[3][3];
-        O->MP->Evaluate(1.0, x0, Eps);
+        O->SVT->Evaluate(1.0, x0, Eps);
 
         EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
       };
@@ -248,20 +248,25 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
       SWGTet *T = O->Tets[nt];
 
       // get average of diagonal permittivity elements
-      // at the four tetrahedra vertices
+      // at the four tetrahedra vertices or at the 
+      // tetrahedron centroid
       double EpsAvg[4];
       double *VV[4];
+      bool UseCentroid=true;
       for(int n=0; n<4; n++)
        { 
          VV[n] = O->Vertices + 3*(T->VI[n]);
 
          double x0[3];
-         memcpy(x0, VV[n], 3*sizeof(double));
+         if (UseCentroid)
+          memcpy(x0, T->Centroid, 3*sizeof(double));
+         else
+          memcpy(x0, VV[n], 3*sizeof(double));
          if (O->GT)   O->GT->UnApply(x0);
          if (O->OTGT) O->OTGT->UnApply(x0);
  
          cdouble Eps[3][3];
-         O->MP->Evaluate(1.0, x0, Eps);
+         O->SVT->Evaluate(1.0, x0, Eps);
 
          EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
        };

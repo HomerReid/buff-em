@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ $# -eq  0 ]
+then
+  echo "usage: $0 Object.msh"
+  exit
+fi
+
+BA=`which buff-analyze`
+if [ "x${BA}" == "x" ]
+then
+  echo "error: can't find buff-analyze (aborting)"
+  exit
+fi
+
+NUMTETS=`buff-analyze --mesh $1  | grep 'tetrahedra' | head -1 | cut -f2 -d' '`
+if [ "x${NUMTETS}" == "x" ]
+then 
+  echo "Something's gone wrong."
+  exit
+fi
+  
+/bin/mv $1 ${1%%.msh}_${NUMTETS}.vmsh
+
+echo "Moved $1 to ${1%%.msh}_${NUMTETS}.vmsh."

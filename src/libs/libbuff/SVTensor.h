@@ -27,6 +27,7 @@
 #ifndef SVTENSOR_H
 #define SVTENSOR_H
 
+#define MAXMPS 3
 #define MAXCONSTANTS 25
 
 #include <libMatProp.h>
@@ -62,14 +63,19 @@ class SVTensor
    /***************************************************************/
    /***************************************************************/
    cdouble EvalExpression(void *Expression, cdouble Omega, double x[3]);
+
+   //constructor helper functions
+   void ExtractMPs(char *s, char *FileName, int LineNum);
    char *Parse(FILE *f);
 
    /***************************************************************/
    /* class data **************************************************/
    /***************************************************************/
    char *Name;
-   cdouble ConstEps; // =0.0 for parsed materials
-   MatProp *MP;      // =0   for non-isotropic materials
+   MatProp *MPs[MAXMPS];      // pointers to SCUFF-EM mat props
+   int NumMPs;
+   bool Homogeneous;
+   bool Isotropic;
 
    // opaque pointers to cmatheval parsed expressions for
    // components of epsilon and mu

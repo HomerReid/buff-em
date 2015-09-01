@@ -165,6 +165,7 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
 /*  MESH#MyMesh.buffgeo                                        */
 /*  MESH#MyMesh#MAT#MatProp.buffgeo                            */
 /*  MESH#MyMesh#MAT#MatProp#MED#MatProp.buffgeo                */
+/*  MESH#MyMesh#SVT#SVTName#buffgeo                            */
 /***************************************************************/
 void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
 {
@@ -185,12 +186,14 @@ void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
   if ( (NumTokens%2) || (NumTokens>4) )
    ErrExit("wrong number of tokens in special file name");
 
-  char *MeshStr=0, *MatStr=0;
+  char *MeshStr=0, *MatStr=0, *SVTStr=0;
   for(int nt=0; nt<NumTokens-1; nt++)
    { if (!strcasecmp(Tokens[nt],"MESH")) 
       MeshStr = Tokens[++nt];
      else if (!strcasecmp(Tokens[nt],"MAT"))
       MatStr  = Tokens[++nt];
+     else if (!strcasecmp(Tokens[nt],"SVT"))
+      SVTStr  = Tokens[++nt];
      else
       ErrExit("invalid token %s in special file name",Tokens[nt]);
    };
@@ -198,8 +201,11 @@ void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
   if (MeshStr==0)
    ErrExit("no mesh found in special file name");
 
-  Log("Processing special file name: mesh=%s, mat=%s",MeshStr,
-       MatStr ? MatStr : "(none)");
+  Log("Processing special file name: mesh=%s",MeshStr);
+  if (MatStr)
+   Log("           special file name: mat=%s",MatStr);
+  if (SVTStr)
+   Log("           special file name: svt=%s",SVTStr);
 
   FILE *f=fopen(GeoFileName,"w");
 
@@ -211,6 +217,8 @@ void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
 
   if (MatStr) 
    fprintf(f," MATERIAL %s\n",MatStr);
+  else if (SVTStr)
+   fprintf(f," SVTENSOR %s.SVTensor\n",SVTStr);
 
   fprintf(f,"ENDOBJECT\n");
   fclose(f);
@@ -311,6 +319,20 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
         Objects=(SWGVolume **)realloc(Objects, NumObjects*sizeof(SWGVolume *) );
         Objects[NumObjects-1]=O;
         O->Index=NumObjects-1;
+      }
+     else if ( !StrCaseCmp(Tokens[0],"MATERIAL") )
+      {
+        /*--------------------------------------------------------------*/
+        /* hand off to MatProp class constructor to parse this section  */
+        /*--------------------------------------------------------------*/
+        if ( nTokens==1 )
+         ErrExit("%s:%i: no name given for MATERIAL ",GeoFileName,LineNum);
+        else if ( nTokens>2 )
+         ErrExit("%s:%i: syntax error",GeoFileName,LineNum);
+         
+        char *ErrMsg=AddMaterialToMatPropDataBase(f, GeoFileName, Tokens[1], &LineNum);
+        if (ErrMsg)
+         ErrExit("%s:%i: %s",GeoFileName,LineNum,ErrMsg); 
       }
      else 
       { 

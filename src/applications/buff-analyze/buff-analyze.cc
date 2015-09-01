@@ -82,16 +82,24 @@ void AnalyzeVolume(SWGVolume *V)
   printf("\n");
   
   /***************************************************************/
+  /* MOI=moment of inertia ***************************************/
   /***************************************************************/
-  /***************************************************************/
-  double Volume=0.0, SurfaceArea=0.0;
+  double Volume=0.0, SurfaceArea=0.0, MOI[3]={0.0,0.0,0.0};
   for(int nt=0; nt<V->NumTets; nt++)
-   Volume+=V->Tets[nt]->Volume;
+   { SWGTet *T=V->Tets[nt];
+     double *X0=V->Tets[nt]->Centroid;
+     Volume+=T->Volume;
+     MOI[0]+=T->Volume*(X0[1]*X0[1] + X0[2]*X0[2]);
+     MOI[1]+=T->Volume*(X0[2]*X0[2] + X0[0]*X0[0]);
+     MOI[2]+=T->Volume*(X0[0]*X0[0] + X0[1]*X0[1]);
+   };
   for(int nf=V->NumInteriorFaces; nf<V->NumTotalFaces; nf++)
    SurfaceArea+=V->Faces[nf]->Area;
 
-  printf(" Volume:        %e \n",Volume);
-  printf(" Surface area:  %e \n",SurfaceArea);
+  printf(" Volume:          %e \n",Volume);
+  printf(" Surface area:    %e \n",SurfaceArea);
+  printf(" \n");
+  printf(" Moment of inertia: {%+.2e,%+.2e,%+.2e}\n",MOI[0],MOI[1],MOI[2]);
   printf(" \n");
 
   double MinQF=1.0e9, MaxQF=-1.0e9, AvgQF=0.0;
@@ -229,23 +237,28 @@ int main(int argc, char *argv[])
   bool WriteGCache=false;
   int NumChunks=1;
   int WhichChunk=0;
+  double XYZ[3]; int nXYZ=0;
+  cdouble Omega=1.0;
   /* name, type, # args, max # instances, storage, count, description*/
   OptStruct OSArray[]=
-   { {"geometry",           PA_STRING, 1, 1, (void *)&GeoFile,          0, ".buffgeo file"},
-     {"mesh",               PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
-     {"meshfile",           PA_STRING, 1, 1, (void *)&MeshFile,         0, ".msh file"},
+   { {"geometry",           PA_STRING,  1, 1,  (void *)&GeoFile,          0, ".buffgeo file"},
+     {"mesh",               PA_STRING,  1, 1,  (void *)&MeshFile,         0, ".msh file"},
+     {"meshfile",           PA_STRING,  1, 1,  (void *)&MeshFile,         0, ".msh file"},
 /**/
-     {"transfile",          PA_STRING, 1, 1, (void *)&TransFile,        0, "list of geometrical transformations"},
+     {"transfile",          PA_STRING,  1, 1,  (void *)&TransFile,        0, "list of geometrical transformations"},
 /**/
-     {"WriteGMSHFiles",     PA_BOOL,   0, 1, (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
+     {"WriteGMSHFiles",     PA_BOOL,    0, 1,  (void *)&WriteGMSHFiles,   0, "output GMSH visualization code"},
 /**/
-     {"WriteGCache",        PA_BOOL,   0, 1, (void *)&WriteCache,       0, "write cache file"},
-     {"NumChunks",          PA_INT,    1, 1, (void *)&NumChunks,        0, "number of pieces into which to subdivide cache write (1)"},
-     {"WhichChunk",         PA_INT,    1, 1, (void *)&WhichChunk,       0, "which piece to write (0)"},
+     {"XYZ",                PA_DOUBLE,  3, 1,  (void *)XYZ,          &nXYZ,  "coordinates at which to evaluate permittivity"},
+     {"Omega",              PA_CDOUBLE, 1, 1, (void *)&Omega,             0, "angular frequency for permittivity check"},
 /**/
-     {"PlotPermittivity",   PA_BOOL,   0, 1, (void *)&PlotPermittivity, 0, "color tetrahedra by average local permittivity"},
-     {"PlotBF",             PA_INT,    1, 10, (void *)PlotBF,    &nPlotBF, "draw an individual basis function"},
-     {"PlotTet",            PA_INT,    1, 10, (void *)PlotTet,   &nPlotTet, "draw an individual tetrahedron"},
+     {"WriteGCache",        PA_BOOL,    0, 1, (void *)&WriteGCache,       0, "write cache file"},
+     {"NumChunks",          PA_INT,     1, 1, (void *)&NumChunks,         0, "number of pieces into which to subdivide cache write (1)"},
+     {"WhichChunk",         PA_INT,     1, 1, (void *)&WhichChunk,        0, "which piece to write (0)"},
+/**/
+     {"PlotPermittivity",   PA_BOOL,    0, 1, (void *)&PlotPermittivity,  0, "color tetrahedra by average local permittivity"},
+     {"PlotBF",             PA_INT,     1, 10, (void *)PlotBF,     &nPlotBF, "draw an individual basis function"},
+     {"PlotTet",            PA_INT,     1, 10, (void *)PlotTet,   &nPlotTet, "draw an individual tetrahedron"},
 /**/
      {0,0,0,0,0,0,0}
    };
@@ -254,10 +267,35 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  if (GeoFile && nXYZ)
+   { 
+     G = new SWGGeometry(GeoFile);
+     SWGVolume *O=G->Objects[0];
+     SVTensor *SVT=O->SVT;
+     cdouble Eps[3][3];
+     SVT->Evaluate(Omega, XYZ, Eps);
+     printf("For object %s (%s): \n",O->Label,O->MeshFileName);
+     printf(" Epsilon at Omega=%e, {x,y,z}={%.2e,%.2e,%.2e} = ",
+              real(Omega),XYZ[0],XYZ[1],XYZ[2]);
+     SetDefaultCD2SFormat("{%+.2e, %+.2e}");
+     if (SVT->Isotropic)
+      printf("%s",CD2S(Eps[0][0]));
+     else
+      { printf("\n");
+        for(int Mu=0; Mu<3; Mu++)
+         printf("   %s     %s     %s \n", CD2S(Eps[Mu][0]), CD2S(Eps[Mu][1]), CD2S(Eps[Mu][2]));
+      };
+     printf("Thank you for your support.\n");
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   SWGGeometry *G=0;
   if (GeoFile)
    { 
      G = new SWGGeometry(GeoFile);
+
      printf("\n*\n* Geometry file %s: %i objects \n*\n\n",
              GeoFile,G->NumObjects);
      for(int no=0; no<G->NumObjects; no++)
@@ -354,5 +392,7 @@ int main(int argc, char *argv[])
      printf("Visualizations for %i transforms written to %s.\n",
              NGTC,FileName);
    };
+
+  printf("Thank you for your support.\n");
 
 }

@@ -161,7 +161,7 @@ class SWGVolume
    char *Label;                    /* unique label identifying the volume*/
 
    char *MatFileName;              /* saved name of material property file */
-   SVTensor *MP;                   /* material property tensors */
+   SVTensor *SVT;                  /* material property tensor */
 
    int Index;                      /* index of this volume in the SWGGeometry */
 
