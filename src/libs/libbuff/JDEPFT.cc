@@ -309,7 +309,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
           DeltaPFT[ OffsetB + PFT_PABS] -= 0.5*PPreFac*real(JJ)*ImG;
           for(int Mu=0; Mu<6; Mu++)
            { DeltaPFT[ OffsetA + PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
-             DeltaPFT[ OffsetB + PFT_XFORCE + Mu ] += 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
+             DeltaPFT[ OffsetB + PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
            };
         };
 
