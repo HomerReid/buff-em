@@ -54,7 +54,7 @@ using namespace scuff;
 namespace buff {
 
 SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf);
-cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb);
+cdouble GetJJ(HVector *JVector, HMatrix *DMatrix, int nbfa, int nbfb);
 
 /***************************************************************/
 /***************************************************************/
@@ -95,9 +95,9 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
      return;
    };
 
-  double kr = k*r, coskr=cos(kr), sinkr=sin(kr);
+  double kr  = k*r, coskr=cos(kr), sinkr=sin(kr);
   double ImG = sinkr/(4.0*M_PI*r);
-  double f1 = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
+  double f1  = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
 
   I[0] = PEFIE * ImG;
   I[1] = PEFIE * R[0] * f1;
@@ -211,7 +211,7 @@ void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
 
   double Error[7];
   int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
-  int NumPts = (ncv > 0 ) ? 33 : 16;
+  int NumPts = (ncv > 0) ? 33 : 16;
   BFBFInt(Oa, nbfa, Ob, nbfb, PFTIntegrand_BFBF, (void *)PFTIData,
           7, IPFT, Error, NumPts, 0, 0);
 }
@@ -221,7 +221,7 @@ void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
 /***************************************************************/
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix)
+                   HMatrix *DMatrix, HMatrix *PFTMatrix)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -260,7 +260,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   double PPreFac  = real(Omega)*ZVAC;
   double FTPreFac = TENTHIRDS*ZVAC;
 #ifdef USE_OPENMP
-  Log("OpenMP multithreading (%i threads)",NumThreads);
+  Log("JDE OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      	\
                          num_threads(NumThreads)
 #endif
@@ -276,7 +276,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       int nob, nfb;
       SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
    
-      cdouble JJ = GetJJ(JVector, Rytov, nbfa, nbfb);
+      cdouble JJ = GetJJ(JVector, DMatrix, nbfa, nbfb);
       if (JJ==0.0) continue;
 
 /*   
@@ -292,14 +292,25 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 #ifdef USE_OPENMP
       nt=omp_get_thread_num();
 #endif
-      int Offset = nt*NONQ + noa*NQ;
+      int OffsetA = nt*NONQ + noa*NQ;
+      int OffsetB = nt*NONQ + nob*NQ;
 
        if (nbfa==nbfb)
-        DeltaPFT[ Offset + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*ImG;
-       else // nbfb > nbfa
-        { DeltaPFT[ Offset + PFT_PABS] -= PPreFac*real(JJ)*ImG;
+        DeltaPFT[ OffsetA + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*ImG;
+       else if (noa==nob) // nbfb > nbfa but both on same object
+        { 
+          DeltaPFT[ OffsetA + PFT_PABS] -= PPreFac*real(JJ)*ImG;
           for(int Mu=0; Mu<6; Mu++)
-           DeltaPFT[ Offset + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
+           DeltaPFT[ OffsetA + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
+        }
+       else // nbfb > nbfa and on different objects
+        { 
+          DeltaPFT[ OffsetA + PFT_PABS] -= 0.5*PPreFac*real(JJ)*ImG;
+          DeltaPFT[ OffsetB + PFT_PABS] -= 0.5*PPreFac*real(JJ)*ImG;
+          for(int Mu=0; Mu<6; Mu++)
+           { DeltaPFT[ OffsetA + PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
+             DeltaPFT[ OffsetB + PFT_XFORCE + Mu ] += 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
+           };
         };
 
     }; // end of multithreaded loop

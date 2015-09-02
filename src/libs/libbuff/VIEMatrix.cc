@@ -95,6 +95,7 @@ typedef struct GOData
    cdouble Omega;
    SVTensor *EpsSVT;
    SVTensor *TemperatureSVT;
+   double TEnvironment;
 
  } GOData;
 
@@ -112,6 +113,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   cdouble Omega            = Data->Omega;
   SVTensor *EpsSVT         = Data->EpsSVT;
   SVTensor *TemperatureSVT = Data->TemperatureSVT;
+  double TEnvironment      = Data->TEnvironment;
 
   cdouble EpsM1[3][3], InvEpsM1[3][3];
   EpsSVT->Evaluate( Omega, x, EpsM1 );
@@ -134,26 +136,28 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
      cdouble TT[3][3];
      TemperatureSVT->Evaluate(0,x,TT);
      double T=real(TT[0][0]);
-     Theta=GetThetaFactor(real(Omega), T);
+     Theta = (   GetThetaFactor(real(Omega), T)
+               - GetThetaFactor(real(Omega), TEnvironment)
+             );
    };
 
   cdouble V=0.0, VInv=0.0;
-  double Sigma=0.0;
+  double Rytov=0.0;
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     { V     += FA[Mu]*EpsM1[Mu][Nu]*FB[Nu];
       VInv  += FA[Mu]*InvEpsM1[Mu][Nu]*FB[Nu];
-      Sigma += Theta*FA[Mu]*imag(EpsM1[Mu][Nu])*FB[Nu];
+      Rytov += Theta*FA[Mu]*imag(EpsM1[Mu][Nu])*FB[Nu];
     };
   V     *= -1.0*Omega*Omega;
   VInv  *= -1.0 / (Omega*Omega);
-  Sigma *= 2.0*real(Omega) / (M_PI*ZVAC);
+  Rytov *= 2.0*real(Omega) / (M_PI*ZVAC);
  
   I[0] = real(V);
   I[1] = imag(V);
   I[2] = real(VInv);
   I[3] = imag(VInv);
-  I[4] = Sigma; 
+  I[4] = Rytov; 
   
 }
 
@@ -166,21 +170,22 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /*                                                             */
 /*        V = k^2 * (1 - Eps)k^2                               */
 /* VInverse = V^{-1}                                           */
-/*    Sigma = Theta(T) * Im Eps * (2k / Pi*ZVAC)               */
+/*    Rytov = (2k / Pi*ZVAC) * (Theta(T)-Theta(TEnv)) * Im Eps */
 /*                                                             */
-/* If Temperature==NULL then Theta(T) is set to 1.             */
+/* If TemperatureSVT==NULL then the factor Theta(T)-Theta(TEnv)*/
+/* is replaced by 1.                                           */
 /***************************************************************/
 int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
-                SVTensor *TemperatureSVT,
+                SVTensor *TemperatureSVT, double TEnvironment,
                 int Indices[MAXOVERLAP],
                 cdouble VEntries[MAXOVERLAP],
                 cdouble VInvEntries[MAXOVERLAP],
-                double SigmaEntries[MAXOVERLAP])
+                double RytovEntries[MAXOVERLAP])
 {
   Indices[0]=nfA;
   VEntries[0]=0.0;
   VInvEntries[0]=0.0;
-  SigmaEntries[0]=0.0;
+  RytovEntries[0]=0.0;
   int NNZ=1;
 
   SWGFace *FA = O->Faces[nfA];
@@ -188,6 +193,7 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
   Data->Omega          = Omega;
   Data->EpsSVT         = O->SVT;
   Data->TemperatureSVT = TemperatureSVT;
+  Data->TEnvironment   = TEnvironment;
 
   /*--------------------------------------------------------------*/
   /* handle interactions between face #nfA and face #nfB, where   */
@@ -222,12 +228,12 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
      if (nfB==nfA)
       { VEntries[0]     += cdouble(I[0], I[1]);
         VInvEntries[0]  += cdouble(I[2], I[3]);
-        SigmaEntries[0] += I[4];
+        RytovEntries[0] += I[4];
       }
      else
       { VEntries[NNZ]     = cdouble(I[0], I[1]);
         VInvEntries[NNZ]  = cdouble(I[2], I[3]);
-        SigmaEntries[NNZ] = I[4];
+        RytovEntries[NNZ] = I[4];
         Indices[NNZ]      = nfB;
         NNZ++;
       };
@@ -266,12 +272,12 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
       { 
         VEntries[0]     += cdouble( I[0], I[1] );
         VInvEntries[0]  += cdouble( I[2], I[3] );
-        SigmaEntries[0] += I[4];
+        RytovEntries[0] += I[4];
       }
      else
       { VEntries[NNZ]     = cdouble( I[0], I[1] );
         VInvEntries[NNZ]  = cdouble( I[2], I[3] );
-        SigmaEntries[NNZ] = I[4];
+        RytovEntries[NNZ] = I[4];
         Indices[NNZ]      = nfB;
         NNZ++;
       };
@@ -282,31 +288,23 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
 
 } // routine GetOverlaps
 
-int GetVInvEntries(SWGVolume *O, int nfA, cdouble Omega,
-                   int Indices[MAXOVERLAP],
-                   cdouble VInvEntries[MAXOVERLAP])
-{
-  cdouble VEntries[MAXOVERLAP];
-  double SigmaEntries[MAXOVERLAP];
-  SVTensor *Temperature=0;
-  return GetOverlaps(O, nfA, Omega, Temperature, Indices,
-                     VEntries, VInvEntries, SigmaEntries);
-}
-
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
-                                        SVTensor *Temperature,
-                                        SMatrix *V, SMatrix *VInv,
-                                        SMatrix *Sigma, HMatrix *TInv,
+                                        SVTensor *TemperatureSVT,
+                                        double TEnvironment,
+                                        SMatrix *V,
+                                        SMatrix *VInv,
+                                        SMatrix *Rytov,
+                                        HMatrix *TInv,
                                         int Offset)
 {
    SWGVolume *O = Objects[no];
 
 #ifdef USE_OPENMP
    int NumThreads=GetNumThreads();
-   if (V || VInv || Sigma)
+   if (V || VInv || Rytov)
     NumThreads=1;
 #pragma omp parallel for schedule(dynamic,1), num_threads(NumThreads)
 #endif
@@ -314,21 +312,21 @@ void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
     { int ncList[MAXOVERLAP];
       cdouble VEntries[MAXOVERLAP];
       cdouble VInvEntries[MAXOVERLAP];
-      double SigmaEntries[MAXOVERLAP];
-      int NNZ = GetOverlaps(O, nr, Omega, Temperature, ncList,
-                            VEntries, VInvEntries, SigmaEntries);
+      double RytovEntries[MAXOVERLAP];
+      int NNZ = GetOverlaps(O, nr, Omega, TemperatureSVT, TEnvironment,
+                            ncList, VEntries, VInvEntries, RytovEntries);
       for(int nnz=0; nnz<NNZ; nnz++)
         { int nc = ncList[nnz];
           if (V)
            V->SetEntry(nr, nc, VEntries[nnz]);
           if (VInv)
            VInv->SetEntry(nr, nc, VInvEntries[nnz]);
-          if (Sigma) 
-           Sigma->SetEntry(nr, nc, SigmaEntries[nnz]);
+          if (Rytov)
+           Rytov->SetEntry(nr, nc, RytovEntries[nnz]);
           if (TInv)
            TInv->AddEntry(Offset+nr, Offset+nc, VInvEntries[nnz]);
         };
-   };
+    };
 
 }
 
@@ -336,7 +334,7 @@ void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
-                                 HMatrix *G, 
+                                 HMatrix *G,
                                  int RowOffset, int ColOffset)
 {
   /***************************************************************/
@@ -419,7 +417,7 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
 
       if (nob==noa)
        { Log("Adding VInv(%i)",noa);
-         AssembleOverlapBlocks(noa, Omega, 0, 0, 0, 0,
+         AssembleOverlapBlocks(noa, Omega, 0, 0, 0, 0, 0,
                                M, BFIndexOffset[noa]);
        };
     };

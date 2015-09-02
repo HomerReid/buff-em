@@ -87,17 +87,17 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
   /*--------------------------------------------------------------*/
   int NO=G->NumObjects;
   BNEQD->VBlocks = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
-  BNEQD->Sigma   = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
+  BNEQD->RBlocks = (SMatrix **)mallocEC(NO*sizeof(SMatrix *));
   BNEQD->GBlocks = (HMatrix ***)mallocEC(NO*sizeof(HMatrix **));
   for(int no=0; no<NO; no++)
    { 
      int NBF  = G->Objects[no]->NumInteriorFaces;
 
      BNEQD->VBlocks[no]  = new SMatrix(NBF, NBF, LHM_COMPLEX);
-     BNEQD->Sigma[no]    = new SMatrix(NBF, NBF, LHM_REAL);
+     BNEQD->RBlocks[no]    = new SMatrix(NBF, NBF, LHM_REAL);
 
      BNEQD->VBlocks[no]->BeginAssembly(MAXOVERLAP);
-     BNEQD->Sigma[no]->BeginAssembly(MAXOVERLAP);
+     BNEQD->RBlocks[no]->BeginAssembly(MAXOVERLAP);
 
      BNEQD->GBlocks[no]  = (HMatrix **)mallocEC(NO*sizeof(HMatrix *));
      int noMate=G->Mate[no];

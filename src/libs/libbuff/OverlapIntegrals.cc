@@ -52,69 +52,6 @@ void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3]);
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-double GetThetaFactor(double Omega, double T);
-#if 0
-#define BOLTZMANNK 4.36763e-4
-double GetThetaFactor(double Omega, double T)
-{ 
-  if (T==0.0)
-   return 0.0;
-  return Omega / ( exp( Omega/(BOLTZMANNK*T) ) - 1.0 );
-}
-#endif
-
-/***************************************************************/
-/* fdim = 5 ****************************************************/
-/***************************************************************/
-void OverlapIntegrand_VVInvSigma(double x[3],
-                                 double bA[3],     double DivbAlpha,
-                                 double bB[3],     double DivbBeta,
-                                 SVTensor *EpsSVT, cdouble Omega,
-                                 void *UserData,   double *I)
-{
-  (void) DivbAlpha; 
-  (void) DivbBeta; // unused
-
-  cdouble EpsM1[3][3], InvEpsM1[3][3];
-  EpsSVT->Evaluate( Omega, x, EpsM1 );
-  EpsM1[0][0] -= 1.0;
-  EpsM1[1][1] -= 1.0;
-  EpsM1[2][2] -= 1.0;
-  Invert3x3Matrix(EpsM1, InvEpsM1);
-
-  double Theta=1.0;
-  SVTensor *TemperatureSVT = (SVTensor *)UserData;
-  if (TemperatureSVT)
-   { 
-     cdouble TT[3][3];
-     TemperatureSVT->Evaluate(0,x,TT);
-     double T=real(TT[0][0]);
-     Theta = GetThetaFactor(real(Omega), T) - GetThetaFactor(real(Omega), 0.0);
-   };
-
-  cdouble V=0.0, VInv=0.0;
-  double Sigma=0.0;
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    { V     += bA[Mu]*EpsM1[Mu][Nu]*bB[Nu];
-      VInv  += bA[Mu]*InvEpsM1[Mu][Nu]*bB[Nu];
-      Sigma += Theta*bA[Mu]*imag(EpsM1[Mu][Nu])*bB[Nu];
-    };
-  V     *= -1.0*Omega*Omega;
-  VInv  *= -1.0 / (Omega*Omega);
-  Sigma *= 2.0*real(Omega) / (M_PI*ZVAC);
- 
-  I[0] = real(V);
-  I[1] = imag(V);
-  I[2] = real(VInv);
-  I[3] = imag(VInv);
-  I[4] = Sigma; 
-  
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 void GetInvChiDotbB(double X[3], double bB[3],
                     SVTensor *EpsSVT, cdouble Omega,
                     cdouble E[3])
@@ -233,7 +170,12 @@ void OverlapIntegrand_PFT(double X[3],
 }
 
 /***************************************************************/
-/***************************************************************/
+/* this is supposed to be a *general* routine for computing    */
+/* overlap integrals with arbitrary user-specified integrands, */
+/* as opposed to the *specific* rotines in VIEMatrix.cc for    */
+/* computing the particular overlap integrals needed to        */
+/* assemble the VIE matrix. but the two codes should really    */
+/* be merged into one.                                         */
 /***************************************************************/
 void GetOverlapIntegrals(SWGVolume *O, int nt,
                          int nQA, double PreFacA,

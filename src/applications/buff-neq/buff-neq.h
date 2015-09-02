@@ -108,9 +108,9 @@ typedef struct BNEQData
 
    // SMatrix structures for sparse matrix subblocks
    // VBlocks[no] = V matrix for object #no
-   // Sigma[no]   = Sigma matrix for object #no
+   // RBlocks[no] = Rytov matrix for object #no
    SMatrix **VBlocks;
-   SMatrix **Sigma;
+   SMatrix **RBlocks;
 
    HMatrix *SInverse;
 

@@ -225,9 +225,10 @@ class SWGGeometry
                    HMatrix *PFTMatrix, PFTOptions *Options=0);
 
    void AssembleOverlapBlocks(int no, cdouble Omega,
-                              SVTensor *Temperature,
+                              SVTensor *TemperatureSVT,
+                              double Temperature,
                               SMatrix *V, SMatrix *VInv,
-                              SMatrix *Sigma, HMatrix *TInv=0,
+                              SMatrix *Rytov, HMatrix *TInv=0,
                               int Offset=0);
    void AssembleGBlock(int noa, int nob, cdouble Omega, HMatrix *G,
                        int RowOffset=0, int ColOffset=0);

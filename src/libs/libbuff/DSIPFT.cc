@@ -100,9 +100,9 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /***************************************************************/
   if (DSIMesh)
-   Log("Computing DSIPFT over bounding surface %s...",DSIMesh);
+   Log("DSI Computing DSIPFT over bounding surface %s...",DSIMesh);
   else
-   Log("Computing DSIPFT: (R,NPts)=(%e,%i)",DSIRadius, DSIPoints);
+   Log("DSI Computing DSIPFT: (R,NPts)=(%e,%i)",DSIRadius, DSIPoints);
 
   /***************************************************************/
   /* get cubature-rule matrix ************************************/
@@ -119,15 +119,15 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /* get incident and scattered fields at the cubature points    */
   /***************************************************************/
-  Log(" Computing incident fields at cubature points...");
+  Log("DSI Computing incident fields at cubature points...");
   HMatrix *FInc  = IF ? G->GetFields(IF, 0, Omega, SCRMatrix) : 0;
-  Log(" Computing scattered fields at cubature points...");
+  Log("DSI Computing scattered fields at cubature points...");
   HMatrix *FScat = JVector ? G->GetFields( 0, JVector, Omega, SCRMatrix) : 0;
 
   /***************************************************************/
   /* loop over points in the cubature rule                       */
   /***************************************************************/
-  Log(" Evaluating cubature rule...");
+  Log("DSI Evaluating cubature rule...");
   memset(PFT, 0, NUMPFT*sizeof(double));
   for(int nr=0; nr<SCRMatrix->NR; nr++)
    { 
@@ -170,7 +170,7 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                              + MuAbs*HVMVP(HT, NMatrix[nq], HT)
                             );
    };
-  Log(" Done!");
+  Log("DSI Done!");
 
   if (FInc) delete FInc;
   if (FScat) delete FScat;
@@ -181,7 +181,7 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
+void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
                     double PFT[NUMPFT],
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options)
@@ -194,9 +194,9 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   /***************************************************************/
   /***************************************************************/
   if (DSIMesh)
-   Log("Computing DSIPFT trace over bounding surface %s...",DSIMesh);
+   Log("DSI Computing DSIPFT trace over bounding surface %s...",DSIMesh);
   else
-   Log("Computing DSIPFT trace: (R,NPts)=(%e,%i)",DSIRadius, DSIPoints);
+   Log("DSI Computing DSIPFT trace: (R,NPts)=(%e,%i)",DSIRadius, DSIPoints);
 
   /***************************************************************/
   /* get cubature-rule matrix ************************************/
@@ -209,11 +209,11 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   int NX  = SCRMatrix->NR;
   int NBF = G->TotalBFs;
   HMatrix *ehMatrix=new HMatrix(6, NX*NBF, LHM_COMPLEX);
-  Log(" Precomputing 1BF fields at cubature points...");
+  Log("DSI Precomputing 1BF fields at cubature points...");
   int NumThreads=1;
 #ifdef USE_OPENMP
   NumThreads=GetNumThreads();
-  Log(" using %i OpenMP threads",NumThreads);
+  Log("DSI using %i OpenMP threads",NumThreads);
 #pragma omp parallel for num_threads(NumThreads), \
                          collapse(2),             \
                          schedule(dynamic,1)
@@ -237,7 +237,7 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   /***************************************************************/
   /* loop over points in the cubature rule                       */
   /***************************************************************/
-  Log(" Evaluating cubature rule...");
+  Log("DSI Evaluating cubature rule...");
   double XTorque[3] = {0.0, 0.0, 0.0};
   if (GT1) GT1->Apply(XTorque);
   if (GT2) GT2->Apply(XTorque);
@@ -245,7 +245,7 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
   double  MuAbs = TENTHIRDS * ZVAC;
   cdouble *DeltaPFT=(cdouble *)mallocEC(NumThreads*NUMPFT*sizeof(cdouble));
 #ifdef USE_OPENMP
-  Log(" using %i OpenMP threads",NumThreads);
+  Log("DSI using %i OpenMP threads",NumThreads);
 #pragma omp parallel for num_threads(NumThreads), \
                          collapse(2),             \
                          schedule(dynamic,1)
@@ -280,7 +280,7 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
          cdouble *EB = ehMatrix->ZM + 6*(nx*NBF + nbfb);
          cdouble *HB = EB+3;
 
-         cdouble JJ = Rytov->GetEntry(nbfb, nbfa);
+         cdouble JJ = DMatrix->GetEntry(nbfb, nbfa);
 
          // absorbed/radiated power 
          DeltaPFT[nt*NUMPFT + PFT_PABS]
@@ -314,7 +314,7 @@ if (nbfb>nbfa)
 
     }; // for(int nx=0; ...), for(int nbfa=0; ...)
 
-  Log(" Done!");
+  Log("DSI Done!");
 
   /***************************************************************/
   /***************************************************************/

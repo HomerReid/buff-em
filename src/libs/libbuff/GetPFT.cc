@@ -72,13 +72,13 @@ namespace buff {
 
 // PFT by overlap method
 HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
-                 HVector *JVector, HMatrix *Rytov,
+                 HVector *JVector, HMatrix *DMatrix,
                  HMatrix *PFTMatrix);
 
 // PFT by J \dot E method
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *Rytov, HMatrix *PFTMatrix);
+                   HMatrix *DMatrix, HMatrix *PFTMatrix);
 
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
@@ -86,23 +86,23 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                GTransformation *GT1, GTransformation *GT2,
                PFTOptions *Options);
 
-void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *Rytov,
+void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
                     double PFT[NUMPFT],
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options);
 
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  HVector *JVector, HMatrix *Rytov,
+                  HVector *JVector, HMatrix *DMatrix,
                   HMatrix *PFTMatrix, bool WritePPFile,
                   double QPF[3]);
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-cdouble GetJJ(HVector *JVector, HMatrix *Rytov, int nbfa, int nbfb)
+cdouble GetJJ(HVector *JVector, HMatrix *DMatrix, int nbfa, int nbfb)
 {
-  if (Rytov)
-   return Rytov->GetEntry(nbfb, nbfa);
+  if (DMatrix)
+   return DMatrix->GetEntry(nbfb, nbfa);
   else
    return conj ( JVector->GetEntry(nbfa) )
               *( JVector->GetEntry(nbfb) );
@@ -150,7 +150,7 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
      InitPFTOptions(Options);
    };
   int PFTMethod      = Options->PFTMethod;
-  HMatrix *Rytov     = Options->RytovMatrix; 
+  HMatrix *DMatrix   = Options->RytovMatrix; 
   HVector *RHSVector = Options->RHSVector;
   IncField *IF       = Options->IF;
 
@@ -159,19 +159,19 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   /* computation                                                 */
   /***************************************************************/
   if ( PFTMethod==SCUFF_PFT_OVERLAP )
-   GetOPFT(this, Omega, JVector, Rytov, PFTMatrix);
+   GetOPFT(this, Omega, JVector, DMatrix, PFTMatrix);
   else if ( PFTMethod==SCUFF_PFT_EP )
-   GetJDEPFT(this, Omega, IF, JVector, RHSVector, Rytov, PFTMatrix);
+   GetJDEPFT(this, Omega, IF, JVector, RHSVector, DMatrix, PFTMatrix);
   else // ( PFTMethod==SCUFF_PFT_DSI )
    for(int no=0; no<NumObjects; no++)
     { 
       GTransformation *GT1=Objects[no]->OTGT;
       GTransformation *GT2=Objects[no]->GT;
       double PFT[NUMPFT];
-      if (Rytov==0)
+      if (DMatrix==0)
        GetDSIPFT(this, Omega, IF, JVector, PFT, GT1, GT2, Options);
       else
-       GetDSIPFTTrace(this, Omega, Rytov, PFT, GT1, GT2, Options);
+       GetDSIPFTTrace(this, Omega, DMatrix, PFT, GT1, GT2, Options);
 
       PFTMatrix->SetEntriesD(no, ":", PFT);
     };

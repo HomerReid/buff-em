@@ -32,7 +32,7 @@
 
 namespace buff {
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  HVector *JVector, HMatrix *Rytov,
+                  HVector *JVector, HMatrix *DMatrix,
                   HMatrix *PFTMatrix,
                   double QPF[3], char *FileBase);
                }
@@ -141,21 +141,21 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 /* Note: the return value is a pointer to a preallocated buffer*/
 /* within the BNEQD structure                                  */
 /***************************************************************/
-HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
+HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
 {
   SWGGeometry *G        = BNEQD->G;
   HMatrix ***GBlocks    = BNEQD->GBlocks;
   SMatrix **VBlocks     = BNEQD->VBlocks;
   HMatrix *SInverse     = BNEQD->SInverse;
-  SMatrix **Sigma       = BNEQD->Sigma;
+  SMatrix **RBlocks     = BNEQD->RBlocks;
   HMatrix **WorkMatrix  = BNEQD->WorkMatrix;
 
   int NO               = G->NumObjects;
   int *Offset          = G->BFIndexOffset;
   int NBF              = G->TotalBFs;
 
-  // compute Rytov = W* (S^{-1}*Sigma*S^{-1}) * W^\dagger
-  //                   -(S^{-1}*Sigma*S^{-1})
+  // compute DressedRytov = W* (S^{-1}*Rytov*S^{-1}) * W^\dagger
+  //                   -(S^{-1}*Rytov*S^{-1})
   //  (where W = inv( 1 + S^{-1} V S^-1 G ) )
   // in a series of steps:
   // (a) M1    <- G
@@ -165,12 +165,11 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
   // (e) M3    <- SInverse*M1 = SInverse*V*SInverse*G
   // (f) M3    += 1
   // (g) M3    <- inv(M3) = W
-  // (h) M1    <- Sigma
-  // (i) M2    <- SInverse*M1 = SInverse*Sigma
-  // (j) M1    <- M2*SInverse = SInverse*Sigma*SInverse
+  // (h) M1    <- Rytov
+  // (i) M2    <- SInverse*M1 = SInverse*Rytov
+  // (j) M1    <- M2*SInverse = SInverse*Rytov*SInverse
   // (k) M2    <- W*M1 = M3*M1
   // (l) M3    <- M2*W'
-  // (m) M3    -= M1
 
   HMatrix *M1=WorkMatrix[0];
   HMatrix *M2=WorkMatrix[1];
@@ -209,7 +208,7 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
 
   // step (h)
   M1->Zero();
-  M1->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
+  M1->AddBlock(RBlocks[SourceObject], Offset[SourceObject], Offset[SourceObject]);
 
   // step (i)
   SInverse->Multiply(M1, M2);
@@ -219,25 +218,9 @@ HMatrix *ComputeRytovMatrix(BNEQData *BNEQD, int SourceObject)
 
   // step (k)
   M3->Multiply(M1, M2);
+
+  // step (l)
   M2->Multiply(M3, M1, "--transB C");
-
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-  if ( !getenv("BUFF_SUBTRACT_SELFTERM") )
-   { Log("Not subtracting self term foryaf.");
-     return M1;
-   };
-  Log("Subtracting self term foryaf.");
-/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-
-  // step (j) 
-  M2->Zero();
-  M2->AddBlock(Sigma[SourceObject], Offset[SourceObject], Offset[SourceObject]);
-  SInverse->Multiply(M2, M3);
-  M3->Multiply(SInverse, M2);
-
-  for(int nbf=0; nbf<NBF; nbf++)
-   for(int nbfp=0; nbfp<NBF; nbfp++)
-    M1->AddEntry(nbf, nbfp, -1.0*M2->GetEntry(nbf, nbfp) );
 
   return M1;
 
@@ -261,7 +244,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   double TEnvironment        = BNEQD->TEnvironment;
   HMatrix ***GBlocks         = BNEQD->GBlocks;
   SMatrix **VBlocks          = BNEQD->VBlocks;
-  SMatrix **Sigma            = BNEQD->Sigma;
+  SMatrix **RBlocks          = BNEQD->RBlocks;
   int NumPFTMethods          = BNEQD->NumPFTMethods;
   int *PFTMethods            = BNEQD->PFTMethods;
   char **PFTFileNames        = BNEQD->PFTFileNames;
@@ -275,12 +258,10 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
-     Log(" Assembling V_{%i} and Sigma_{%i} ...",no,no);
-     G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
-                              VBlocks[no], 0, Sigma[no]);
-
-     if (TEnvironment!=0.0) 
-      ErrExit("nonzero environment temperature not yet supported");
+     Log(" Assembling V_{%i} and Rytov_{%i} ...",no,no);
+     G->AssembleOverlapBlocks(no, Omega,
+                              TemperatureSVTs[no], TEnvironment,
+                              VBlocks[no], 0, RBlocks[no]);
 
      if (G->Mate[no]!=-1)
       { Log(" Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
@@ -295,7 +276,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
    { FirstTime=false;
      for(int no=0; no<NO; no++) 
       { VBlocks[no]->EndAssembly();
-        Sigma[no]->EndAssembly();
+        RBlocks[no]->EndAssembly();
       };
    };
 
@@ -335,8 +316,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      static HMatrix *PFTMatrix = new HMatrix(NO, NUMPFT);
      for(int nos=0; nos<NO; nos++)
       { 
-        // get the Rytov matrix for source object #nos
-        pftOptions->RytovMatrix=ComputeRytovMatrix(BNEQD, nos);
+        // get the DressedRytov matrix for source object #nos
+        pftOptions->RytovMatrix=ComputeDressedRytovMatrix(BNEQD, nos);
 
         if (BNEQD->DoMomentPFT)
          { for(int nod=0; nod<NO; nod++)
