@@ -283,7 +283,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   double PreFactor=1.0;
   for(int no=0; no<NO; no++)
    if (TemperatureSVTs[no])
-    PreFactor=HBAROMEGA02/M_PI;
+    PreFactor=HBAROMEGA02;
 
   /***************************************************************/
   /* now loop over transformations.                              */
@@ -318,22 +318,6 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
       { 
         // get the DressedRytov matrix for source object #nos
         pftOptions->RytovMatrix=ComputeDressedRytovMatrix(BNEQD, nos);
-
-        if (BNEQD->DoMomentPFT)
-         { for(int nod=0; nod<NO; nod++)
-            { double QPF[3];
-              GetMomentPFT(G, nod, real(Omega), 0,
-                           pftOptions->RytovMatrix, PFTMatrix,
-                           QPF, FileBase);
-              PFTMatrix->Scale(PreFactor);
-              FILE *f=vfopen("%s.SIFlux.MomentPFT","a",FileBase);
-              fprintf(f,"%s %e %i%i ",Tag,real(Omega),nos+1,nod+1);
-              for(int nq=0; nq<NUMPFT; nq++)
-               fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq));
-              fprintf(f,"\n");
-              fclose(f);
-            };
-         };
 
         // get the PFT for all destination objects using all
         // requested methods

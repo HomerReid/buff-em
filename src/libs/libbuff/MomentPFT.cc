@@ -33,10 +33,14 @@
 namespace buff {
 
 /***************************************************************/
-/***************************************************************/
+/* compute the moments of a single unit-strength SWG basis     */
+/* function.                                                   */
+/* JMu[Mu]       = \int J_\Mu dV                               */
+/* JMuNu[Mu][Nu] = \int J_\Mu (X_nu - X0_nu) dV                */
 /***************************************************************/
 void Get1BFMoments(SWGVolume *O, int nf,
-                   double JMu[3], double JMuNu[3][3])
+                   double JMu[3], double JMuNu[3][3],
+                   double *X0=0)
 {
   SWGFace *F  = O->Faces[nf];
   double  A   = F->Area;
@@ -76,14 +80,80 @@ void Get1BFMoments(SWGVolume *O, int nf,
             + L2P[Mu]*QP[Nu]  - L2M[Mu]*QM[Nu]
             + L3P[Mu]*QP[Nu]  - L3M[Mu]*QM[Nu]
            ) /12.0;
+
+  if (X0)
+   for(int Mu=0; Mu<3; Mu++)
+    for(int Nu=0; Nu<3; Nu++)
+     JMuNu[Mu][Nu] -= JMu[Mu]*X0[Nu];
 }
 
 /***************************************************************/
+/* get the electric dipole, magnetic dipole, and electric      */
+/* quadrupole moments of the induced current distribution      */
+/***************************************************************/
+void GetMoments(SWGGeometry *G, int no, cdouble Omega,
+                HVector *JVector,
+                cdouble p[3], cdouble m[3], cdouble Qp[3])
+{
+  // if the object has been transformed since it was read in
+  // from the mesh file, make sure to shift appropriately the
+  // origin about which we compute the torque
+  SWGVolume *O=G->Objects[no];
+  double *X0=0, X0Buffer[3]={0.0, 0.0, 0.0};
+  if (O->GT || O->OTGT)
+   { X0=X0Buffer;
+     if (O->OTGT) O->OTGT->Apply(X0);
+     if (O->GT  ) O->GT->Apply(X0);
+   };
+
+  p[0]=p[1]=p[2]=m[0]=m[1]=m[2]=0.0;
+  cdouble Q[3][3]={{0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0}};
+  cdouble iw=II*Omega;
+  int Offset = G->BFIndexOffset[no];
+  for(int n=0; n<O->NumInteriorFaces; n++)
+   { 
+     cdouble JAlpha = JVector->GetEntry(Offset + n);
+
+     double JMu[3], JMuNu[3][3];
+     Get1BFMoments(O, n, JMu, JMuNu, X0);
+
+     cdouble JMMTrace=JAlpha*(JMuNu[0][0]+JMuNu[1][1]+JMuNu[2][2]);
+     for(int Mu=0; Mu<3; Mu++)
+      { 
+        p[Mu] -= JAlpha*JMu[Mu] / iw;
+
+        int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
+        m[Mu] -= 0.5*JAlpha*(JMuNu[MP1][MP2]-JMuNu[MP2][MP1]);
+
+        Q[Mu][Mu] -= JAlpha*(6.0*JMuNu[Mu][Mu] - 2.0*JMMTrace)/iw;
+        for(int Nu=Mu+1; Nu<3; Nu++)
+         Q[Mu][Nu] -= 3.0*JAlpha*(JMuNu[Mu][Nu] + JMuNu[Nu][Mu])/iw;
+      };
+     Q[1][0]=Q[0][1];
+     Q[2][0]=Q[0][2];
+     Q[2][1]=Q[1][2];
+   };
+
+  Qp[0]=Qp[1]=Qp[2]=0.0;
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    Qp[Mu] += Q[Mu][Nu] * p[Nu];
+
+// TODO: need to rotate all vectors if the object has been
+//       subject to a rotational transformation
+// if (O->GT || O->OTGT) ...
+
+}
+
+/***************************************************************/
+/* get the moment matrices MMuNu and MMuNuRho for a fluctuation-*/
+/* induced current distribution described by a dressed DMatrix   */
+/* matrix DMatrix.                                             */
 /* if Workspace is non-null it must point to a buffer with     */
 /* space for at least 12*N cdoubles, where N is the number of  */
 /* basis functions on object #no.                              */
 /***************************************************************/
-void GetNEQMoments(SWGGeometry *G, int no, HMatrix *Rytov,
+void GetNEQMoments(SWGGeometry *G, int no, HMatrix *DMatrix,
                    cdouble MMuNu[3][3], cdouble MMuNuRho[3][3][3],
                    cdouble *Workspace=0)
 {
@@ -115,6 +185,16 @@ void GetNEQMoments(SWGGeometry *G, int no, HMatrix *Rytov,
    for(int Nu=0; Nu<3; Nu++, nVec++)
     vMuNu[Mu][Nu] = new HVector(N, LHM_COMPLEX, Workspace + nVec*N);
 
+  // if the object has been transformed since it was read in
+  // from the mesh file, make sure to shift appropriately the
+  // origin about which we compute the torque
+  double *X0=0, X0Buffer[3]={0.0, 0.0, 0.0};
+  if (O->GT || O->OTGT)
+   { X0=X0Buffer;
+     if (O->OTGT) O->OTGT->Apply(X0);
+     if (O->GT  ) O->GT->Apply(X0);
+   };
+
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -122,7 +202,7 @@ void GetNEQMoments(SWGGeometry *G, int no, HMatrix *Rytov,
   for(int n=0; n<N; n++)
    { 
      double JMu[3], JMuNu[3][3];
-     Get1BFMoments(O, n, JMu, JMuNu);
+     Get1BFMoments(O, n, JMu, JMuNu, X0);
 
      for(int Mu=0; Mu<3; Mu++)
       vMu[Mu]->SetEntry(n, JMu[Mu]);
@@ -139,12 +219,12 @@ void GetNEQMoments(SWGGeometry *G, int no, HMatrix *Rytov,
 
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    MMuNu[Mu][Nu]=Rytov->BilinearProduct(vMu[Mu], vMu[Nu]);
+    MMuNu[Mu][Nu]=DMatrix->BilinearProduct(vMu[Mu], vMu[Nu]);
 
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     for(int Rho=0; Rho<3; Rho++)
-     MMuNuRho[Mu][Nu][Rho]=Rytov->BilinearProduct(vMuNu[Mu][Rho], vMu[Nu]);
+     MMuNuRho[Mu][Nu][Rho]=DMatrix->BilinearProduct(vMuNu[Mu][Rho], vMu[Nu]);
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -158,50 +238,9 @@ void GetNEQMoments(SWGGeometry *G, int no, HMatrix *Rytov,
 }
 
 /***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void GetMoments(SWGGeometry *G, int no, cdouble Omega, 
-                HVector *JVector,
-                cdouble p[3], cdouble m[3], cdouble Qp[3])
-{
-  p[0]=p[1]=p[2]=m[0]=m[1]=m[2]=0.0;
-  cdouble Q[3][3]={{0.0,0.0,0.0}, {0.0,0.0,0.0}, {0.0,0.0,0.0}};
-  cdouble iw=II*Omega;
-  SWGVolume *O=G->Objects[no];
-  int Offset = G->BFIndexOffset[no];
-  for(int n=0; n<O->NumInteriorFaces; n++)
-   { 
-     cdouble JAlpha = JVector->GetEntry(Offset + n);
-
-     double JMu[3], JMuNu[3][3];
-     Get1BFMoments(O, n, JMu, JMuNu);
-
-     cdouble JMMTrace=JAlpha*(JMuNu[0][0]+JMuNu[1][1]+JMuNu[2][2]);
-     for(int Mu=0; Mu<3; Mu++)
-      { 
-        p[Mu] -= JAlpha*JMu[Mu] / iw;
-
-        int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
-        m[Mu] -= 0.5*JAlpha*(JMuNu[MP1][MP2]-JMuNu[MP2][MP1]);
-
-        Q[Mu][Mu] -= JAlpha*(6.0*JMuNu[Mu][Mu] - 2.0*JMMTrace)/iw;
-        for(int Nu=Mu+1; Nu<3; Nu++)
-         Q[Mu][Nu] -= 3.0*JAlpha*(JMuNu[Mu][Nu] + JMuNu[Nu][Mu])/iw;
-      };
-     Q[1][0]=Q[0][1];
-     Q[2][0]=Q[0][2];
-     Q[2][1]=Q[1][2];
-   };
-
-  Qp[0]=Qp[1]=Qp[2]=0.0;
-  for(int Mu=0; Mu<3; Mu++)
-   for(int Nu=0; Nu<3; Nu++)
-    Qp[Mu] += Q[Mu][Nu] * p[Nu];
-
-}
-
-/***************************************************************/
-/***************************************************************/
+/* play the principal-moment-decomposition game to get the     */
+/* p_a and m_a moments of a fluctuation-induced current        */
+/* distribution from its moment matrices MMuNu and MuNuRho.    */
 /***************************************************************/
 void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3], 
                                   cdouble MMuNuRho[3][3][3], 
@@ -266,20 +305,22 @@ void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3],
 /* if FileBase=0 then no .moments or .pp files are written     */
 /***************************************************************/
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  HVector *JVector, HMatrix *Rytov,
-                  HMatrix *PFTMatrix, double QPF[3],
+                  IncField *IF, HVector *JVector, HMatrix *DMatrix,
+                  HMatrix *PFTMatrix, bool KeepQpTerm, 
                   char *FileBase)
 {
-  // p[a][Mu] = Muth component of ath principal p-vector
-  // m[a][Mu] = Muth component of ath principal m-vector
-  cdouble p[3][3];
-  cdouble m[3][3];
-  cdouble Qp[3];  // Q*p, only used in the deterministic case
-  int NumMoments; // = 1 for deterministic, 3 for neq
+  for(int nq=0; nq<NUMPFT; nq++)
+   PFTMatrix->SetEntry(no, nq, 0.0);
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
+  // p[a][Mu]   = Muth component of ath principal p-vector
+  // m[a][Mu]   = Muth component of ath principal m-vector
+  cdouble p[3][3];
+  cdouble m[3][3];
+  cdouble Qp[3];  // Q*p, only used in the deterministic case
+  int NumMoments; // = 1 for deterministic, 3 for neq
   if (JVector)
    { NumMoments=1;
      GetMoments(G, no, Omega, JVector, p[0], m[0], Qp);
@@ -289,8 +330,54 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
      NumMoments=3;
      Log("GMP getting NEQ moments...");
      cdouble MMuNu[3][3], MMuNuRho[3][3][3];
-     GetNEQMoments(G, no, Rytov, MMuNu, MMuNuRho);
+     GetNEQMoments(G, no, DMatrix, MMuNu, MMuNuRho);
      DoPrincipalAxisDecomposition(MMuNu, MMuNuRho, Omega, p, m);
+   };
+
+  /***************************************************************/
+  /* add incident-field contributions ****************************/
+  /***************************************************************/
+  if (IF)
+   { 
+     // get fields and derivatives at body centroid by finite-differencing
+     double X0[3]={0.0, 0.0, 0.0};
+     SWGVolume *O=G->Objects[no];
+     if (O->OTGT) O->OTGT->Apply(X0);
+     if (O->GT)   O->GT->Apply(X0);
+     cdouble EH[6], EHP[6], EHM[6], dEH[3][6];
+     IF->GetFields(X0, EH);
+     for(int Mu=0; Mu<3; Mu++)
+      { 
+        double xTweaked[3];
+        xTweaked[0]=X0[0];
+        xTweaked[1]=X0[1];
+        xTweaked[2]=X0[2];
+
+        double Delta = (X0[Mu]==0.0 ? 1.0e-4 : 1.0e-4*fabs(X0[Mu]));
+        if ( abs(Omega) > 1.0 )
+         Delta = fmin(Delta, 1.0e-4/abs(Omega) );
+
+        xTweaked[Mu] += Delta;
+        IF->GetFields(xTweaked, EHP);
+        xTweaked[Mu] -= 2.0*Delta;
+        IF->GetFields(xTweaked, EHM);
+        for(int Nu=0; Nu<6; Nu++)
+         dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
+      }; 
+
+     //
+     cdouble *p0=p[0]; //, *m0=m[0];
+     for(int Mu=0; Mu<3; Mu++)
+      {
+        PFTMatrix->AddEntry(no, PFT_PABS, 0.5*Omega*imag( conj(p0[Mu])*EH[Mu] ) );
+
+        for(int Nu=0; Nu<3; Nu++)
+         PFTMatrix->AddEntry(no, PFT_XFORCE+Nu, -0.5*real( conj(p0[Mu])*dEH[Nu][Mu] ) );
+
+        int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
+        PFTMatrix->AddEntry(no, PFT_XTORQUE+Mu, -0.5*real( conj(p0[MP1])*EH[MP2] - conj(p0[MP2])*EH[MP1] ) );
+      };
+
    };
 
   /***************************************************************/
@@ -325,15 +412,18 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                          );
     };
 
-  if (JVector && QPF)
-   { QPF[0] = FPF2*imag(Qp[0]);
-     QPF[1] = FPF2*imag(Qp[1]);
-     QPF[2] = FPF2*imag(Qp[2]);
+  if (JVector && KeepQpTerm)
+   { PFTMatrix->AddEntry(no, PFT_XFORCE, FPF2*imag(Qp[0]) );
+     PFTMatrix->AddEntry(no, PFT_YFORCE, FPF2*imag(Qp[1]) );
+     PFTMatrix->AddEntry(no, PFT_ZFORCE, FPF2*imag(Qp[2]) );
    };
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
+  if (FileBase==0)
+   FileBase=getenv("BUFF_MOMENT_FILEBASE");
+
   if (FileBase)
    {
      FILE *f=vfopen("%s.Moments","a",FileBase);
@@ -403,6 +493,16 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
 
    };
 
+}
+
+void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+                  HVector *JVector, HMatrix *DMatrix,
+                  HMatrix *PFTMatrix, bool KeepQpTerm, 
+                  char *FileBase)
+{
+  for(int no=0; no<G->NumObjects; no++)
+   GetMomentPFT(G, no, Omega, IF, JVector, DMatrix, PFTMatrix,
+                KeepQpTerm, FileBase);
 }
 
 } // namespace buff

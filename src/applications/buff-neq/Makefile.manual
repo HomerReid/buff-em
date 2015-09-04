@@ -37,6 +37,9 @@ OBJS =			\
  CreateBNEQData.o	\
  GetFlux.o		\
 
+GetTemperatureDependence: GetTemperatureDependence.o 
+		$(CXX) $(LDFLAGS) -o $@ $^ -lscuff $(OTHER_LIBS)
+
 buff-neq:    	$(OBJS)
 		$(CXX) $(LDFLAGS) -o $@ $^ $(LIBS)
 

@@ -80,6 +80,12 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
                    HMatrix *DMatrix, HMatrix *PFTMatrix);
 
+// PFT from multipole moments
+void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+                  HVector *JVector, HMatrix *DMatrix,
+                  HMatrix *PFTMatrix, bool KeepQpTerm=false,
+                  char *FileBase=0);
+
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                HVector *JVector, double PFT[NUMPFT],
@@ -90,11 +96,6 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
                     double PFT[NUMPFT],
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options);
-
-void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  HVector *JVector, HMatrix *DMatrix,
-                  HMatrix *PFTMatrix, bool WritePPFile,
-                  double QPF[3]);
 
 /***************************************************************/
 /***************************************************************/
@@ -158,11 +159,13 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   /* hand off to the individual PFT algorithms to do the         */
   /* computation                                                 */
   /***************************************************************/
-  if ( PFTMethod==SCUFF_PFT_OVERLAP )
+  if ( PFTMethod==BUFF_PFT_OVERLAP )
    GetOPFT(this, Omega, JVector, DMatrix, PFTMatrix);
-  else if ( PFTMethod==SCUFF_PFT_EP )
+  else if ( PFTMethod==BUFF_PFT_JDE )
    GetJDEPFT(this, Omega, IF, JVector, RHSVector, DMatrix, PFTMatrix);
-  else // ( PFTMethod==SCUFF_PFT_DSI )
+  else if ( PFTMethod==BUFF_PFT_MOMENTS )
+   GetMomentPFT(this, Omega, IF, JVector, DMatrix, PFTMatrix);
+  else // ( PFTMethod==BUFF_PFT_DSI )
    for(int no=0; no<NumObjects; no++)
     { 
       GTransformation *GT1=Objects[no]->OTGT;
@@ -194,7 +197,7 @@ PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options)
   scuff::InitPFTOptions(Options);
 
   // modify as appropriate for BUFF-EM defaults
-  Options->PFTMethod = SCUFF_PFT_DSI;
+  Options->PFTMethod = BUFF_PFT_JDE;
 
   // options affecting DSI PFT computation
   Options->DSIMesh=0;

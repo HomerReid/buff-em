@@ -143,19 +143,25 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
   BNEQD->NumPFTMethods=0;
   int nPFT=0;
   if (DoOPFT)
-   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_OVERLAP;
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_OVERLAP;
      BNEQD->DSIPoints[nPFT]    = 0;
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.OPFT",FileBase);
      nPFT++;
    };
   if (DoJDEPFT)
-   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_EP;
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_JDE;
      BNEQD->DSIPoints[nPFT]    = 0;
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
      nPFT++;
    };
+  if (DoMomentPFT)
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_MOMENTS;
+     BNEQD->DSIPoints[nPFT]    = 0;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.MomentPFT",FileBase);
+     nPFT++;
+   };
   if (DSIPoints>0 || DSIMesh)
-   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_DSI;
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_DSI;
      BNEQD->DSIPoints[nPFT]    = DSIPoints;
      if (DSIPoints>0)
       BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI%i",FileBase,DSIPoints);
@@ -164,7 +170,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
      nPFT++;
    };
   if (DSIPoints2>0)
-   { BNEQD->PFTMethods[nPFT]   = SCUFF_PFT_DSI;
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_DSI;
      BNEQD->DSIPoints[nPFT]    = DSIPoints2;
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI%i",FileBase,DSIPoints2);
      nPFT++;
@@ -176,8 +182,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
   BNEQD->pftOptions->DSIMesh=DSIMesh;
   BNEQD->pftOptions->DSIRadius=DSIRadius;
   
-  BNEQD->DoMomentPFT=DoMomentPFT;
-
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/

@@ -74,12 +74,13 @@ int main(int argc, char *argv[])
 
   char *JPlotFile=0;
 
-  char *OPFTFile   = 0;
-  char *JDEPFTFile = 0;
-  char *DSIPFTFile = 0;
-  double DSIRadius = 10.0;
-  int DSIPoints    = 302;
-  char *DSIMesh    = 0;
+  char *OPFTFile      = 0;
+  char *JDEPFTFile    = 0;
+  char *MomentPFTFile = 0;
+  char *DSIPFTFile    = 0;
+  double DSIRadius    = 10.0;
+  int DSIPoints       = 302;
+  char *DSIMesh       = 0;
   bool NeedFT[6]={false, false, false, false, false, false};
 
   char *MomentFile=0;
@@ -106,10 +107,11 @@ int main(int argc, char *argv[])
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
-     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,             "name of overlap PFT output file"},
+     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,     0,           "name of overlap PFT output file"},
      {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile,   0,           "name of J \\dot E PFT output file"},
+     {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,           "name of moment PFT output file"},
      {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile,   0,           "name of DSIPFT output file"},
-     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,             "mesh file for surface-integral PFT"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,      0,           "mesh file for surface-integral PFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
      {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
 /**/
@@ -299,13 +301,16 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (OPFTFile)
-      WritePFTFile(BSD, OPFTFile, pftOptions, SCUFF_PFT_OVERLAP);
+      WritePFTFile(BSD, OPFTFile, pftOptions, BUFF_PFT_OVERLAP);
 
      if (JDEPFTFile)
-      WritePFTFile(BSD, JDEPFTFile, pftOptions, SCUFF_PFT_EP);
+      WritePFTFile(BSD, JDEPFTFile, pftOptions, BUFF_PFT_JDE);
+
+     if (MomentPFTFile)
+      WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
 
      if (DSIPFTFile)
-      WritePFTFile(BSD, DSIPFTFile, pftOptions, SCUFF_PFT_DSI);
+      WritePFTFile(BSD, DSIPFTFile, pftOptions, BUFF_PFT_DSI);
 
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/

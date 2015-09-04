@@ -61,6 +61,12 @@ namespace buff {
 // length of character strings for filenames, etc
 #define MAXSTR 200 
 
+// name of PFT methods
+#define BUFF_PFT_OVERLAP 0
+#define BUFF_PFT_DSI     1
+#define BUFF_PFT_JDE     2
+#define BUFF_PFT_MOMENTS 3
+
 /***************************************************************/
 /* SWGTet is a structure containing data on a single           */
 /* tetrahedron in the meshed geometry.                         */
