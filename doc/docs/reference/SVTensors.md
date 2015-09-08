@@ -1,23 +1,30 @@
-# Spatially-varying tensors in [[buff-em]]
+<h1> Spatially-varying permittivity tensors in
+     <span class="SC">buff-em</span>
+</h1>
+
 
 [[buff-em]] supports objects with arbitrary user-specified
 spatially-varying frequency-dependent permittivity tensors.
 These tensors are described by simple text files conventionally
 given the file extension `.SVTensor.`
 
+[TOC]
+
+# 1. Syntax of the `.SVTensor` file
+
 The `.SVTensor` file contains lines of the form 
 
 + `Eps =` *function of space and frequency*
 
-(to define a spatially-varying but isotropic permittivity)
+to define a spatially-varying but isotropic permittivity, or
 
 + `EpsXX =` *function of space and frequency*
 + `EpsXY =` *function of space and frequency*
 + ...
 + `EpsZZ =` *function of space and frequency*
 
-(to define the individual cartesian components of the
-permittivity tensor).
+to define the individual cartesian components of the
+permittivity tensor.
 
 If you leave any off-diagonal components unspecified,
 they will be assumed to be zero. If you do specify an 
@@ -29,18 +36,6 @@ set $\epsilon_{yx}=\epsilon_{xy}$.
 For diagonal components, if you specify `EpsXX` but omit
 specifications for `EpsYY` and `EpsZZ` then the code
 will set $\epsilon_{yy}=\epsilon_{zz}=\epsilon_{xx}.$
-
-For example, the constant permittivity tensor
-$\left(\begin{array}{ccc} 2+3i & 0.01 & 0    \\
-                          0.01 & 2+3i & 0.00 \\
-                          0    &    0 & 2.3i \\
- \end{array}\right)$
-may be described like this:
-
-````bash
-EPSXX=2+3i
-EPSXY=0.1
-````
 
 ## Functions and variables
 
@@ -67,47 +62,53 @@ Note that there is no need to refer to the frequency `w`
 here; the `GOLD` and `SIO2` permittivities will automatically
 by evaluated at the correct frequency.
 
-## Isotropic but spatially-varying permittivities
+# 2. Examples of `.SVTensor` files
 
-If your material is isotropic (permittivity tensor
-proportional to the 3x3 identity matrix), the `.SVTensor`
-file may consist of just a single line of the
-form `Eps = `<i>my permittivity function</i>`.
+## 1. An isotropic but spatially-varying permittivity
 
-````bash
- Eps = (5 + 4*i/w)*(1 + (x+5)/10)
-````
-
-For example, here's an isotropic material whose dielectric
-constant varies linearly as a function of the *x*-coordinate,
+Here's an isotropic material whose dielectric
+constant varies linearly as a function of the *z*-coordinate,
 from a value of $\epsilon=5+\frac{4i}{\omega}$ at
-$x=-5$ to a value of $\epsilon=10+\frac{8i}{\omega}$
-at $x=+5$:
+$z=-5$ to a value of $\epsilon=10+\frac{8i}{\omega}$
+at $z=+5$:
 
 ````bash
- Eps = (5 + 4*i/w)*(1 + (x+5)/10)
+ Eps = (5 + 4*i/w)*(1 + (z+5)/10 )
 ````
 
-## Non-isotropic permittivities
+## 2. A non-isotropic permittivity
+
+This example describes the constant permittivity tensor
+$\boldsymbol{\epsilon}=
+ \left(\begin{array}{ccc} 2+3i & 0.01 & 0    \\
+                          0.01 & 2+3i & 0.00 \\
+                          0    &    0 & 4.5i \\
+       \end{array}\right)$:
 
 ````bash
- Eps = 
+EPSXX=2+3i
+EPSXY=0.1
+EPSZZ=4+5i
 ````
 
-## Referring to
+<a name="CoatedSphere">
+## 3. A gold-coated SiO2 sphere
 
-In many cases your spatially-varying permittivity
+This example is used to describe a silicon dioxide sphere of 
+radius 2 um coated with a layer of gold.
+Note that `step` refers to the Heaviside step function.
 
-[[scuff-em]]-style
-The functions specified
+````bash
+ Eps = step(2-r)*MP_SIO2 + step(r-2)*MP_GOLD
+````
 
-may 
-`.SVTensor` file may
+## 4. A gold/SiO2 Janus particle
 
-## Material definitions in `.SVTensor` files
+In this case the material is gold at points above the *xy* plane
+and SiO2 at points below the *xy$ plane.
 
-Prior to the 
+````bash
+ Eps = step(z)*MP_GOLD + step(-z)*MP_SIO2
+````
 
-# Material definitions in `.SVTensor` files
-
-[scuffEMMaterials]:	http://homerreid.com/
+[scuffEMMaterials]:	http://homerreid.github.io/scuff-em-documentation/reference/Materials/
