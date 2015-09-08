@@ -1,0 +1,51 @@
+site_name: BUFF-EM documentation
+site_author: Homer Reid
+site_favicon: buffEM.ico
+
+repo_url: https://github.com/homerreid/buff-em/
+
+theme_dir: 'scuff-em-mkdocs-theme'
+
+markdown_extensions:
+    - wikilinks
+    - toc:
+        title: Table of Contents
+    - attr_list
+    - mdx_math:
+        enable_dollar_delimiter: True
+
+extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML','mathjaxhelper.js']
+
+pages:
+- SCUFF-EM documentation: 'index.md'
+- Examples:
+    - 'Casimir forces in a compact geometry':     'examples/CubeTorus.md'
+    - 'Casimir forces in a 1D extended geometry': 'examples/SiliconBeams/SiliconBeams.md'
+    - 'Casimir forces in a 2D extended geometry': 'examples/SiliconSlabs/SiliconSlabs.md'
+    - 'Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres': 'examples/SiO2Spheres/SiO2Spheres.md'
+    - 'Spatial distribution of heat flux from a warm tip over a cold substrate': 'examples/TipSubstrate/TipSubstrate.md'
+    - 'LDOS and dyadic Green functions above an infinite aluminum half-space': 'examples/HalfSpaceLDOS/HalfSpaceLDOS.md'
+- General reference:
+    - 'Top-level overview':        'reference/TopLevel.md'
+    - 'Installation':              'reference/Installing.md'
+    - 'Geometry descriptions':     'reference/Geometries.md'
+    - 'Material designations':     'reference/Materials.md'
+    - 'Geometric transformations': 'reference/Transformations.md'
+- Command-line application reference:
+    - 'General command-line reference': 'applications/GeneralReference.md'
+    - 'scuff-scatter':         'applications/scuff-scatter/scuff-scatter.md'
+    - 'scuff-transmission':    'applications/scuff-transmission/scuff-transmission.md'
+    - 'scuff-ldos':            'applications/scuff-ldos/scuff-ldos.md'
+    - 'scuff-tmatrix':         'applications/scuff-tmatrix/scuff-tmatrix.md'
+    - 'scuff-cas3D':           'applications/scuff-cas3D/scuff-cas3D.md'
+    - 'scuff-caspol':          'applications/scuff-caspol/scuff-caspol.md'
+    - 'scuff-neq':             'applications/scuff-neq/scuff-neq.md'
+    - 'scuff-RF':              'applications/scuff-RF/scuff-RF.md'
+    - 'scuff-static':          'applications/scuff-static/scuff-static.md'
+    - 'scuff-analyze':         'applications/scuff-analyze/scuff-analyze.md'
+- API reference:  
+    - 'libscuff':              'API/libscuff.md'
+- For developers:
+    - 'Implementation':        'forDevelopers/Implementation.md'
+    - 'Data Structures':       'forDevelopers/DataStructures.md'
+    - 'Documentation':         'forDevelopers/Documentation.md'
