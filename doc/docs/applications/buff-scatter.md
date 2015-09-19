@@ -1,90 +1,125 @@
-<h1> Solving electrostatics problems with
-     <span class="SC">scuff-static</span>
+<h1> Solving electromagnetic scattering problems with
+     <span class="SC">buff-scatter</span>
 </h1>
 
-[[scuff-static]] is a tool within the
-[[scuff-em]] code suite for solving
-a broad class of electrostatics problems.
+[[buff-scatter]] is a tool within the [[buff-em]] code suite
+for solving classical scattering problems involving
+user-specified incident fields impinging on a material
+geometry.
 
-The calculations that [[scuff-static]] can 
-perform include the following:
+To run a scattering calculation in [[buff-scatter]], you will
 
-+ Compute the capacitance matrix (i.e. the self- and mutual-
-capacitances) of a collection of conductors.
++ Create a [<span class="SC">buff-em</sc> geometry file][buffEMGeometries] describing your geometry. This will involve generating tetrahedral mesh representations of each object in your geometry and possibly writing a `.SVTensor` file to describe any objects with anisotropic and/or inhomogeneous permittivity.
 
-+ Compute the DC polarizability of a conducting or 
-dielectric body.
++ Specify the incident field that will impinge on your objects:
+  a plane wave, a gaussian beam, a point dipole radiator,
+  or some combination.
 
-+ Compute the electrostatic potential and field
-at arbitrary user-specified points in the vicinity 
-of conducting or dielectric bodies, with the  
-conductors maintained at arbitrary user-specified 
-potentials and (optionally) an arbitrary user-specified
-external forcing field.
++ Run [[buff-scatter]] with command-line options specifying 
+  the geometry, the incident fields, the frequencies at which you
+  wish to calculate, and the types of output you want to get back.
 
-+ Compute the *C-matrix*, a sort of electrostatic
-version of the 
-["T-matrix"](../scuff-tmatrix/scuff-tmatrix.md)
-used to characterize the scattering properties
-of bodies at nonzero frequencies. The C-matrix
-was shown in 
-[this paper](http://dx.doi.org/10.1103/PhysRevLett.114.151602)
-to be related to quantum-mechanical entanglement
-entropy.
+The types of output you can request from [[buff-scatter]] include
 
-As a technical detail, we note that the implementation of 
-[[scuff-static]] actually differs in some significant ways 
-from the other codes in the [[scuff-em]] suite; in particular,
-as compared to the [[scuff-em]] core library,
-[[scuff-static]] uses different basis functions and a 
-different formulation of the boundary-element method, as 
-appropriate for zero-frequency problems. (More specifically, 
-[[scuff-static]] expands
-surface electric charge densities on PEC and dielectric 
-surfaces using ``pulse'' basis functions, which are 
-constant on individual triangles and vanishing everywhere
-else.) However, from the implementation standpoint, it 
-turns out that the calculations needed to implement the 
-electrostatics calculations in [[scuff-static]] are a
-proper *subset* of the calculations already implemented 
-in [[scuff-em]]. Moreover, from the user's standpoint,
-the work needed to set up a [[scuff-static]] problem
-(create surface meshes, write geometry files, etc.)
-is similar to the setup needed for the nonzero-frequency 
-codes in the [[scuff-em]] suite.
-This is why it makes sense to package these codes together.
++ The components of the scattered and total electric and magnetic
+fields at an arbitrary list of evaluation points you provide.
 
-Here is a brief [technical memo](scuff-static.pdf)
-discussing the implementation of [[scuff-static]],
-including both the underlying BEM electrostatics formulation
-and the execution of the various types of calculation
-(capacitance, polarizability, etc.) that the code can do.
++ The absorbed power, scattered power, force, and torque for 
+each object in the geometry.
 
-[//]: ###################################################
-[//]: ###################################################
-[//]: ###################################################
++ Data on the electric and magnetic dipole moments induced
+  by the incident field on each object.
+
++ Visualization files plotting the distribution of induced
+current within each object.
 
 [TOC]
 
---------------------------------------------------
-
-# 1. What <span class="SC">scuff-neq</span> actually computes
-
---------------------------------------------------
-
 <a name="CommandLineOptions"></a>
-# 2. <span class="SC">scuff-static</span> command-line options
+# 1. <span class="SC">buff-neq</span> command-line options
 
---------------------------------------------------
+## Options defining the scattering problem
 
-<a name="OutputFiles"></a>
-# 3. <span class="SC">scuff-static</span> output files
+````
+--geometry MyGeometry.buffgeo
+````
+{.toc}
+
+Specifies the geometry input file.
+
+````
+--Omega      3.14
+--OmegaFile  MyOmegaFile
+````
+{.toc}
+
+Specifies the angular frequencies at which to
+run calculations. (Angular frequencies are interpreted
+in units of $c/1\,\mu\text{m}=3\cdot 10^{14} rad/sec.$)
+The `--Omega` option may be used more than once 
+to specify multiple frequencies. Alternatively,
+the `--OmegaFile` option may be used to specify the
+name of a file containing a list of frequencies (one per
+line) at which to run calculations.h
+
+## Options defining the incident field
+
+The options for specifying incident fields in
+[[buff-scatter]] are identical to those in [[scuff-scatter]],
+as described in detail on the page
+[Incident fields in <span class="SC">scuff-em</span>][IncidentFields].
+
+we refer you to the
+[<span class="SC">scuff-scatter</span> documentation][scuffScatter]
+for details, and here quote only the
+available options without commentary.
+
+````
+--pwDirection    nx ny nz
+--pwPolarization Ex Ey Ez
+
+--psStrength Px Py Pz
+--psLocation xx yy zz
+
+--gbDirection nx ny nz
+--gbPolarization Ex Ey Ez
+--gbCenter Cx Cy Cz
+--gbWaist W
+````
+{.toc}
+
+(As in [[scuff-scatter]], these options may occur multiple times 
+to define superpositions of multiple types of incident field.)
+
+## Options requesting scattered and total fields
+
+````
+ --EPFile MyEPFile
+````
+{.toc}
+
+Specifies a list of evaluation points at which to
+compute and report components of the scattered and total
+fields. This option may be specified more than once to 
+define multiple sets of field evaluation points. 
+
+The `--EPFile` in [[buff-scatter]] is identical to 
+that in [[scuff-scatter]]; for details, see the 
+[<span class="SC">scuff-scatter</span> documentation][scuffScatter]
+
+## Options requesting power, force, and torque (PFT) data
+
+````
+ --EPFile MyEPFile
+````
+
+````bash
+
 
 <a name="Examples"></a>
-# 4. Examples of calculations using <span class="SC">scuff-static</span>
+# 2. <span class="SC">buff-neq</span> examples
 
-+ [Polarizability of the platonic solids](../../examples/PlatonicSolids.md)
-
-+ [Self- and mutual-capacitance of irregularly shaped conductors](../../examples/PlatonicSolids.md)
-
-+ [Electrostatic fields in the vicinity of a complicated gate array](../../examples/
+buffEMGeometries:	       ../reference/Geometries.md
+SVTensorFiles:   	       ../reference/SVTensors.md
+[scuffScatter]:    	       http://homerreid.github.io/scuff-em-documentation/applications/scuff-scatter/scuff-scatter.md
+[IncidentFields]:              ../../reference/IncidentFields.md
