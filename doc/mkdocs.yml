@@ -19,9 +19,10 @@ extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX
 pages:
 - BUFF-EM documentation: 'index.md'
 - Examples:
-    - 'Power, force, and torque on a Janus particle irradiated by a plane wave':  'examples/JanusParticlePlaneWave/index.md'
+    - 'Power, force, and torque on spheres and Janus particles irradiated by plane waves':  'examples/JanusParticles/index.md'
     - 'Thermal radiation, self-propulsion and self-rotation of a Janus particle': 'examples/JanusParticleNEQ/index.md'
-    - 'Thermal self-rotation of a microscopic pinwheel':                          'examples/Pinwheel/index.md'
+    - 'Thermal self-rotation of a photon torpedo':                          'examples/PhotonTorpedo/index.md'
+    - 'Thermal self-rotation of a QED pinwheel':                          'examples/Pinwheel/index.md'
 - General reference:
     - 'Top-level overview':                     'reference/TopLevel.md'
     - 'Installation':                           'reference/Installing.md'

@@ -1,81 +1,126 @@
-# Top-level overview of [[scuff-em]]
+# Top-level overview of [[buff-em]]
 
-[[scuff-em]] is a free, open-source software 
-implementation of the boundary-element method (BEM)
-(or the "method of moments") of electromagnetic
-scattering. (More specifically, [[scuff-em]]
-implements the EFIE and PMCHWT formulations
-of the BEM using RWG basis functions.)
+[[buff-em]] is a free, open-source software
+implementation of the frequency-domain 
+volume-integral-equation (VIE) method of 
+classical electromagnetic
+scattering using [SWG basis functions][SWGPaper].
 
-[[scuff-em]] originated as a specialized tool
-for using BEM techniques to model
-fluctuation-induced electromagnetic phenomena---such as
-[Casimir forces](http://dx.doi.org/10.1103/PhysRevA.88.022514)
-and
-[radiative heat transfer](http://dx.doi.org/10.1103/PhysRevB.88.054305)---and 
-subsequently expanded into a general-purpose BEM solver targeting a
-variety of applications in nanophotonics.
+[[buff-em]] is similar in many ways to 
+[<span class="SC">scuff-em</sc>][scuffEM],
+which solves similar problems using the
+alternative surface-integral-equation (SIE)
+formalism. Some key differences between these
+codes are
 
-[[scuff-em]] consists of a [core library](../API/libscuff.md),
-implementing the basic BEM functionality, plus a large number 
-of specialized [application modules](#AvailableApplications) 
-designed for specific problems in science and engineering.
++ [[buff-em]] can handle bodies with inhomogeneous
+and/or anisotropic dielectric permittivity. In
+contrast, [[scuff-em]] can only handle homogeneous
+isotropic materials.
 
-[[scuff-em]] stands for **S**urface **CU**rrent/**F**ield **F**ormulation of 
++ [[buff-em]] requires scatterers to be described
+by volume (tetrahedral) meshes instead of 
+the surface (triangle) meshes used by [[scuff-em]].
+
++ [[buff-em]] does not aspire to solve the same
+breadth of problems that [[scuff-em]] does. 
+More specifically, [[buff-em]] is primarily
+intended for just two classes of problem: 
+**(a)** classical scattering of known incident
+fields from compact bodies (implemented by the
+command-line code 
+[<span class="SC">buff-scatter</span>][buffScatter], 
+and 
+**(b)** non-equilibrium fluctuational
+electrodynamics in the fluctuating-volume-current 
+approach---including radiative heat transfer, thermal 
+self propulsion/rotation, and non-equilibrium Casimir 
+forces---for one or more compact bodies (implemented
+by the command-line code
+[<span class="SC">buff-neq</span>][buffNEQ].
+
+(For more on similarities and differences between
+the two codes, see the document
+[Key differences between <span class="SC">buff-em</span>
+and <span class="SC">scuff-em</span>][BUFFvsSCUFF]).
+
+Like [[scuff-em]], [[buff-em]] consists of a 
+[core library](../API/libbuff.md),
+implementing the basic VIE functionality, plus
+the two specialized [application modules](#AvailableApplications) 
+mentioned above for scattering and non-equilibrium
+fluctuations.
+
+[[buff-em]] stands for **BU**ulk **F**ield **F**ormulation of 
 **E**lectro**M**agnetism. This is a reference to the underlying solution 
-methodology used by [[scuff-em]] and other BEM solvers, in which we solve 
-first for surface currents [including both electric (***K***) and 
-magnetic (***N***) currents, as cartooned in the [[scuff-em]] logo], 
-then use these currents to compute the scattered fields or other 
-quantities of interest.
+methodology used by [[buff-em]] and other VIE solvers, in which
+the primary goal of the solver is to compute the volume electric 
+current distribution throughout a compact body (which is
+locally proportional to the local bulk electric field,
+whereupon the name).
 
-The entire [[scuff-em]] suite is free software distributed 
-under the [GNU GPL][GNUGPL]. The source code for [[scuff-em]] 
-may be downloaded from the 
-[<span class="SC">scuff-em</span> GitHub page][GitHub]. 
+Like [[scuff-em]], the entire [[buff-em]] suite is free software 
+distributed under the [GNU GPL][GNUGPL]. The source code for
+[[buff-em]] may be downloaded from the 
+[<span class="SC">buff-em</span> GitHub page][GitHub]. 
 **The GitHub page is also the right place for questions, 
-bug reports, feature requests, and other discussion of [[scuff-em]].**
+bug reports, feature requests, and other discussion of [[buff-em]].**
 
-## Interfaces to [[scuff-em]]
+Note that [[buff-em]] requires [[scuff-em]], so you will need a
+working [[scuff-em]] installation on your system before you can 
+start using [[buff-em]].
 
-Access to the [[scuff-em]] computational engine is available
-via multiple interfaces.
+## Interfaces to [[buff-em]]
 
-The *command-line interface* consists of a large number
-of [command-line applications](#AvailableApplications) for
-running various types of standard calculations in computational
-physics. Using [[scuff-em]] in this way requires only
-that you learn the basic command-line options
+As is true for [[scuff-em]], the core computational engine 
+in [[buff-em]] may be accessed via multiple interfaces.
+
+The *command-line interface* consists of specialized
+[command-line applications](#AvailableApplications) for
+running specific calculations in computational
+physics. Using [[buff-em]] in this way requires only
+that you learn some basic command-line options;
+it should be possible to come quickly up to speed
+by following these
+[tutorial examples][Examples].
 
 The *application programming interface* consists of 
-[C++ and python APIs](../API/libscuff.md)
-that allow access to internal [[scuff-em]] data structures
+a [C++ API](../API/libbuff.md)
+that allows access to internal [[buff-em]] data structures
 and methods for maximal flexibility in implementing your
 own custom-designed physics codes.
 
-## Inputs to [[scuff-em]] calculations
+## Inputs to [[buff-em]] calculations
 
 Typical inputs to [[scuff-em]] calculations include
 
 + A [geometry file](Geometries.md) describing the scattering geometry
 
-+ An optional [list of geometric transformations](Transformations.md) 
++ For anisotropic or inhomogeneous bodies, an 
+  [`.SVTensor` file](SVTensors.md) describing
+  the spatially-varying components of the permittivity
+  tensor. ("SVTensor" stands for "spatially-varying tensor.")
+
++ Specification of the frequencies at which you want to 
+  perform calculations.
+
++ An optional 
+  [list of geometric transformations][Transformations]
   to be applied to the geometry, with calculations generally repeated
-  at each transformation
+  at each transformation. (The usage and syntax of transformations
+  in [[buff-em]] is identical to that in [[scuff-em]].)
 
-+ Specification of the frequencies (and, for extended geometries,
-  the Bloch vectors) at which you want to perform calculations
-
-+ For scattering codes: a specification of the incident fields
++ For scattering codes: a specification of the 
+  [IncidentFields][IncidentFields]. (Incident fields in 
+  in [[buff-em]] are handled the same way as in [[scuff-em]].)
 
 + Specifications of the output quantities you wish to get back: 
   field components at individual points in space, power/force/torque
-  information, Casimir quantities, heat-transfer rates, impedance 
-  parameters, capacitances, polarizabilities, etc.
+  information, Casimir quantities, heat-transfer rates, etc.
 
-## Outputs from [[scuff-em]] calculations
+## Outputs from [[buff-em]] calculations
 
-Typical outputs from [[scuff-em]] calculations include
+Typical outputs from [[buff-em]] calculations include
 
 + text-based data files reporting output quantities
 
@@ -88,51 +133,47 @@ Typical outputs from [[scuff-em]] calculations include
 
 ### Nanophotonics / electromagnetic scattering 
 
- + [<span class="SC">scuff-scatter</span>][scuff-scatter]
-> A general-purpose solver forproblems involving
+ + [<span class="SC">buff-scatter</span>][buffScatter]
+> A general-purpose solver for problems involving the 
+> scattering of known incident fields from one or more
+> compact objects.
 > Available outputs include: scattered and total fields
-> at arbitrary points in space; visualization of fields 
-> and surface currents; absorbed and scattered power;
-> force and torque (radiation pressure); induced dipole
-> or spherical multipole moments; and more.
-> 
-
- + [<span class="SC">scuff-transmission</span>][scuff-transmission]
-> A specialized solver for computing plane-wave transmission
-> in 2D extended geometries: thin films, perforated screens,
-> nanoparticle arrays, etc. 
-
- + [<span class="SC">scuff-tmatrix</span>][scuff-tmatrix]
-> A specialized code for computing the
-> [T-matrices](http://en.wikipedia.org/wiki/T-matrix_method)
-> of arbitrary compact scatterers.
+> at arbitrary points in space; absorbed and scattered 
+> power; force and torque (radiation pressure); and induced 
+> multipole moments.
 
 ### Fluctuation-induced interactions
 
-### RF / microwave engineering
+ + [<span class="SC">buff-neq</span>][buffNEQ]
+> An implementation of the fluctuating-volume-current
+> approach to non-equilibrium fluctuation-induced
+> interactions among compact objects.
+> Available outputs include: frequency-resolved or 
+> frequency-integrated rates of heat radiation or 
+> radiative heat transfer; non-equilibrium Casimir 
+> forces; self-propulsion and self-rotation of 
+> isolated bodies.
 
-### Electrostatics
+##Citing [[buff-em]]
 
-##Citing [[scuff-em]]
-
-If you find [[scuff-em]] useful for generating
+If you find [[buff-em]] useful for generating
 results included in publications, please consider citing both 
 **(a)** one of the papers discussing the implementation of
-[[scuff-em]], and 
+[[buff-em]], and
 **(b)** the URL for the code. For example, if you are writing
 in LaTeX, you might write something like this:
 
 ````tex
-Numerical computations were performed using {\sc scuff-em}, a free,
-open-source software implementation of the boundary-element 
-method~\cite{SCUFF1, SCUFF2}.
+Numerical computations were performed using {\sc buff-em}, a free,
+open-source software implementation of the 
+volume-integral-equation method~\cite{BUFF1, BUFF2}.
 ````
 
-Here the ``SCUFF1`` and ``SCUFF2``
+Here the ``BUFF1`` and ``BUFF2``
 references refer to the following ``.bibtex`` entries:
 
 ````tex
-@ARTICLE{SCUFF1,
+@ARTICLE{BUFF1,
 author = {{Homer Reid}, M.~T. and {Johnson}, S.~G.},
 title = "{Efficient Computation of Power, Force, and Torque in 
 BEM Scattering Calculations}",
@@ -145,14 +186,17 @@ year = 2013,
 month = jul,
 }
 
-@ARTICLE{SCUFF2,
-note="\texttt{http://homerreid.com/scuff-EM}"
+@ARTICLE{BUFF2,
+note="\texttt{https://github.com/HomerReid/buff-em}"
 }
 ````
 
 [GMSH]: http://www.geuz.org/gmsh
-[scuff-scatter]: ../applications/scuff-scatter/scuff-scatter.md
-[scuff-transmission]: ../applications/scuff-transmission/scuff-transmission.md
-[scuff-tmatrix]: ../applications/scuff-tmatrix/scuff-tmatrix.md
-[GNUGPL]: http://en.wikipedia.org/wiki/GNU_General_Public_License
-[GitHub]: https://github.com/HomerReid/scuff-em/
+[GNUGPL]:                            http://en.wikipedia.org/wiki/GNU_General_Public_License
+[GitHub]:                            https://github.com/HomerReid/buff-em/
+[scuffEM]:                           http://homerreid.github.io/scuff-em-documentation
+[SWGPaper]:                          http://dx.doi.org/10.1109/TAP.1984.1143193
+[buffScatter]:                       ../../applications/buff-scatter.md
+[buffNEQ]:                           ../../applications/buff-neq.md
+[Transformations]:                   http://homerreid.github.io/scuff-em-documentation/reference/Transformations
+[IncidentFields]:                    http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields

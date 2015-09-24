@@ -1,2 +1,5 @@
 SUBDIRS =            	\
- SiO2Spheres
+ SiO2Spheres		\
+ JanusParticles		\
+ PhotonTorpedoes	\
+ Pinwheels
