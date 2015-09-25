@@ -8,7 +8,7 @@ phenomena--specifically, for computing *radiative heat-transfer rates*
 and *non-equilibrium Casimir forces and torques* for bodies of 
 arbitrary shapes and arbitrary (linear, isotropic, piecewise 
 homogeneous) frequency-dependent permittivity and permeability.
-[[buff-cas3d]] implements the 
+[[buff-neq]] implements the 
 *fluctuating-volume current (FSC)* approach
 to numerical modeling of non-equilibrium fluctuation phenomena.
 
@@ -29,7 +29,7 @@ factors, to obtain the total heat-transfer rate or NEQ Casimir force.
 [What <span class="SC">buff-neq</span> actually computes](#WhatItComputes).)
 
 + As in [[scuff-neq]], you can specify an optional list of 
-[geometrical transformations](../../reference/Transformations.md) 
+[geometrical transformations][scuffTransformations]
 describing various displacements and rotations of the bodies 
 in your geometry; in this case you will get back values of the 
 frequency-resolved or frequency-integrated quantities for each 
@@ -74,9 +74,10 @@ the way they are computed by [[buff-neq]].)
 
 ### Common options
 
-[[buff-neq]] recognizes the following subset of the 
-[list of commonly accepted options to <span class="SC">buff-em</span> command-line codes][CommonOptions].
-
+[[buff-neq]] recognizes the following subset of the
+list of commonly accepted options to <span class="SC">buff-em</span> command-line codes; these all have the same meaning as 
+the [corresponding options in <span class="SC">scuff-em</span>][scuffOptions]. (In general, almost everything mentioned in the 
+[General reference for <span class="SC">scuff-em</span> command-line applications][scuffGeneralReference] pertains to [[buff-em]] command-line applications as well.)
  
   ````
 --geometry
@@ -202,10 +203,9 @@ you requested by specifying `--DSIPoints` or
 <a name="Examples"></a>
 # 3. Examples of calculations using <span class="SC">buff-neq</span>
 
-+ [Thermal radiation and self-propulsion of photon torpedoes](../examples/PhotonTorpedoes.md)
-+ [Thermal self-rotation of a QED pinwheel](../examples/Pinwheels.md)
++ [Thermal radiation and self-propulsion of photon torpedoes](../examples/PhotonTorpedoes/index.md)
++ [Thermal self-rotation of a QED pinwheel](../examples/Pinwheels/index.md)
 
-[buff-cas3D]:    ../buff-cas3D/buff-cas3D.md
-[EPFile]:        ../../applications/GeneralReference.md#EvaluationPoints
-[LogFiles]:      ../GeneralReference.md#LogFiles
-[CommonOptions]: ../GeneralReference.md#CommonOptions
+[CommonOptions]:                http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference#CommonOptions
+[scuffGeneralReference]:        http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference
+[scuffTransformations]:         http://homerreid.github.io/scuff-em-documentation/reference/Transformations

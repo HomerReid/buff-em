@@ -38,29 +38,21 @@ current within each object.
 <a name="CommandLineOptions"></a>
 # 1. <span class="SC">buff-neq</span> command-line options
 
-## Options defining the scattering problem
+### Common options
 
-````
---geometry MyGeometry.buffgeo
-````
-{.toc}
+[[buff-scatter]] recognizes the following subset of the
+list of commonly accepted options to [[buff-em]] command-line codes;
+these all have the same meaning as the
+[corresponding options in <span class="SC">scuff-em</span>][scuffOptions].
+ (In general, almost everything mentioned in the
+[General reference for <span class="SC">scuff-em</span> command-line applications][scuffGeneralReference] 
+pertains to [[buff-em]] command-line applications as well.)
 
-Specifies the geometry input file.
-
+````bash
+--geometry 
+--Omega
+--OmegaFile
 ````
---Omega      3.14
---OmegaFile  MyOmegaFile
-````
-{.toc}
-
-Specifies the angular frequencies at which to
-run calculations. (Angular frequencies are interpreted
-in units of $c/1\,\mu\text{m}=3\cdot 10^{14} rad/sec.$)
-The `--Omega` option may be used more than once 
-to specify multiple frequencies. Alternatively,
-the `--OmegaFile` option may be used to specify the
-name of a file containing a list of frequencies (one per
-line) at which to run calculations.h
 
 ## Options defining the incident field
 
@@ -169,7 +161,11 @@ use `--DSIMesh.`
 
 + [Power, force, and torque on spheres and Janus particles irradiated by plane waves](../examples/JanusParticles/index.md)
 
-buffEMGeometries:	       ../reference/Geometries.md
-SVTensorFiles:   	       ../reference/SVTensors.md
-[scuffScatter]:    	       http://homerreid.github.io/scuff-em-documentation/applications/scuff-scatter/scuff-scatter.md
-[IncidentFields]:              ../../reference/IncidentFields.md
+[buffEMGeometries]:	             ../reference/Geometries.md
+[SVTensorFiles]:   	             ../reference/SVTensors.md
+[scuffScatter]:    	             http://homerreid.github.io/scuff-em-documentation/applications/scuff-scatter/scuff-scatter.md
+[IncidentFields]:  	             http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields.md
+[CommonOptions]:                     http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference#CommonOptions
+[scuffGeneralReference]:             http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference
+[scuffTransformations]:              http://homerreid.github.io/scuff-em-documentation/reference/Transformations
+[scuffSIO2Spheres]:                  http://homerreid.github.io/scuff-em-documentation/examples/SiO2Spheres/SiO2Spheres/

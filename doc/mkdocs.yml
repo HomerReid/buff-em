@@ -21,7 +21,7 @@ pages:
 - Examples:
     - 'Power, force, and torque on spheres and Janus particles irradiated by plane waves':  'examples/JanusParticles/index.md'
     - 'Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres': 'examples/SiO2Spheres/index.md'
-    - 'Thermal self-rotation of a photon torpedo':                          'examples/PhotonTorpedo/index.md'
+    - 'Thermal self-rotation of a photon torpedo':                          'examples/PhotonTorpedoes/index.md'
     - 'Thermal self-rotation of a QED pinwheel':                          'examples/Pinwheels/index.md'
 - General reference:
     - 'Top-level overview':                     'reference/TopLevel.md'

@@ -59,12 +59,8 @@ You can adjust the fineness of the surface mesh by varying the `-clscale` parame
 (which stands for "characteristic length scale"); finer meshes will be more accurate 
 but will take longer to simulate.
 
-Next we create a [<span class="SC">scuff-em</span> geometry file][scuffEMGeometries]
-that will tell scuff-scatter about our geometry, including both the surface mesh 
-and the material properties (dielectric function) of the sphere. As a first example, 
-we'll use a dielectric model for silicon carbide that expresses the relative 
-permittivity as a rational function of ω; in this case we'll call the geometry 
-file `SiCSphere.scuffgeo.`
+Next we create a [<span class="SC">buff-em</span> geometry file][buffEMGeometries] that will tell [[buff-scatter]] about our geometry, including both the volume mesh and the material properties (dielectric function) of the sphere. As a first example, we'll use a dielectric model for silicon carbide that expresses the relative permittivity as a rational function of ω; in this case we'll call the geometry 
+file `SiCSphere_637.buffgeo.`
 
 ````bash 
 MATERIAL SiliconCarbide
@@ -79,7 +75,7 @@ MATERIAL SiliconCarbide
 ENDMATERIAL 
 
 OBJECT TheSphere
-        MESHFILE Sphere.msh
+        MESHFILE Sphere_637.msh
         MATERIAL SiliconCarbide
 ENDOBJECT
 ````
@@ -94,7 +90,8 @@ list of angular frequencies at which to run the scattering problem:
     10.0
 ````
 
-(We pause to note one subtlety here: Angular frequencies specified 
+(We pause to note one subtlety here: As in [[scuff-em]],
+angular frequencies specified 
 using the `--Omega` or `--OmegaFile` arguments are interpreted in 
 units of $c / 1 \mu$m = $3\cdot 10^{14}$ rad/sec.
 These are natural 
@@ -105,49 +102,43 @@ quantity $kR$ (wavenumber times radius) known as the
 "size parameter" in the Mie scattering literature. In contrast, 
 when specifying functions of angular frequency like `Eps(w)` in 
 `MATERIAL...ENDMATERIAL` sections of geometry files or in any other 
-[<span class="SC">scuff-em</span> material description][scuffEMMaterials], 
+[<span class="SC">buff-em</span> material description][SVTensors], 
 the `w` variable 
 is always interpreted in units of **1 `rad/sec`**, because these are 
 the units in which tabulated material properties and functional forms 
 for model dielectric functions are typically expressed.)
 
 Finally, we'll create a little text file called `Args` that will contain 
-a list of command-line options for [[scuff-scatter]]; these will include 
+a list of command-line options for [[buff-scatter]]; these will include 
 **(1)** a specification of the geometry, **(2)** the frequency list, 
-**(3)** the name of an output file for the power, force, and torque 
-**(4)** the name of a cache file for geometric data (this file doesn't 
-exist yet, but will be created by our first run of [[scuff-scatter]]), 
-and **(5)** a specification of the incident field.
+**(3)** the name of an output file for the power, force, and torque, 
+and **(4)** a specification of the incident field.
 
 ````bash
-    geometry SiCSphere.scuffgeo
+    geometry SiCSphere_637.buffgeo
     OmegaFile OmegaValues.dat
     PFTFile SiCSphere.PFT
     Cache Sphere.cache
     pwDirection 0 0 1
     pwPolarization 1 0 0
-    
 ````
 
-And now we just pipe this little file into the standard input of [[scuff-scatter]]:
+And now we just pipe this little file into the standard input of [[buff-scatter]]:
 
 ````bash
-    % scuff-scatter < Args 
+    % buff-scatter < Args 
 ````
 
-This produces the file `SiCSphere.PFT`, which contains one line per simulated 
-frequency; each line contains data on the scattered and total power, the force, 
-and the torque on the particle at that frequency. (Look at the first few lines
-of the file for a text description of how to interpret it.)
+This produces the file `SiCSphere_637.PFT`, which contains one line per simulated frequency; each line contains data on the scattered and total power, the force, and the torque on the particle at that frequency. (Look at the first few lines of the file for a text description of how to interpret it.)
 
-(On my fairly standard workstation (8 Xeon E5420 cores, 2.5 GHz), this calculation 
-takes a few minutes to run. You can monitor its progress by following the `scuff-scatter.log` 
+(On my fairly standard workstation, this calculation 
+takes a few minutes to run. You can monitor its progress by following the `buff-scatter.log` 
 file. Note that, during computationally-intensive operations such as the BEM matrix assembly, 
 the code should be using all available CPU cores on your workstation; if you find that this is 
 not the case (for example, by monitoring CPU usage using 
 [<span class="SC">htop</span>](http://htop.sourceforge.net)) 
 you may need to 
-[reconfigure and recompile with different openmp/pthreads configuration options.][scuffEMInstallation.shtml]
+[reconfigure and recompile with different openmp/pthreads configuration options.][../reference/Installing.md]
 
 Here's a comparison of the scuff-scatter results with the analytical Mie series, as computed 
 using [this Mathematica script.](Mie.math) [Like most Mie codes, this script computes the 
@@ -190,32 +181,10 @@ Now our data look like this:
 
 ![Gold data](GoldData.png)
 
-In some cases it's useful to look at how the induced surface currents vary over the surface of the object. 
-Let's re-run the SiC example, now at just the single angular frequency of ω=0.1, and ask for a surface current plot.
-
-````bash
-% scuff-scatter --geometry SiCSphere.scuffgeo --Omega 0.1 --Cache Sphere.cache --pwDirection 0 0 1 --pwPolarization 1 0 0 --PlotSurfaceCurrents
-````
-
-This produces a file named `SiCSphere.0.1.pp`, which we can open in gmsh like this:
-
-````bash
- % gmsh SiCSphere.0.1.pp
-````
-
-![Sphere surface currents](SphereSurfaceCurrents.png)
-
-[scuffEMGeometries]:                  ../../reference/Geometries.md
-[scuffEMMaterials]:                   ../../reference/Materials.md
-[scuffEMInstallation]:                ../../reference/Installation.md
-[scuffMie]:                           ../../reference/Installation.md
-
-[Mie scattering in <span class="SC">scuff-em</span>][scuffMie].
-For an example of a [[gmsh]] geometry file that can be used
-to produce both surface and volume meshes for the same
-body, see the worked tutorial example involving
-[QED pinwheels in <span class="SC">buff-em</span>][Pinwheels].
+[buffEMGeometries]:                   ../../reference/Geometries.md
+[buffEMInstallation]:                 ../../reference/Installation.md
+[buffMie]:                            ../../reference/Installation.md
 
 [scuffMie]:                           http://homerreid.github.io/scuff-em-documentation/examples/MieScattering
-[Pinwheels]:                          ../examples/Pinwheels/Pinwheels.md
+[Pinwheels]:                          ../Pinwheels/Pinwheels.md
 [buffAnalyze]:                        ../../applications/buff-analyze.md

@@ -196,7 +196,7 @@ note="\texttt{https://github.com/HomerReid/buff-em}"
 [GitHub]:                            https://github.com/HomerReid/buff-em/
 [scuffEM]:                           http://homerreid.github.io/scuff-em-documentation
 [SWGPaper]:                          http://dx.doi.org/10.1109/TAP.1984.1143193
-[buffScatter]:                       ../../applications/buff-scatter.md
-[buffNEQ]:                           ../../applications/buff-neq.md
+[buffScatter]:                       ../applications/buff-scatter.md
+[buffNEQ]:                           ../applications/buff-neq.md
 [Transformations]:                   http://homerreid.github.io/scuff-em-documentation/reference/Transformations
 [IncidentFields]:                    http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields

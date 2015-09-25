@@ -1,14 +1,14 @@
 # Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres
 
 In this example, we use [[buff-neq]] to reproduce the results
-of [this example from the <span class="SC">scuff-neq</span> documentation][scuffSIO2Spheres]:
-we will compute **(1)** the power radiated by a single SiO2 sphere, 
-and **(2)** the heat transfer and non-equilibrium Casimir force
-between two SiO2 spheres. 
+of [this example from the <span class="SC">scuff-neq</span> documentation][scuffSIO2Spheres].
+We will compute **(1)** the power radiated by a single SiO2 
+sphere, and **(2)** the heat transfer and non-equilibrium 
+Casimir force between two SiO2 spheres.
 
 The files for this example may be found in the 
 `share/buff-em/examples/SiO2Spheres` subdirectory
-of your [[scuff-em]] installation.
+of your [[buff-em]] installation.
 
 --------------------------------------------------
 ## [[gmsh]] geometry file and volume mesh for a single sphere
@@ -58,20 +58,21 @@ by default [[gmsh]]
 --------------------------------------------------
 ## [[buff-em]] geometry files
 
-The [[buff-em]] geometry file
-[`SiO2Sphere_637.scuffgeo`](SiO2Sphere_637.scuffgeo)
+The
+[<span class="SC">buff-em</span> geometry file][buffEMGeometries]
+[`SiO2Sphere_637.buffgeo`](SiO2Sphere_637.buffgeo)
 describes a single SiO2 sphere.
 
 The [[buff-em]] geometry files
-[`SiO2Spheres_637.scuffgeo`](SiO2Spheres_637.scuffgeo)
+[`SiO2Spheres_637.buffgeo`](SiO2Spheres_637.buffgeo)
 and
-[`SiO2Spheres_1727.scuffgeo`](SiO2Spheres_1727.scuffgeo)
+[`SiO2Spheres_1727.buffgeo`](SiO2Spheres_1727.buffgeo)
 each describe the same configuration: two SiO2 spheres
 separated by a center--center distance of 10 microns.
 You can visualize this configuration by typing e.g.
 
 ````bash
-% buff-analyze --geometry SiO2Spheres_1727.scuffgeo --WriteGMSHFiles
+% buff-analyze --geometry SiO2Spheres_1727.buffgeo --WriteGMSHFiles
 % gmsh SiO2Spheres_1727.pp
 ````
 
@@ -81,8 +82,8 @@ You can visualize this configuration by typing e.g.
 ## Spectral density of radiated power
 
 As described in the 
-[<span class="CodeName">scuff-neq</span> documentation][scuff-neq],
-[[scuff-neq]] computes the total power radiated by
+[<span class="CodeName">buff-neq</span> documentation][buffNEQ],
+[[buff-neq]] computes the total power radiated by
 finite-temperature objects as an integral over angular frequencies
 $\omega,$ in which the integrand involves a
 temperature-dependent Bose-Einstein factor 
@@ -91,18 +92,18 @@ To calculate this radiated-power flux at a given set
 of frequencies, we say
 
 ````bash
- % scuff-neq --geometry SiO2Sphere_501.scuffgeo --OmegaFile --PRad
+ % buff-neq --geometry SiO2Sphere_637.buffgeo --OmegaFile --PRad
 ````
 
 where [`OmegaFile`](OmegaFile) is a list of
-angular frequencies. (Here `--PRad` says that we 
+angular frequencies. (Here `--PRad` says that we
 are interested in the radiated power).
 This produces the file
-``SiO2Sphere_501.SiFlux``, which looks something
+``SiO2Sphere_637.SiFlux``, which looks something
 like this:
 
 ````bash
-# scuff-neq run on superhr2 (07/11/15::00:31:36)
+# buff-neq run on superhr2 (07/11/15::00:31:36)
 # data file columns: 
 # 1 transform tag
 # 2 omega 
@@ -118,10 +119,11 @@ As the file header says, the second column here
 is the angular frequency 
 in units of $\omega_0=3\cdot 10^{14}$ rad/sec
 and the fourth column is the dimensionless power
-flux. (The first column lists the 
-[geometrical transformation][Transformations]; since 
+flux. (The first column lists the
+[geometrical transformation][scuffTransformations];
+since 
 we didn't specify the `--transfile` option to 
-[[scuff-neq]], we have just a single geometric
+[[buff-neq]], we have just a single geometric
 configuration, labeled `DEFAULT`. The third 
 column identifies the source and destination objects;
 since this geometry only has a single object,
@@ -143,12 +145,12 @@ The plot is produced by [[gnuplot]] using
 --------------------------------------------------
 ## Spectral density of power transfer and non-equilibrium force
 
-Here's a [bash script](RunScript) that runs [[scuff-neq]]
+Here's a [bash script](RunScript) that runs [[buff-neq]]
 for both the coarsely-meshed and finely-meshed two-sphere
 geometry to compute the fluxes of power transfer
 and nonequilibrium force between the spheres. 
-Running the script produces files `SiO2Spheres_501.SIFlux`
-and `SiO2Spheres_1479.SIFlux.` Here are plots (produced
+Running the script produces files `SiO2Spheres_637.SIFlux`
+and `SiO2Spheres_1727.SIFlux.` Here are plots (produced
 by the same [[gnuplot]] script referenced above)
 of the heat-transfer flux from sphere 1 to sphere 2,
 and the force fluxes from sphere 1 to sphere 2 and
@@ -164,11 +166,11 @@ code referenced above).
 
 --------------------------------------------------
 
-[scuff-neq]:                          ../../applications/scuff-neq/scuff-neq.md
-[Transformations]:                    ../../reference/Transformations
+[buffNEQ]:                            ../../applications/buff-neq.md
+[buffEMGeometries]:                   ../../reference/Geometries.md
 [KruegerPaper]:                       http://dx.doi.org/10.1103/PhysRevB.86.115423
-[scuffSIO2Spheres]:                   http://homerreid.github.io/scuff-em-documentation/examples/SiO2Spheres/SiO2Spheres/
-[RenameMesh3D]:                       ../JanusParticles/JanusParticles.md#RenameMesh3D
+[RenameMesh3D]:                       ../JanusParticles/index.md#RenameMesh3D
 [buffAnalyze]:                        ../../applications/buff-analyze.md
 [Sphere637Image]:                     ../JanusParticles/Sphere637.png
 [Sphere1727Image]:                    ../JanusParticles/Sphere1727.png
+[scuffTransformations]:               http://homerreid.github.io/scuff-em-documentation/reference/Transformations

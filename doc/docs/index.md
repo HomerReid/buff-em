@@ -10,7 +10,7 @@
 * [Top-level overview](reference/TopLevel.md)
 * [Installation](reference/Installing.md)
 * [Geometry files](reference/Geometries.md)
-* [SVTensor files](reference/Materials.md)
+* [SVTensor files](reference/SVTensors.md)
 * [Key differences between <span class="SC">buff-em</sc> and <span class="SC">scuff-em</sc>](reference/BUFFvsSCUFF.md)
 
 ## Command-line application reference
@@ -33,8 +33,8 @@
 * [<span class="SC">buff-em</span>technical memo][memo]
 
 [buffEMLogo]:         img/buffEMLogo.png
-[buff-scatter]:       applications/buff-scatter/buff-scatter.md
-[buff-neq]:           applications/buff-neq/buff-neq.md
-[buff-analyze]:       applications/buff-analyze/buff-analyze.md
+[buff-scatter]:       applications/buff-scatter.md
+[buff-neq]:           applications/buff-neq.md
+[buff-analyze]:       applications/buff-analyze.md
 [libbuff]:            API/libbuff.md
 [memo]:               tex/buff-em-tex.md
