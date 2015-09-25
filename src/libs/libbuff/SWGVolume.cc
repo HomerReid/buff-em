@@ -19,7 +19,7 @@
 
 /*
  * SWGVolume.cc -- implementation of some methods in the SWGVolume
- *               -- class (this is the class formerly known as RWGObject)
+ *              -- class 
  *
  * homer reid    -- 3/2007
  */
@@ -105,7 +105,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
                            &WhichDir);
   if (!MeshFile)
    ErrExit("could not open file %s",MeshFileName);
-  Log("Found mesh file %s/%s",WhichDir,MeshFile);
+  Log("Found mesh file %s/%s",WhichDir,MeshFileName);
    
   /*------------------------------------------------------------*/
   /*- initialize simple fields ---------------------------------*/

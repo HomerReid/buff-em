@@ -125,11 +125,11 @@ AC_CONFIG_FILES([
  src/applications/buff-scatter/Makefile
  src/applications/buff-neq/Makefile
  src/unitTests/Makefile
- src/examples/Makefile
- src/examples/JanusParticles/Makefile
- src/examples/SiO2Spheres/Makefile
- src/examples/Pinwheels/Makefile
- src/examples/PhotonTorpedoes/Makefile
+ examples/Makefile
+ examples/JanusParticles/Makefile
+ examples/SiO2Spheres/Makefile
+ examples/Pinwheels/Makefile
+ examples/PhotonTorpedoes/Makefile
 ])
 AC_OUTPUT
 

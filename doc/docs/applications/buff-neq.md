@@ -202,10 +202,10 @@ you requested by specifying `--DSIPoints` or
 <a name="Examples"></a>
 # 3. Examples of calculations using <span class="SC">buff-neq</span>
 
++ [Thermal radiation and self-propulsion of photon torpedoes](../examples/PhotonTorpedoes.md)
++ [Thermal self-rotation of a QED pinwheel](../examples/Pinwheels.md)
+
 [buff-cas3D]:    ../buff-cas3D/buff-cas3D.md
 [EPFile]:        ../../applications/GeneralReference.md#EvaluationPoints
 [LogFiles]:      ../GeneralReference.md#LogFiles
-[SiO2Sphere]:    ../../examples/SiO2Spheres/SiO2Spheres.md
-[SiO2Spheres]:   ../../examples/SiO2Spheres/SiO2Spheres.md
-[TipSubstrate]:  ../../examples/TipSubstrate/TipSubstrate.md
 [CommonOptions]: ../GeneralReference.md#CommonOptions

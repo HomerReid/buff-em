@@ -1,13 +1,14 @@
 EXTRA_DIST=				\
- KrugerFormulas.jl			\
+ RunScript				\
  OmegaFile				\
  Plotter.gp				\
- SiO2Sphere_501.scuffgeo		\
- SiO2Spheres_1479.scuffgeo		\
- SiO2Spheres_501.scuffgeo		\
- Sphere_1479.msh			\
- Sphere_501.msh				\
+ SiO2Sphere_637.buffgeo			\
+ SiO2Spheres_637.buffgeo		\
+ Sphere_637.vmsh			\
+ Spheres.trans				\
  Sphere.geo
 
 pkgdatadir = $(datadir)/buff-em/examples/SiO2Spheres
 nodist_pkgdata_DATA = ${EXTRA_DIST}
+
+

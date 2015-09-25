@@ -107,8 +107,9 @@ int main(int argc, char *argv[])
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
-     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,     0,           "name of overlap PFT output file"},
+     {"PFTFile",       PA_STRING,  1, 1,       (void *)&JDEPFTFile,     0,           "name of PFT output file (computed by default JDEPFT method)"},
      {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile,   0,           "name of J \\dot E PFT output file"},
+     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,     0,           "name of overlap PFT output file"},
      {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,           "name of moment PFT output file"},
      {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile,   0,           "name of DSIPFT output file"},
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,      0,           "mesh file for surface-integral PFT"},

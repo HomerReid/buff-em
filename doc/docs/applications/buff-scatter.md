@@ -109,15 +109,65 @@ that in [[scuff-scatter]]; for details, see the
 
 ## Options requesting power, force, and torque (PFT) data
 
+````bash
+ --PFTFile   MyFile.PFT
 ````
- --EPFile MyEPFile
-````
+
+Requests that data on the absorbed and scattered power,
+force, and torque for all bodies in the geometry be
+written to the file `MyFile.PFT`. See the file header
+in the output file for details on how to interpret its
+contents.
+
 
 ````bash
+ --OPFTFile     MyFile.OPFT
+ --JDEPFTFile   MyFile.JDEPFT
+ --DSIPFTFile   MyFile.DSIPFT
+````
 
+These options are similar to `--PFTFile`, but they 
+request PFT calculations by specific algorithms: 
+the "overlap" (OPFT) method, the "J dot E" (JDEPFT) 
+method, or the "displaced surface-integral" (DSIPFT)
+method. Note that JDEPFT is the default, so 
+the options `--PFTFile` and `--JDEPFTFile` are
+actually synonymous (if you specify both, only
+one output file will be produced).
+
+````bash
+ --DSIRadius 5.0
+ --DSIPoints 302
+
+ --DSIMesh   MyBoundingMesh.msh
+````
+
+These options control the behavior of DSIPFT calculations.
+The surface integral may be evaluated in one of two
+ways: **(a)** by Lebedev cubature over a bounding sphere
+surrounding the object, or **(b)** using a user-supplied
+bounding surface mesh. 
+
+For case **(a)**, the bounding sphere radius is set
+by `--DSIRadius`, while the number of cubature points
+is set by `--DSIPoints`. Type `buff-scatter --help`
+to see list of allowed values for `--DSIPoints.`
+
+For case **(b)**, `MyBoundingMesh.msh` should be a
+[[gmsh]] mesh file describing a closed bounding
+surface discretized into triangles.
+
+Lebedev cubature generally yields better accuracy for 
+the same number of cubature points; however, if your 
+geometry contains closely-spaced objects
+which cannot be enclosed in a bounding sphere without
+also encompassing other objects, you will need to 
+use `--DSIMesh.`
 
 <a name="Examples"></a>
-# 2. <span class="SC">buff-neq</span> examples
+# 2. <span class="SC">buff-scatter</span> examples
+
++ [Power, force, and torque on spheres and Janus particles irradiated by plane waves](../examples/JanusParticles/index.md)
 
 buffEMGeometries:	       ../reference/Geometries.md
 SVTensorFiles:   	       ../reference/SVTensors.md
