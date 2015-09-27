@@ -179,7 +179,33 @@ and scattered *power*.]
 --------------------------------------------------
 ## A note on computation time
 
+As discussed [here][ComputationTimeNote], the first 
+calculation done by [[buff-em]] on any given geometry
+will be significantly slower than all subsequent 
+calculations (including the 2nd and subsequent
+frequencies in the `OmegaFile`, as well as any 
+subsequent [[buff-scatter]] or [[buff-neq]]
+runs you may do using the same object mesh, even
+if you change the material properties). The reason
+for this is that, when [[buff-em]] first assembles
+the self-interaction block of the system matrix for 
+a given object, it stores the most time-intensive 
+portions of the calculation for later reuse.
+(The data are stored in memory for reuse within the
+same run, and are also written to disk in the form of 
+a binary cache file for reuse in later runs).
 
+For the particular calculation described here,
+you can accelerate this process by downloading the
+(13 megabyte) cache file for the `Sphere_637.vmsh`
+from this link: 
+[`Sphere_637.cache`][http://homerreid.com/Sphere_637.cache].
+Put this file into your working directory when you
+run [[buff-scatter]], and the calculation
+will proceed much more quickly. 
+
+(For example, on my fairly fast workstation, computing
+the cache file takes 12 minutes, 
 
 (On my fairly standard workstation, this calculation
 takes a few minutes to run. You can monitor its progress by
@@ -232,4 +258,4 @@ Now our data look like this:
 [scuffMie]:                           http://homerreid.github.io/scuff-em-documentation/examples/MieScattering
 [Pinwheels]:                          ../Pinwheels/Pinwheels.md
 [buffAnalyze]:                        ../../applications/buff-analyze.md
-[buffAnalyze]:                        ../../applications/buff-analyze.md
+[ComputationTimeNote]:                ../../reference/BuffvsSCUFF.md#Caching
