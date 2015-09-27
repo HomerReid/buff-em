@@ -11,7 +11,7 @@ disparate materials. The files for this example are in the
 [[buff-em]] source distribution.
 
 --------------------------------------------------
-## [[gmsh]] geometry file and volume mesh for a single sphere
+## <span class="SC">gmsh</span> geometry file and volume mesh for a single sphere
 
 We begin by creating a 
 [<span class="SC">gmsh</span>](http://geuz.org/gmsh) 
@@ -37,7 +37,7 @@ to `-2` for a 2D (surface) mesh. The `-clscale 1.0` option
 sets the meshing fineness scale to be 1.0 (the default).
 
 <a name="RenameMesh3D">
-This produces a file named `Sphere.msh. To remind
+This produces a file named `Sphere.msh`. To remind
 myself that this is a volume mesh instead of a surface mesh, I
 like to rename the file extension to `.vmsh`, and I also like
 to change the base filename to read `Sphere_637` to remind 
@@ -52,15 +52,26 @@ little shell script called [`RenameMesh3D`](RenameMesh3D):
 
 which renames the file to `Sphere_637.vmsh`. (It invokes
 [<span class="SC">buff-analyze</span>][buffAnalyze] to 
+count the number of interior faces).
 
-![Sphere mesh](SphereMesh.png)
+![Sphere mesh](Sphere_637.png)
 
-You can adjust the fineness of the surface mesh by varying the `-clscale` parameter 
-(which stands for "characteristic length scale"); finer meshes will be more accurate 
+You can adjust the fineness of the surface mesh by varying 
+the `-clscale` parameter (which stands for "characteristic 
+length scale"); finer meshes will be more accurate 
 but will take longer to simulate.
 
-Next we create a [<span class="SC">buff-em</span> geometry file][buffEMGeometries] that will tell [[buff-scatter]] about our geometry, including both the volume mesh and the material properties (dielectric function) of the sphere. As a first example, we'll use a dielectric model for silicon carbide that expresses the relative permittivity as a rational function of ω; in this case we'll call the geometry 
-file `SiCSphere_637.buffgeo.`
+--------------------------------------------------
+## <span class="SC">buff-em</span> geometry file for a single sphere
+
+Next we create a 
+[<span class="SC">buff-em</span> geometry file][buffGeometries] 
+that will tell [[buff-scatter]] about our geometry, including both 
+the volume mesh and the material properties (dielectric function) 
+of the sphere. As a first example, we'll use a dielectric model for
+silicon carbide that expresses the relative permittivity as a
+rational function of $\omega$; in this case we'll call the
+geometry file `SiCSphere_637.buffgeo.`
 
 ````bash 
 MATERIAL SiliconCarbide
@@ -75,12 +86,28 @@ MATERIAL SiliconCarbide
 ENDMATERIAL 
 
 OBJECT TheSphere
-        MESHFILE Sphere_637.msh
+        MESHFILE Sphere_637.vmsh
         MATERIAL SiliconCarbide
 ENDOBJECT
 ````
 
-We create a simple file called [`OmegaValues.dat`](OmegaValues.dat) containing a 
+(Note that, because this particular example involves an isotropic
+and homogeneous (spatially constant) dielectric function, we
+can simply use the `MATERIAL` keyword to specify a 
+[<span class="SC">scuff-em</span> material property definition][scuffMaterials],
+just as we would in a [[scuff-em]] geometry file. To specify
+anisotropic and/or inhomogeneous materials in [[buff-em]], 
+we would instead use the `SVTensor` keyword, as documented on 
+the page 
+[Spatially-varying permittivity tensors in <span class="SC">buff-em</span>][buffMaterials].
+We will see an example of a `SVTensor` specification later
+in this tutorial example.)
+
+--------------------------------------------------
+## Defining frequencies at which to run computations
+
+Next, we create a simple file called
+[`OmegaFile`](OmegaFile) containing a
 list of angular frequencies at which to run the scattering problem:
 
 ````bash
@@ -104,21 +131,25 @@ when specifying functions of angular frequency like `Eps(w)` in
 `MATERIAL...ENDMATERIAL` sections of geometry files or in any other 
 [<span class="SC">buff-em</span> material description][SVTensors], 
 the `w` variable 
-is always interpreted in units of **1 `rad/sec`**, because these are 
-the units in which tabulated material properties and functional forms 
+is always interpreted in units of **1 `rad/sec`**, because these are
+the units in which tabulated material properties and functional forms
 for model dielectric functions are typically expressed.)
 
-Finally, we'll create a little text file called `Args` that will contain 
-a list of command-line options for [[buff-scatter]]; these will include 
-**(1)** a specification of the geometry, **(2)** the frequency list, 
-**(3)** the name of an output file for the power, force, and torque, 
-and **(4)** a specification of the incident field.
+--------------------------------------------------
+## Running the sphere computation
+
+Finally, we'll create a little text file called `Args` that will contain
+a list of command-line options for [[buff-scatter]]; these will include
+**(1)** a specification of the geometry, **(2)** the frequency list,
+**(3)** the name of an output file for the power, force, and torque,
+and **(4)** a specification of the incident field, which in
+this case is a linearly polarized *z*-traveling plane wave
+with **E**-field pointing in the *x* direction:
 
 ````bash
     geometry SiCSphere_637.buffgeo
-    OmegaFile OmegaValues.dat
+    OmegaFile OmegaFile
     PFTFile SiCSphere.PFT
-    Cache Sphere.cache
     pwDirection 0 0 1
     pwPolarization 1 0 0
 ````
@@ -129,25 +160,44 @@ And now we just pipe this little file into the standard input of [[buff-scatter]
     % buff-scatter < Args 
 ````
 
-This produces the file `SiCSphere_637.PFT`, which contains one line per simulated frequency; each line contains data on the scattered and total power, the force, and the torque on the particle at that frequency. (Look at the first few lines of the file for a text description of how to interpret it.)
+This produces the file `SiCSphere_637.PFT`, which contains one line
+per simulated frequency; each line contains data on the scattered
+and total power, the force, and the torque on the particle at that
+frequency. (Look at the first few lines of the file for a text description
+of how to interpret it.)
 
-(On my fairly standard workstation, this calculation 
-takes a few minutes to run. You can monitor its progress by following the `buff-scatter.log` 
-file. Note that, during computationally-intensive operations such as the BEM matrix assembly, 
-the code should be using all available CPU cores on your workstation; if you find that this is 
-not the case (for example, by monitoring CPU usage using 
-[<span class="SC">htop</span>](http://htop.sourceforge.net)) 
-you may need to 
-[reconfigure and recompile with different openmp/pthreads configuration options.][../reference/Installing.md]
-
-Here's a comparison of the scuff-scatter results with the analytical Mie series, as computed 
-using [this Mathematica script.](Mie.math) [Like most Mie codes, this script computes the 
-absorption and scattering *cross-sections*, which we multiply by the incoming beam flux ($\frac{1}{2Z_0}$ for a unit-strength plane wave in vacuum) to get 
-values for the absorbed and scattered *power*.]
+Here's a comparison of the [[buff-scatter]] results with the
+analytical Mie series, as computed
+using [this Mathematica script.](Mie.math) [Like most Mie codes, 
+this script computes the absorption and scattering *cross-sections*, 
+which we multiply by the incoming beam flux ($\frac{1}{2Z_0}$ for a 
+unit-strength plane wave in vacuum) to get values for the absorbed 
+and scattered *power*.]
 
 ![Silicon carbide data plot](SiCData.png)
 
-Now let's redo the calculation for a sphere made of gold instead of silicon carbide.  In this case we will name our scuff-em geometry file `GoldSphere.scuffgeo`:
+--------------------------------------------------
+## A note on computation time
+
+
+
+(On my fairly standard workstation, this calculation
+takes a few minutes to run. You can monitor its progress by
+following the `buff-scatter.log` file. Note that, during
+computationally-intensive operations such as the VIE matrix
+assembly, the code should be using all available CPU cores
+on your workstation; if you find that this is
+not the case (for example, by monitoring CPU usage using
+[<span class="SC">htop</span>](http://htop.sourceforge.net))
+you may need to
+[reconfigure and recompile with different openmp/pthreads configuration options.][../../reference/Installing.md]
+
+--------------------------------------------------
+## Validating results for a gold sphere
+
+Now let's redo the calculation for a sphere made of gold
+instead of silicon carbide.  In this case we will name our
+[[buff-em]] geometry file `GoldSphere.scuffgeo`:
 
 ````bash
     MATERIAL Gold
@@ -157,34 +207,29 @@ Now let's redo the calculation for a sphere made of gold instead of silicon carb
     ENDMATERIAL
 
     OBJECT TheSphere
-        MESHFILE Sphere.msh
+        MESHFILE Sphere_637.vmsh
         MATERIAL Gold
     ENDOBJECT
     
 ````
 
-Since most of the command-line arguments to [[scuff-scatter]] will be the same as before, 
-we can reuse the same `Args` file, with the options that need to be given new values 
-specified on the command line:
+Since most of the command-line arguments to [[buff-scatter]] will
+be the same as before, we can reuse the same `Args` file, with the
+options that need to be given new values specified on the command line:
 
 ````bash
-% scuff-scatter --geometry GoldSphere.scuffgeo --PFTFile GoldSphere.PFT < Args
+% buff-scatter --geometry GoldSphere.scuffgeo --PFTFile GoldSphere.PFT < Args
     
 ````
-
-(Note that we don't have to change the name of the cache file specified with the `Cache` 
-option; because we are using the same surface mesh as before, and because 
-[cached geometric data in <span class="SC">scuff-em</span> are independent of material properties](http://homerreid.com/scuff-em/reference/scuffEMMisc.shtml#Caching), 
-we can take advantage of geometric data computed during the earlier run for the silicon carbide sphere.)
 
 Now our data look like this:
 
 ![Gold data](GoldData.png)
 
-[buffEMGeometries]:                   ../../reference/Geometries.md
-[buffEMInstallation]:                 ../../reference/Installation.md
-[buffMie]:                            ../../reference/Installation.md
+[buffGeometries]:                     ../../reference/Geometries.md
+[buffMaterials]:                      ../../reference/SVTensors.md
 
 [scuffMie]:                           http://homerreid.github.io/scuff-em-documentation/examples/MieScattering
 [Pinwheels]:                          ../Pinwheels/Pinwheels.md
+[buffAnalyze]:                        ../../applications/buff-analyze.md
 [buffAnalyze]:                        ../../applications/buff-analyze.md

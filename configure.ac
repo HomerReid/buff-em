@@ -126,6 +126,7 @@ AC_CONFIG_FILES([
  src/applications/buff-neq/Makefile
  src/unitTests/Makefile
  examples/Makefile
+ examples/MieScattering/Makefile
  examples/JanusParticles/Makefile
  examples/SiO2Spheres/Makefile
  examples/Pinwheels/Makefile

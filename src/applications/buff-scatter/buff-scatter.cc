@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
 
   char *JPlotFile=0;
 
+  char *PFTFile       = 0;
   char *OPFTFile      = 0;
   char *JDEPFTFile    = 0;
   char *MomentPFTFile = 0;
@@ -107,12 +108,12 @@ int main(int argc, char *argv[])
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
 /**/
-     {"PFTFile",       PA_STRING,  1, 1,       (void *)&JDEPFTFile,     0,           "name of PFT output file (computed by default JDEPFT method)"},
-     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile,   0,           "name of J \\dot E PFT output file"},
-     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,     0,           "name of overlap PFT output file"},
+     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,           "name of PFT output file (computed by default JDEPFT method)"},
+     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile, 0,           "name of J \\dot E PFT output file"},
+     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,           "name of overlap PFT output file"},
      {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,           "name of moment PFT output file"},
-     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile,   0,           "name of DSIPFT output file"},
-     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,      0,           "mesh file for surface-integral PFT"},
+     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,           "name of DSIPFT output file"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,           "mesh file for surface-integral PFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
      {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
 /**/
@@ -301,11 +302,14 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
-     if (OPFTFile)
-      WritePFTFile(BSD, OPFTFile, pftOptions, BUFF_PFT_OVERLAP);
+     if (PFTFile)
+      WritePFTFile(BSD, PFTFile, pftOptions, BUFF_PFT_JDE);
 
      if (JDEPFTFile)
       WritePFTFile(BSD, JDEPFTFile, pftOptions, BUFF_PFT_JDE);
+
+     if (OPFTFile)
+      WritePFTFile(BSD, OPFTFile, pftOptions, BUFF_PFT_OVERLAP);
 
      if (MomentPFTFile)
       WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
