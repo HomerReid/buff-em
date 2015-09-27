@@ -1,8 +1,0 @@
-#!/bin/bash
-
-SCUFF=/home/homer/work/scuff-em-installation
-
-export LDFLAGS="${LDFLAGS} -L${SCUFF}/lib"
-export CPPFLAGS="${CPPFLAGS} -I${SCUFF}/include/scuff-em"
-
-sh autogen.sh --prefix=/home/homer/work/buff-em-installation
