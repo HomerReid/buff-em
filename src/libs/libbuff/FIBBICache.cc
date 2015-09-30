@@ -122,7 +122,7 @@ FIBBICache::FIBBICache(char *MeshFileName)
   if (MeshFileName)
    { 
      char CacheFileName[MAXSTR];
-     int Status=0;
+     int Status=1;
 
      // first look for ${BUFF_CACHE_DIR}/MeshFile.cache 
      char *CacheDir=getenv("BUFF_CACHE_DIR");

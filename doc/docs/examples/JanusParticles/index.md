@@ -1,13 +1,9 @@
-# Plane-wave scattering from spheres and Janus particles
+# Mie scattering in [[buff-em]]
 
 In this example we use [[buff-scatter]] to solve the canonical textbook
 problem of *Mie scattering*---the scattering of a plane wave
-from a dielectric sphere---then take advantage of [[buff-em]]'s
-support for inhomogeneous materials to study more complicated
-scatterers, including spheres with continuously-varying permittivity
-and Janus particles consisting of conjoined hemispheres of
-disparate materials. The files for this example are in the 
-`share/buff-em/examples/JanusParticles` subdirectory of the 
+from a dielectric sphere. The files for this example are in the 
+`share/buff-em/examples/MieScattering` subdirectory of the 
 [[buff-em]] source distribution.
 
 --------------------------------------------------
@@ -118,7 +114,7 @@ list of angular frequencies at which to run the scattering problem:
 ````
 
 (We pause to note one subtlety here: As in [[scuff-em]],
-angular frequencies specified 
+angular frequencies specified
 using the `--Omega` or `--OmegaFile` arguments are interpreted in 
 units of $c / 1 \mu$m = $3\cdot 10^{14}$ rad/sec.
 These are natural 
@@ -148,8 +144,8 @@ with **E**-field pointing in the *x* direction:
 
 ````bash
     geometry SiCSphere_637.buffgeo
-    OmegaFile OmegaFile
     PFTFile SiCSphere.PFT
+    OmegaFile OmegaFile
     pwDirection 0 0 1
     pwPolarization 1 0 0
 ````
@@ -174,7 +170,7 @@ which we multiply by the incoming beam flux ($\frac{1}{2Z_0}$ for a
 unit-strength plane wave in vacuum) to get values for the absorbed 
 and scattered *power*.]
 
-![Silicon carbide data plot](SiCData.png)
+![Silicon carbide data plot](SiCData.buff-scatter.png)
 
 --------------------------------------------------
 ## A note on computation time
@@ -199,24 +195,24 @@ For the particular calculation described here,
 you can accelerate this process by downloading the
 (13 megabyte) cache file for the `Sphere_637.vmsh`
 from this link: 
-[`Sphere_637.cache`][http://homerreid.com/Sphere_637.cache].
+[`Sphere_637.cache`](http://homerreid.com/Sphere_637.cache).
 Put this file into your working directory when you
 run [[buff-scatter]], and the calculation
 will proceed much more quickly. 
 
-(For example, on my fairly fast workstation, computing
-the cache file takes 12 minutes, 
+For example, on my (fairly fast) laptop, computing
+the cache file takes 12 minutes, after which computing
+the PFT at each individual frequency takes about 20 seconds.
 
-(On my fairly standard workstation, this calculation
-takes a few minutes to run. You can monitor its progress by
-following the `buff-scatter.log` file. Note that, during
+You can monitor the progress of the calculation by following 
+the `buff-scatter.log` file. Note that, during
 computationally-intensive operations such as the VIE matrix
 assembly, the code should be using all available CPU cores
 on your workstation; if you find that this is
 not the case (for example, by monitoring CPU usage using
 [<span class="SC">htop</span>](http://htop.sourceforge.net))
 you may need to
-[reconfigure and recompile with different openmp/pthreads configuration options.][../../reference/Installing.md]
+[reconfigure and recompile with different openmp configuration options.](../../reference/Installing.md)
 
 --------------------------------------------------
 ## Validating results for a gold sphere
