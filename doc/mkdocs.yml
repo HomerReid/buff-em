@@ -19,10 +19,11 @@ extra_javascript: ['https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX
 pages:
 - BUFF-EM documentation: 'index.md'
 - Examples:
-    - 'Power, force, and torque on spheres and Janus particles irradiated by plane waves':  'examples/JanusParticles/index.md'
+    - 'Mie scattering':  'examples/MieScattering/index.md'
+    - 'Power, force, and torque on a Janus particle irradiated by a plane wave':  'examples/JanusParticles/index.md'
     - 'Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres': 'examples/SiO2Spheres/index.md'
-    - 'Thermal self-rotation of a photon torpedo':                          'examples/PhotonTorpedoes/index.md'
-    - 'Thermal self-rotation of a QED pinwheel':                          'examples/Pinwheels/index.md'
+    - 'Thermal self-rotation of photon torpedoes':                          'examples/PhotonTorpedoes/index.md'
+    - 'Thermal self-rotation of QED pinwheels':                          'examples/Pinwheels/index.md'
 - General reference:
     - 'Top-level overview':                     'reference/TopLevel.md'
     - 'Installation':                           'reference/Installing.md'

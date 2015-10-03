@@ -113,14 +113,14 @@ EpsSiC[w_]:=Module[
   EpsInf * ( w^2 + a1*I*w + a0 ) / ( w^2 + b1*I*w + b0)
 ];
 
-EpsConst[w_] := 10+10*I;
+EpsConst[w_] := 10+1*I;
 
 (***********************************************************************)
 (* main body of the mathematica script *********************************)
 (***********************************************************************)
 
-F=OpenWrite["Gold.Mie", PageWidth->Infinity, FormatType->OutputForm];
-Eps[w_]:=EpsGold[w];
+F=OpenWrite["Eps10P1I.Mie", PageWidth->Infinity, FormatType->OutputForm];
+Eps[w_]:=EpsConst[w];
 
 DX=Exp[Log[10]/20.0];
 For[

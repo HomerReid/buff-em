@@ -79,4 +79,5 @@ variable:
 % export GOMP_CPU_AFFINITY=0-7
 ````
 
-[scuffEMInstallation]:               http://homerreid.github.io/scuff-em-documentation/reference/Installing.md
+[scuffEMInstallation]:               http://homerreid.github.io/scuff-em-documentation/reference/Installing
+[GitHub]:                            http://github.com/HomerReid/buff-em

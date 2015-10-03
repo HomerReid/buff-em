@@ -43,20 +43,26 @@ The user-defined *function of space and frequency* in the
 definition of permittivity components is a character string
 that may refer to any of the following variables:
 
-| `w`          | angular frequency in units of 3e14 rad/sec
-| `x,y,z`      | cartesian coordinates
-| `r,Theta,Phi`| spherical coordinates
++ `w`           (the angular frequency in units of 3e14 rad/sec)
++ `x,y,z`       (cartesian coordinates of points in space)
++ `r,Theta,Phi` (spherical coordinates of points in space)
 
 ### Referring to [[scuff-em]] material designations
 
-In many cases your permittivity functions will want to
-refer to
+In many cases your permittivity functions will want to refer to
 [<span class="SC">scuff-em</span> material designations][scuffEMMaterials]
 describing frequency-dependent homogeneous isotropic materials.
 You can do this by including the string `MP_MATNAME`
 in the function definition, where `MATNAME` is the name
 of the [[scuff-em]] material.
-For example, here
+For example, here is a description of a material
+tensor that varies continuously from 100% gold to 
+100% silicon dioxide as the *z* coordinate runs
+from 0 to 1:
+
+````bash
+ Eps = MP_SIO2 * z + MP_GOLD*(1-z)
+````
 
 Note that there is no need to refer to the frequency `w` 
 here; the `GOLD` and `SIO2` permittivities will automatically
@@ -91,7 +97,7 @@ EPSXY=0.1
 EPSZZ=4+5i
 ````
 
-<a name="CoatedSphere">
+<a name="CoatedSphere"></a>
 ## 3. A gold-coated SiO2 sphere
 
 This example is used to describe a silicon dioxide sphere of 
@@ -105,7 +111,7 @@ Note that `step` refers to the Heaviside step function.
 ## 4. A gold/SiO2 Janus particle
 
 In this case the material is gold at points above the *xy* plane
-and SiO2 at points below the *xy$ plane.
+and SiO2 at points below the *xy* plane.
 
 ````bash
  Eps = step(z)*MP_GOLD + step(-z)*MP_SIO2

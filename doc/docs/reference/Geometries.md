@@ -7,7 +7,7 @@ that are conventionally given the file extension `.buffgeo`.
 
 [TOC]
 
-# 1. Syntax of the `.SVTensor` file
+# 1. Syntax of the `.buffgeo` file
 
 The `.buffgeo` file consists of one or more sections,
 delineated by the keywords `OBJECT...ENDOBJECT.`
@@ -55,7 +55,7 @@ The alternative `SVTENSOR` keyword is used for inhomogeneous
 and/or anisotropic materials. (It stands for "spatially-varying
 tensor.") In this case, `MyMaterial.SVTensor`
 should be a 
-[<span class="SC">buff-em</span> spatially-varying tensor file][SVTensors.md]
+[<span class="SC">buff-em</span> spatially-varying tensor file][SVTensors]
 present either in the current working directory or in the search
 path defined by the environment variable `BUFF_SVTENSOR_PATH`.
 
@@ -80,7 +80,7 @@ ENDOBJECT
 
 The file `CoatedSphere.SVTensor` is described [here](SVTensors.md#CoatedSphere).
 
-## b. Two gold spheres, described by the same volume mesh but separated 3 length units in the *z* direction:
+## b. Two gold spheres, described by the same volume mesh but separated 3 length units in the *z* direction
 
 ````bash
 MATERIAL GOLD
@@ -103,3 +103,4 @@ ENDOBJECT
 
 
 [scuffEMMaterials]:	http://homerreid.github.io/scuff-em-documentation/reference/Materials/
+[SVTensors]:       	SVTensors.md

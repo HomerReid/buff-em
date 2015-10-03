@@ -37,7 +37,7 @@ approach---including radiative heat transfer, thermal
 self propulsion/rotation, and non-equilibrium Casimir 
 forces---for one or more compact bodies (implemented
 by the command-line code
-[<span class="SC">buff-neq</span>][buffNEQ].
+[<span class="SC">buff-neq</span>][buffNEQ]).
 
 (For more on similarities and differences between
 the two codes, see the document
@@ -82,7 +82,7 @@ physics. Using [[buff-em]] in this way requires only
 that you learn some basic command-line options;
 it should be possible to come quickly up to speed
 by following these
-[tutorial examples][Examples].
+[tutorial examples](../index.md#Examples).
 
 The *application programming interface* consists of 
 a [C++ API](../API/libbuff.md)
@@ -111,7 +111,7 @@ Typical inputs to [[scuff-em]] calculations include
   in [[buff-em]] is identical to that in [[scuff-em]].)
 
 + For scattering codes: a specification of the 
-  [IncidentFields][IncidentFields]. (Incident fields in 
+  [Incident fields][IncidentFields]. (Incident fields in 
   in [[buff-em]] are handled the same way as in [[scuff-em]].)
 
 + Specifications of the output quantities you wish to get back: 
@@ -198,5 +198,7 @@ note="\texttt{https://github.com/HomerReid/buff-em}"
 [SWGPaper]:                          http://dx.doi.org/10.1109/TAP.1984.1143193
 [buffScatter]:                       ../applications/buff-scatter.md
 [buffNEQ]:                           ../applications/buff-neq.md
+[BUFFvsSCUFF]:                       ../reference/BUFFvsSCUFF.md
+[Examples]:                          ../../examples/index.md
 [Transformations]:                   http://homerreid.github.io/scuff-em-documentation/reference/Transformations
 [IncidentFields]:                    http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields

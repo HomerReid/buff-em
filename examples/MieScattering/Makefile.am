@@ -1,11 +1,13 @@
 EXTRA_DIST=				\
  RenameMesh3D                           \
  OmegaFile				\
- Sphere_637.vmsh			\
- Sphere_1727.vmsh			\
+ Sphere_677.vmsh			\
+ Sphere_1675.vmsh			\
  Mie.math             			\
- SiCSphere_637.buffgeo			\
- GoldSphere_637.buffgeo			\
+ SiCSphere_677.buffgeo			\
+ GoldSphere_677.buffgeo			\
+ SiCSphere_1675.buffgeo			\
+ GoldSphere_1675.buffgeo		\
  Sphere.geo
 
 pkgdatadir = $(datadir)/buff-em/examples/MieScattering
