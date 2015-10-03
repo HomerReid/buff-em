@@ -27,7 +27,6 @@
 
 #include "buff-scatter.h"
 
-
 #define ABSTOL   0.0
 #define RELTOL   5.0e-2
 #define MAXEVALS 20000
@@ -36,6 +35,12 @@
 
 using namespace buff;
 using namespace scuff;
+
+namespace buff {
+void GetMoments(SWGGeometry *G, int no, cdouble Omega,
+                HVector *JVector,
+                cdouble p[3], cdouble m[3], cdouble Qp[3]);
+               }
 
 /***************************************************************/
 /* compute scattered and total fields at a user-specified list */
@@ -165,6 +170,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+#if 0
 void WriteMomentFile(BSData *BSD, char *FileName)
 {
   SWGGeometry *G    = BSD->G;
@@ -198,6 +204,35 @@ void WriteMomentFile(BSData *BSD, char *FileName)
                 real(M[0]),imag(M[0]),
                 real(M[1]),imag(M[1]),
                 real(M[2]),imag(M[2]));
+   };
+  fclose(f);
+  
+}
+#endif
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void WriteMomentFile(BSData *BSD, char *FileName)
+{
+  SWGGeometry *G    = BSD->G;
+  HVector *JVector  = BSD->J;
+  cdouble Omega     = BSD->Omega;
+
+  FILE *f=fopen(FileName,"a");
+  for(int no=0; no<G->NumObjects; no++)
+   { 
+     cdouble p[3], m[3], Qp[3];
+     GetMoments(G, no, Omega, JVector, p, m, Qp);
+
+     fprintf(f,"%s %s ",z2s(Omega),G->Objects[no]->Label);
+     fprintf(f,"%e %e ",real(p[0]),imag(p[0]));
+     fprintf(f,"%e %e ",real(p[1]),imag(p[1]));
+     fprintf(f,"%e %e ",real(p[2]),imag(p[2]));
+     fprintf(f,"%e %e ",real(m[0]),imag(m[0]));
+     fprintf(f,"%e %e ",real(m[1]),imag(m[1]));
+     fprintf(f,"%e %e ",real(m[2]),imag(m[2]));
+     fprintf(f,"\n");
    };
   fclose(f);
   
