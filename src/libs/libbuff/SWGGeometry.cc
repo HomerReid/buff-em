@@ -164,13 +164,13 @@ SWGVolume *ParseObjectSection(FILE *f, int *LineNum, char *Label, char **pErrMsg
 /*  MESH__MyMesh__MAT__MatProp                                 */
 /*  MESH__MyMesh__SVT__SVTName                                 */
 /***************************************************************/
-void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
+bool ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
 {
   // check for a special geometry file name, which
   //  begins with MESH__
   int N=strlen(GeoFileName);
   if ( N<7 || strncmp(GeoFileName,"MESH__",6) )
-   return;
+   return false;
 
   char GFNCopy[MAXSTR];
   strncpy(GFNCopy, GeoFileName+6, MAXSTR);
@@ -204,6 +204,8 @@ void ProcessSpecialBUFFGeoFileName(const char *GeoFileName)
   fprintf(f,"ENDOBJECT\n");
   fclose(f);
 
+  return true;
+
 }
 
 /***********************************************************************/
@@ -234,7 +236,9 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   /***************************************************************/
   /* try to open input file **************************************/
   /***************************************************************/
-  ProcessSpecialBUFFGeoFileName(pGeoFileName);
+  if (ProcessSpecialBUFFGeoFileName(pGeoFileName))
+   GeoFileName=vstrappend(GeoFileName,".buffgeo");
+
   FILE *f=fopen(GeoFileName,"r");
   if (!f)
    ErrExit("could not open %s",GeoFileName);
