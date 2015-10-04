@@ -237,8 +237,8 @@ char *SVTensor::Parse(FILE *f)
         else 
          for(int n=0; n<2; n++)
           { // the user can specify either e.g. EpsXY or Eps12
-            if( q[n]>='X' && q[n]<='Z')
-             MN[n] = q[n] - 'X';
+            if( toupper(q[n])>='X' && toupper(q[n])<='Z')
+             MN[n] = toupper(q[n]) - 'X';
             else if (q[n]>='1' && q[n]<='3')
              MN[n] = q[n] - '1';
             else 

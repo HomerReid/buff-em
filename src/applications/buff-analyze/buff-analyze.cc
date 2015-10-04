@@ -200,6 +200,69 @@ void WriteCache(SWGVolume *O, int NumChunks=1, int WhichChunk=0)
 }
 
 /***************************************************************/
+/* report permittivity at user-specified (Omega, X, Y, Z)      */
+/***************************************************************/
+void GetPermittivity(char *GeoFile, cdouble Omega, double XYZ[3])
+{
+   SWGGeometry *G = new SWGGeometry(GeoFile);
+   printf("Permittivities at (Omega, x, y, z)=(%g,%g,%g,%g): \n",
+           real(Omega),XYZ[0],XYZ[1],XYZ[2]);
+
+   FILE *f=vfopen("%s.permittivity","r",GetFileBase(GeoFile));
+   if (f==0)
+    { f=vfopen("%s.permittivity","w",GetFileBase(GeoFile));
+      fprintf(f,"# data file columns: \n");
+      fprintf(f,"# 1     omega \n");
+      fprintf(f,"# 2,3,4 x,y,z \n");
+      fprintf(f,"# 5     index of object in .buffgeo file\n");
+      fprintf(f,"# 6,7   re,im EpsXX\n");
+      fprintf(f,"# 8,9   re,im EpsXY\n");
+      fprintf(f,"# 10,11 re,im EpsXZ\n");
+      fprintf(f,"# 12,13 re,im EpsYX\n");
+      fprintf(f,"# 14,15 re,im EpsYY\n");
+      fprintf(f,"# 16,17 re,im EpsYZ\n");
+      fprintf(f,"# 18,19 re,im EpsZX\n");
+      fprintf(f,"# 20,21 re,im EpsZY\n");
+      fprintf(f,"# 22,23 re,im EpsZZ\n");
+      fclose(f);
+    };
+
+   f=vfopen("%s.permittivity","a",GetFileBase(GeoFile));
+   for(int no=0; no<G->NumObjects; no++)
+    { 
+      SWGVolume *O=G->Objects[no];
+      SVTensor *SVT=O->SVT;
+      cdouble Eps[3][3];
+      SVT->Evaluate(Omega, XYZ, Eps);
+
+      SetDefaultCD2SFormat("{%+.3e, %+.3e}");
+      printf("For object %s (%s): ",O->Label,O->MeshFileName);
+      if (SVT->Isotropic)
+       printf(" %s \n",CD2S(Eps[0][0]));
+      else
+       { printf("\n");
+         printf(" %s %s %s \n",CD2S(Eps[0][0]),CD2S(Eps[0][1]),CD2S(Eps[0][2]));
+         printf(" %s %s %s \n",CD2S(Eps[1][0]),CD2S(Eps[1][1]),CD2S(Eps[1][2]));
+         printf(" %s %s %s \n",CD2S(Eps[2][0]),CD2S(Eps[2][1]),CD2S(Eps[2][2]));
+         printf("\n");
+       };
+      printf("\n");
+
+      SetDefaultCD2SFormat("%e %e");
+      fprintf(f,"%e %e %e %e %i ",real(Omega),XYZ[0],XYZ[1],XYZ[2],no);
+      for(int Mu=0; Mu<3; Mu++)
+       for(int Nu=0; Nu<3; Nu++)
+        fprintf(f,"%s ",CD2S(Eps[Mu][Nu]));
+      fprintf(f,"\n");
+    };
+
+   fclose(f);
+   printf("Thank you for your support.\n");
+   exit(0);
+
+}
+
+/***************************************************************/
 /* main function   *********************************************/
 /***************************************************************/  
 int main(int argc, char *argv[])
@@ -269,41 +332,7 @@ int main(int argc, char *argv[])
   /***************************************************************/
   /***************************************************************/
   if (GeoFile && nXYZ)
-   { 
-     SWGGeometry *G = new SWGGeometry(GeoFile);
-     printf("Permittivities at (Omega, x, y, z)=(%e,%e,%e,%e): \n",
-             real(Omega),XYZ[0],XYZ[1],XYZ[2]);
-
-     FILE *f=vfopen("%s.Permittivity","a");
-     for(int no=0; no<G->NumObjects; no++)
-      { 
-        SWGVolume *O=G->Objects[no];
-        SVTensor *SVT=O->SVT;
-        cdouble Eps[3][3];
-        SVT->Evaluate(Omega, XYZ, Eps);
-
-        SetDefaultCD2SFormat("{%+.4e, %+.4e}");
-        printf("For object %s (%s): ",O->Label,O->MeshFileName);
-        if (SVT->Isotropic)
-         printf(" %s \n",Eps[0][0]);
-        else
-         { printf(" %s %s %s \n",Eps[0][0],Eps[0][1],Eps[0][2]);
-           printf(" %s %s %s \n",Eps[1][0],Eps[1][1],Eps[1][2]);
-           printf(" %s %s %s \n",Eps[2][0],Eps[2][1],Eps[2][2]);
-         };
-        printf("\n");
-
-        SetDefaultCD2SFormat("%e %e");
-        fprintf(f,"%e %e %e %e %i ",real(Omega),XYZ[0],XYZ[1],XYZ[2]);
-        for(int Mu=0; Mu<3; Mu++)
-         for(int Nu=0; Nu<3; Nu++)
-          fprintf(f,"%s ",CD2S(Eps[Mu][Nu]));
-        fprintf(f,"\n");
-      };
-     fclose(f);
-     printf("Thank you for your support.\n");
-     exit(0);
-   };
+   GetPermittivity(GeoFile, Omega, XYZ);
 
   /***************************************************************/
   /***************************************************************/
