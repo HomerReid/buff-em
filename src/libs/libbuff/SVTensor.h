@@ -48,8 +48,10 @@ class SVTensor
   /* destructor */
    ~SVTensor();
 
-   /* get the tensor components at a given frequency and position */
-   void Evaluate(cdouble Omega, double x[3], cdouble Q[3][3]);
+   /* get the tensor components at a given frequency and position. */
+   void    Evaluate(cdouble Omega, double x[3], cdouble Q[3][3]);
+   cdouble Evaluate(cdouble Omega, double x[3]); // returns Q[0][0]=Q_{xx}
+   double  EvaluateD(cdouble Omega, double x[3]); // returns real(Q_{xx})
 
    /* if ErrMsg is not NULL after the class constructor is invoked, there  */
    /* was an error.                                                        */

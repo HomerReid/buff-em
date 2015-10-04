@@ -93,6 +93,7 @@ typedef struct BNEQData
    SWGGeometry *G;
 
    SVTensor **TemperatureSVTs; // one for each object in G
+   double *MeanDeltaTheta;     // one for each object in G
    double TEnvironment;
 
    GTComplex **GTCList;
@@ -139,21 +140,20 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
                          int DSIPoints2);
 
 /***************************************************************/
+/* routines in GetFlux.cc **************************************/
 /***************************************************************/
-/***************************************************************/
-/***************************************************************/
-int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq);
+int GetFluxIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq);
+int GetNEQIIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq);
 void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
+void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand);
 
 /***************************************************************/
-/***************************************************************/
+/* routines in Quadrature.cc                                   */
 /***************************************************************/
 void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
-                                        double OmegaMin, double OmegaMax, 
-                                        double AbsTol, double RelTol,
-                                        double *I, double *E);
+                                        double OmegaMin, double OmegaMax,
+                                        double AbsTol, double RelTol);
 
 void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD,
-                                        double OmegaMin, double OmegaMax, int NumIntervals,
-                                        double *I, double *E);
+                                        double OmegaMin, double OmegaMax, int NumIntervals);
 #endif

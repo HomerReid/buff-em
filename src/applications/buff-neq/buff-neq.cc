@@ -265,23 +265,19 @@ int main(int argc, char *argv[])
   /* now switch off based on the requested frequency behavior to     */
   /* perform the actual calculations                                 */
   /*******************************************************************/
-  int OutputVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects* BNEQD->NQ;
-  double *I = new double[ OutputVectorLength ];
   if (NumFreqs>0)
-   { for (int nFreq=0; nFreq<NumFreqs; nFreq++)
-      GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), I);
+   { 
+     int OutputVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects* BNEQD->NQ;
+     double *Flux=new double[OutputVectorLength];
+     for (int nFreq=0; nFreq<NumFreqs; nFreq++)
+      GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), Flux);
    }
   else
-   { 
-      double *E = new double[ OutputVectorLength ];
-      if ( !strcasecmp(OmegaQuadrature,"adaptive") )
-       EvaluateFrequencyIntegral_Adaptive(BNEQD, OmegaMin, OmegaMax, AbsTol, RelTol, I, E);
-      else
-       EvaluateFrequencyIntegral_TrapSimp(BNEQD, OmegaMin, OmegaMax,
-                                          Intervals, I, E);
-      delete[] E;
+   { if ( !strcasecmp(OmegaQuadrature,"adaptive") )
+      EvaluateFrequencyIntegral_Adaptive(BNEQD, OmegaMin, OmegaMax, AbsTol, RelTol);
+     else
+      EvaluateFrequencyIntegral_TrapSimp(BNEQD, OmegaMin, OmegaMax, Intervals);
    };
-  delete[] I;
 
   /***************************************************************/
   /***************************************************************/

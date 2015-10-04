@@ -373,3 +373,12 @@ void SVTensor::Evaluate(cdouble Omega, double x[3], cdouble Q[3][3])
    };
 
 }
+
+cdouble SVTensor::Evaluate(cdouble Omega, double x[3])
+{ cdouble Q[3][3];
+  Evaluate(Omega, x, Q);
+  return Q[0][0];
+}
+
+double SVTensor::EvaluateD(cdouble Omega, double x[3])
+ { return real(Evaluate(Omega, x)); }

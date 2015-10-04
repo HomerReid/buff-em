@@ -35,6 +35,11 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                   HVector *JVector, HMatrix *DMatrix,
                   HMatrix *PFTMatrix,
                   double QPF[3], char *FileBase);
+
+double GetThetaFactor(double Omega, double T);
+
+double GetMeanDeltaTheta(SWGVolume *O, SVTensor *TemperatureSVT,
+                         cdouble Omega, double ThetaEnvironment);
                }
 
 /***************************************************************/
@@ -49,14 +54,20 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
 /* Given values for quantities (a)--(d), this routine computes */
 /* a unique index into a big vector storing all the quantities.*/
 /***************************************************************/
-int GetIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq)
+int GetIndex(BNEQData *BNEQD, bool Flux, int nt, int nos, int nod, int nq)
 {
   int NO    = BNEQD->G->NumObjects;
-  int NQ    = BNEQD->NQ;
+  int NQ    = Flux ? NUMPFT : BNEQD->NQ;
   int NONQ  = NO*NQ;
   int NO2NQ = NO*NO*NQ;
   return nt*NO2NQ + nos*NONQ + nod*NQ + nq; 
 }
+
+int GetFluxIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq)
+{ return GetIndex(BNEQD, true, nt, nos, nod, nq); }
+
+int GetNEQIIndex(BNEQData *BNEQD, int nt, int nos, int nod, int nq)
+{ return GetIndex(BNEQD, false, nt, nos, nod, nq); }
 
 /***************************************************************/
 /* return false on failure *************************************/
@@ -72,7 +83,7 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
 
   int NT=BNEQD->NumTransformations;
   int NO=BNEQD->G->NumObjects;
-  int NQ=BNEQD->NQ;
+  int NQ=NUMPFT;
   int nt, nos, nod, nq;
   GTComplex **GTCList=BNEQD->GTCList;
   char *FirstTag = GTCList[0]->Tag;
@@ -116,7 +127,7 @@ bool CacheRead(BNEQData *BNEQD, cdouble Omega, double *Flux)
        if ( NumTokens < 3+NQ ) 
         { ErrorCode=5; goto fail; }
        for(nq=0; nq<NQ; nq++)
-        sscanf(Tokens[3+nq],"%le", Flux+GetIndex(BNEQD, nt, nos, nod, nq) );
+        sscanf(Tokens[3+nq],"%le", Flux+GetFluxIndex(BNEQD, nt, nos, nod, nq) );
      };
 
   // success:
@@ -242,6 +253,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   SWGGeometry *G             = BNEQD->G;
   SVTensor **TemperatureSVTs = BNEQD->TemperatureSVTs;
   double TEnvironment        = BNEQD->TEnvironment;
+  double *MeanDeltaTheta     = BNEQD->MeanDeltaTheta;
   HMatrix ***GBlocks         = BNEQD->GBlocks;
   SMatrix **VBlocks          = BNEQD->VBlocks;
   SMatrix **RBlocks          = BNEQD->RBlocks;
@@ -250,17 +262,20 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   char **PFTFileNames        = BNEQD->PFTFileNames;
   int *DSIPoints             = BNEQD->DSIPoints;
   PFTOptions *pftOptions     = BNEQD->pftOptions;
-  char *FileBase             = BNEQD->FileBase;
 
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
   /***************************************************************/
+  double ThetaEnvironment = GetThetaFactor(real(Omega), TEnvironment);
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
+     MeanDeltaTheta[no]=GetMeanDeltaTheta(G->Objects[no], TemperatureSVTs[no],
+                                          Omega, ThetaEnvironment);
+
      Log(" Assembling V_{%i} and Rytov_{%i} ...",no,no);
-     G->AssembleOverlapBlocks(no, Omega,
-                              TemperatureSVTs[no], TEnvironment,
+     G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
+                              ThetaEnvironment, MeanDeltaTheta[no],
                               VBlocks[no], 0, RBlocks[no]);
 
      if (G->Mate[no]!=-1)
@@ -279,11 +294,6 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         RBlocks[no]->EndAssembly();
       };
    };
-
-  double PreFactor=1.0;
-  for(int no=0; no<NO; no++)
-   if (TemperatureSVTs[no])
-    PreFactor=HBAROMEGA02;
 
   /***************************************************************/
   /* now loop over transformations.                              */
@@ -328,7 +338,6 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
            pftOptions->PFTMethod  = PFTMethods[nPFT];
            pftOptions->DSIPoints  = DSIPoints[nPFT];
            G->GetPFT(0, Omega, PFTMatrix, pftOptions);
-           PFTMatrix->Scale(PreFactor);
 
            FILE *f=fopen(PFTFileNames[nPFT],"a");
            for(int nod=0; nod<NO; nod++)
@@ -338,7 +347,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
               fprintf(f,"\n");
 
               for(int nq=0; nq<BNEQD->NQ; nq++)
-               { int Index=GetIndex(BNEQD, nt, nos, nod, nq);
+               { int Index=GetFluxIndex(BNEQD, nt, nos, nod, nq);
                  Flux[Index]=PFTMatrix->GetEntryD(nod,nq);
                };
             };
@@ -355,3 +364,43 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
    }; // for (nt=0; nt<BNEQD->NumTransformations... )
 
 } 
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand)
+{
+  int NO                 = BNEQD->G->NumObjects;
+  int NT                 = BNEQD->NumTransformations;
+  int NQ                 = BNEQD->NQ;
+  int QuantityFlags      = BNEQD->QuantityFlags;
+
+  double *Flux = new double[NT*NO*NO*NUMPFT];
+  GetFlux(BNEQD, Omega, Flux);
+ 
+  double *MeanDeltaTheta = BNEQD->MeanDeltaTheta;
+
+  for(int nt=0; nt<NT; nt++)
+   for(int nos=0; nos<NO; nos++)
+    for(int nod=0; nod<NO; nod++)
+     for(int nPFT=0, nq=0; nPFT<NUMPFT; nPFT++)
+      if ( QuantityFlags & (1<<nPFT) )
+       { int FluxIndex=GetFluxIndex(BNEQD, nt, nos, nod, nPFT);
+         int NEQIIndex=GetNEQIIndex(BNEQD, nt, nos, nod, nq++);
+         NEQIntegrand[NEQIIndex]
+          = HBAROMEGA02*MeanDeltaTheta[nos]*Flux[FluxIndex];
+       };
+
+  FILE *f=vfopen("%s.SIIntegrand","a",BNEQD->FileBase);
+  for(int nt=0; nt<NT; nt++)
+   for(int nos=0; nos<NO; nos++)
+    for(int nod=0; nod<NO; nod++)
+     { fprintf(f,"%s %e %i%i ",BNEQD->GTCList[nt]->Tag,real(Omega),nos+1,nod+1);
+       for(int nq=0; nq<NQ; nq++)
+        fprintf(f,"%+.8e ",NEQIntegrand[ GetNEQIIndex(BNEQD, nt, nos, nod, nq) ]);
+       fprintf(f,"\n");
+     };
+  fclose(f);
+
+  delete[] Flux;
+}
