@@ -7,7 +7,7 @@ classical electromagnetic
 scattering using [SWG basis functions][SWGPaper].
 
 [[buff-em]] is similar in many ways to 
-[<span class="SC">scuff-em</sc>][scuffEM],
+[<span class="SC">scuff-em</span>][scuffEM],
 which solves similar problems using the
 alternative surface-integral-equation (SIE)
 formalism. Some key differences between these
@@ -51,7 +51,7 @@ the two specialized [application modules](#AvailableApplications)
 mentioned above for scattering and non-equilibrium
 fluctuations.
 
-[[buff-em]] stands for **BU**ulk **F**ield **F**ormulation of 
+[[buff-em]] stands for **BU**lk **F**ield **F**ormulation of 
 **E**lectro**M**agnetism. This is a reference to the underlying solution 
 methodology used by [[buff-em]] and other VIE solvers, in which
 the primary goal of the solver is to compute the volume electric 

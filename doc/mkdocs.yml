@@ -22,7 +22,7 @@ pages:
     - 'Mie scattering':  'examples/MieScattering/index.md'
     - 'Power, force, and torque on a Janus particle irradiated by a plane wave':  'examples/JanusParticles/index.md'
     - 'Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres': 'examples/SiO2Spheres/index.md'
-    - 'Thermal self-rotation of photon torpedoes':                          'examples/PhotonTorpedoes/index.md'
+    - 'Thermal radiation and self-propulsion of photon torpedoes':                          'examples/PhotonTorpedoes/index.md'
     - 'Thermal self-rotation of QED pinwheels':                          'examples/Pinwheels/index.md'
 - General reference:
     - 'Top-level overview':                     'reference/TopLevel.md'

@@ -11,7 +11,7 @@
 * [Installation](reference/Installing.md)
 * [Geometry files](reference/Geometries.md)
 * [SVTensor files](reference/SVTensors.md)
-* [Key differences between <span class="SC">buff-em</sc> and <span class="SC">scuff-em</sc>](reference/BUFFvsSCUFF.md)
+* [Key differences between <span class="SC">buff-em</span> and <span class="SC">scuff-em</span>](reference/BUFFvsSCUFF.md)
 
 <a name="Examples"></a>
 ## Tutorial examples
@@ -19,7 +19,7 @@
 + [Mie scattering](examples/MieScattering/index.md)
 + [Power, force, and torque on Janus particles irradiated by plane waves](examples/JanusParticles/index.md)
 + [Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres](examples/SiO2Spheres/index.md)
-+ [Thermal self-rotation of photon torpedoes](examples/PhotonTorpedoes/index.md)
++ [Thermal radiation and self-propulsion of photon torpedoes](examples/PhotonTorpedoes/index.md)
 + [Thermal self-rotation of QED pinwheels](examples/Pinwheels/index.md)
 
 ## Command-line application reference

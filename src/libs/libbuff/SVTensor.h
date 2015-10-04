@@ -48,10 +48,8 @@ class SVTensor
   /* destructor */
    ~SVTensor();
 
-   /* get epsilon and mu at a given frequency and position */
-   void Evaluate(cdouble Omega, double x[3],
-                 cdouble Eps[3][3], cdouble Mu[3][3]);
-   void Evaluate(cdouble Omega, double x[3], cdouble Eps[3][3]);
+   /* get the tensor components at a given frequency and position */
+   void Evaluate(cdouble Omega, double x[3], cdouble Q[3][3]);
 
    /* if ErrMsg is not NULL after the class constructor is invoked, there  */
    /* was an error.                                                        */
@@ -78,8 +76,8 @@ class SVTensor
    bool Isotropic;
 
    // opaque pointers to cmatheval parsed expressions for
-   // components of epsilon and mu
-   void *EpsExpression[3][3], *MuExpression[3][3];
+   // components of Q
+   void *QExpression[3][3];
 
    int NumConstants;
    char *ConstantNames[MAXCONSTANTS];

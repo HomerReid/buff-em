@@ -219,40 +219,6 @@ you may need to
 [reconfigure and recompile with different [[openmp]] 
 configuration options.](../../reference/Installing.md)
 
---------------------------------------------------
-## Validating results for a gold sphere
-
-Now let's redo the calculation for a sphere made of gold
-instead of silicon carbide.  In this case we will name our
-[[buff-em]] geometry file `GoldSphere.scuffgeo`:
-
-````bash
-    MATERIAL Gold
-      wp = 1.37e16;
-      gamma = 5.32e13;
-      Eps(w) = 1 - wp^2 / (w * (w + i*gamma));
-    ENDMATERIAL
-
-    OBJECT TheSphere
-        MESHFILE Sphere_677.vmsh
-        MATERIAL Gold
-    ENDOBJECT
-    
-````
-
-Since most of the command-line arguments to [[buff-scatter]] will
-be the same as before, we can reuse the same `Args` file, with the
-options that need to be given new values specified on the command line:
-
-````bash
-% buff-scatter --geometry GoldSphere.scuffgeo --PFTFile GoldSphere.PFT < Args
-    
-````
-
-Now our data look like this:
-
-![Gold data](GoldData.png)
-
 [buffGeometries]:                     ../../reference/Geometries.md
 [buffMaterials]:                      ../../reference/SVTensors.md
 

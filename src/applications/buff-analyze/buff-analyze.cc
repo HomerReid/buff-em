@@ -252,6 +252,7 @@ int main(int argc, char *argv[])
      {"XYZ",                PA_DOUBLE,  3, 1,  (void *)XYZ,          &nXYZ,  "coordinates at which to evaluate permittivity"},
      {"Omega",              PA_CDOUBLE, 1, 1, (void *)&Omega,             0, "angular frequency for permittivity check"},
 /**/
+     {"WriteCache",         PA_BOOL,    0, 1, (void *)&WriteGCache,       0, "write cache file"},
      {"WriteGCache",        PA_BOOL,    0, 1, (void *)&WriteGCache,       0, "write cache file"},
      {"NumChunks",          PA_INT,     1, 1, (void *)&NumChunks,         0, "number of pieces into which to subdivide cache write (1)"},
      {"WhichChunk",         PA_INT,     1, 1, (void *)&WhichChunk,        0, "which piece to write (0)"},
