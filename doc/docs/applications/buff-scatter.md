@@ -9,7 +9,7 @@ geometry.
 
 To run a scattering calculation in [[buff-scatter]], you will
 
-+ Create a [<span class="SC">buff-em</sc> geometry file][buffEMGeometries] describing your geometry. This will involve generating tetrahedral mesh representations of each object in your geometry and possibly writing a `.SVTensor` file to describe any objects with anisotropic and/or inhomogeneous permittivity.
++ Create a [<span class="SC">buff-em</span> geometry file][buffEMGeometries] describing your geometry. This will involve generating tetrahedral mesh representations of each object in your geometry and possibly writing a `.SVTensor` file to describe any objects with anisotropic and/or inhomogeneous permittivity.
 
 + Specify the incident field that will impinge on your objects:
   a plane wave, a gaussian beam, a point dipole radiator,
@@ -36,7 +36,7 @@ current within each object.
 [TOC]
 
 <a name="CommandLineOptions"></a>
-# 1. <span class="SC">buff-neq</span> command-line options
+# 1. <span class="SC">buff-scatter</span> command-line options
 
 ### Common options
 
@@ -48,11 +48,12 @@ these all have the same meaning as the
 [General reference for <span class="SC">scuff-em</span> command-line applications][scuffGeneralReference] 
 pertains to [[buff-em]] command-line applications as well.)
 
-````bash
+  ````
 --geometry 
 --Omega
 --OmegaFile
-````
+  ````
+{.toc}
 
 ## Options defining the incident field
 
@@ -60,24 +61,27 @@ The options for specifying incident fields in
 [[buff-scatter]] are identical to those in [[scuff-scatter]],
 as described in detail on the page
 [Incident fields in <span class="SC">scuff-em</span>][IncidentFields].
+Here we only summarize the available options without commentary.
 
-we refer you to the
-[<span class="SC">scuff-scatter</span> documentation][scuffScatter]
-for details, and here quote only the
-available options without commentary.
-
-````
+  ````
 --pwDirection    nx ny nz
 --pwPolarization Ex Ey Ez
+  ````
+{.toc}
 
+
+  ````
 --psStrength Px Py Pz
 --psLocation xx yy zz
+  ````
+{.toc}
 
+  ````
 --gbDirection nx ny nz
 --gbPolarization Ex Ey Ez
 --gbCenter Cx Cy Cz
 --gbWaist W
-````
+  ````
 {.toc}
 
 (As in [[scuff-scatter]], these options may occur multiple times 
@@ -85,9 +89,9 @@ to define superpositions of multiple types of incident field.)
 
 ## Options requesting scattered and total fields
 
-````
+  ````
  --EPFile MyEPFile
-````
+  ````
 {.toc}
 
 Specifies a list of evaluation points at which to
@@ -101,9 +105,10 @@ that in [[scuff-scatter]]; for details, see the
 
 ## Options requesting power, force, and torque (PFT) data
 
-````bash
+  ````
  --PFTFile   MyFile.PFT
-````
+  ````
+{.toc}
 
 Requests that data on the absorbed and scattered power,
 force, and torque for all bodies in the geometry be
@@ -112,11 +117,12 @@ in the output file for details on how to interpret its
 contents.
 
 
-````bash
+  ````
  --OPFTFile     MyFile.OPFT
  --JDEPFTFile   MyFile.JDEPFT
  --DSIPFTFile   MyFile.DSIPFT
-````
+  ````
+{.toc}
 
 These options are similar to `--PFTFile`, but they 
 request PFT calculations by specific algorithms: 
@@ -127,12 +133,16 @@ the options `--PFTFile` and `--JDEPFTFile` are
 actually synonymous (if you specify both, only
 one output file will be produced).
 
-````bash
+  ````
  --DSIRadius 5.0
  --DSIPoints 302
+  ````
+{.toc}
 
+  ````
  --DSIMesh   MyBoundingMesh.msh
-````
+  ````
+{.toc}
 
 These options control the behavior of DSIPFT calculations.
 The surface integral may be evaluated in one of two
@@ -159,12 +169,13 @@ use `--DSIMesh.`
 <a name="Examples"></a>
 # 2. <span class="SC">buff-scatter</span> examples
 
-+ [Power, force, and torque on spheres and Janus particles irradiated by plane waves](../examples/JanusParticles/index.md)
++ [Mie scattering](../examples/MieScattering/index.md)
++ [Power, force, and torque on Janus particles irradiated by plane waves](../examples/JanusParticles/index.md)
 
 [buffEMGeometries]:	             ../reference/Geometries.md
 [SVTensorFiles]:   	             ../reference/SVTensors.md
-[scuffScatter]:    	             http://homerreid.github.io/scuff-em-documentation/applications/scuff-scatter/scuff-scatter.md
-[IncidentFields]:  	             http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields.md
+[scuffScatter]:    	             http://homerreid.github.io/scuff-em-documentation/applications/scuff-scatter/scuff-scatter
+[IncidentFields]:  	             http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields
 [CommonOptions]:                     http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference#CommonOptions
 [scuffGeneralReference]:             http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference
 [scuffTransformations]:              http://homerreid.github.io/scuff-em-documentation/reference/Transformations

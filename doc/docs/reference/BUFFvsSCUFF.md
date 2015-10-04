@@ -13,16 +13,16 @@ frequency.
 + The volume-integral technique used by [[buff-em]] to
 handle non-equilibrium Casimir forces and torques is
 significantly faster than the surface-integral
-technique used by [[scuff-em.]]
+technique used by [[scuff-em]].
 
-### What [[buff-em]] *can't* do that [[suuff-em]] can do
+### What [[buff-em]] *can't* do that [[scuff-em]] can do
 
 + [[buff-em]] does not currently support extended objects 
 or periodic boundary conditions; all bodies must be compact 
 objects. This may change in a later version of the code.
 
 + [[buff-em]] does not currently support magnetic materials 
-($\mu$\ne 1$). This may change in a later version of the
+($\mu \ne 1$). This may change in a later version of the
 code.
 
 + [[buff-em]] does not support perfectly electrically
@@ -46,13 +46,13 @@ may be generated in `gmsh` using the command-line
 argument `-3` as opposed to `-2` for triangular meshes.
 This will produce a `.msh` file, which will be automatically
 renamed to a `.vmsh` file by this [[bash]] script:
-(`RenameMesh3D`)[RenameMesh3D].
+[`RenameMesh3D`][RenameMesh3D].
 
 + [[buff-em]] looks for mesh files in the current
   working directory and in the directory specified
   by the environment variables `BUFF_MESH_DIR.`
 
-<a name="Caching">
+<a name="Caching"></a>
 ## Differences in caching
 
 + The discretized integral-equation formalisms implemented
@@ -134,7 +134,7 @@ on the first frequency.
 
 ## Differences in the underlying formalism
 
-+ The computational paradigm employed by `scuff-em`
++ The computational paradigm employed by [[scuff-em]]
 separates space into contiguous homogeneous regions
 bounded by closed surfaces. The fields in any
 region are determined solely from knowledge of the 
@@ -142,11 +142,12 @@ surface currents on the surfaces bounding that surface
 (together with the fields of any bulk sources that 
 exist within the region).
 
-In `buff-em` there is no such separation. Instead,
+In [[buff-em]] there is no such separation. Instead,
 all objects exist in a single ginormous all-encompassing
 homogeneous region (the vacuum) and the fields at any 
 point receive contributions from all objects and from
 any incident-field sources that may be present.
 
 [SVTensors]:                          SVTensors.md
-[buffAnalyze]:                        ../../applications/buff-analyze.md
+[buffAnalyze]:                        ../applications/buff-analyze.md
+[RenameMesh3D]:                       RenameMesh3D

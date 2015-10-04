@@ -8,13 +8,13 @@ phenomena--specifically, for computing *radiative heat-transfer rates*
 and *non-equilibrium Casimir forces and torques* for bodies of 
 arbitrary shapes and arbitrary (linear, isotropic, piecewise 
 homogeneous) frequency-dependent permittivity and permeability.
-[[buff-neq]] implements the 
-*fluctuating-volume current (FSC)* approach
-to numerical modeling of non-equilibrium fluctuation phenomena.
+[[buff-neq]] implements the
+[*fluctuating-volume current (FVC)* approach
+to numerical modeling of non-equilibrium fluctuation phenomena][FVCPaper].
 
 Mechanically, working with [[buff-neq]] is similar in many ways to
 working with the non-equilibrium Casimir code 
-[scuff-neq][scuff-neq]{.SC} in the [[scuff-em]] code suite.
+[<span class="SC">scuff-neq</span>][scuffNEQ] in the [[scuff-em]] code suite.
 In particular,
 
 + As in [[scuff-neq]], you can request either **(a)** frequency-resolved
@@ -75,9 +75,12 @@ the way they are computed by [[buff-neq]].)
 ### Common options
 
 [[buff-neq]] recognizes the following subset of the
-list of commonly accepted options to <span class="SC">buff-em</span> command-line codes; these all have the same meaning as 
-the [corresponding options in <span class="SC">scuff-em</span>][scuffOptions]. (In general, almost everything mentioned in the 
-[General reference for <span class="SC">scuff-em</span> command-line applications][scuffGeneralReference] pertains to [[buff-em]] command-line applications as well.)
+list of commonly accepted options to [[buff-em]] command-line codes;
+these all have the same meaning as
+the [corresponding options in <span class="SC">scuff-em</span>][scuffOptions]. 
+(In general, almost everything mentioned in the 
+[General reference for <span class="SC">scuff-em</span> command-line applications][scuffGeneralReference] 
+pertains to [[buff-em]] command-line applications as well.)
  
   ````
 --geometry
@@ -105,25 +108,31 @@ the [corresponding options in <span class="SC">scuff-em</span>][scuffOptions]. (
 --ZTorque
   ````
 {.toc}
-
-Specifies the quantities in which you are interested:
-absorbed power (`--PAbs`), radiated power (`--PRad`),
-Cartesian force components, or Cartesian torque components.
-You may specify none, all, or any subset of these options,
-but each option you specify will generally increase
-the computation time (you can scrutinize the
-[`.log` file](#LogFile) to see how *much* additional time each
-extra output quantity takes to compute).
+> 
+> Specifies the quantities in which you are interested:
+> absorbed power (`--PAbs`), radiated power (`--PRad`),
+> Cartesian force components, or Cartesian torque components.
+> You may specify none, all, or any subset of these options,
+> but each option you specify will generally increase
+> the computation time (you can scrutinize the
+> [`.log` file](#LogFile) to see how *much* additional time each
+> extra output quantity takes to compute).
 
 ### Options specifying object temperatures
 
   ````
 --Temperature     UpperSphere 300
 --Temperature     LowerSphere 100
+  ````
+{.toc}
 
+  ````
 --TEnvironment    100
+  ````
+{.toc}
 
---TemperatureFile MyTemperatureFile.dat
+  ````
+--TemperatureFile MyTemperatureFile.SVTensor
   ````
 {.toc}
 
@@ -134,8 +143,27 @@ extra output quantity takes to compute).
 > units of Kelvin**, so `300` corresponds to 
 > room temperature.
 >
-> The third option here sets the temperature of
+> The `--TEnvironment` option here sets the temperature of
 > the environment in which the objects are embedded.
+>
+> The `--TemperatureFile` option here may be used to
+> define spatially inhomogeneous temperature profiles.
+> In this case, `MyTemperatureFile.SVTensor` should be
+> a [`.SVTensor` file][SVTensors] describing an isotropic
+> but possibly spatially inhomogeneous tensor 
+> $\mathbf{Q}(\mathbf x)=Q(\mathbf x)\mathbf{1}$
+> whose scalar value is the temperature in Kelvin; for example,
+> `MyTemperatureFile.SVTensor` might contain the line
+> 
+> ````bash
+>   Q = 300*z + 100*(1-z)
+> ````    
+>
+> This describes a temperature profile that varies linearly
+> from 100 Kelvin at *z*=0 to 300 Kelvin at *z*=1. (Here
+> `Q` is just the conventional name used in the 
+> [`.SVTensor` file specification][SVTensors] for assigning
+> formulas for tensor components.)
 >
 > Note that the temperatures of all objects, and of
 > the environment, are zero by default. This means that,
@@ -156,47 +184,54 @@ of PFTs via more than one method.
   ````
  --JDEPFT
   ````
+{.toc}
 
-Requests that PFTs be computed using the $\mathbf{J} \cdot \mathbf{E}$ method.
+> Requests that PFTs be computed using the $\mathbf{J} \cdot \mathbf{E}$ method.
 
   ````
  --MomentPFT
   ````
+{.toc}
 
-Requests that PFTs be computed using the moment method.
+> Requests that PFTs be computed using the moment method.
 
   ````
 --DSIPoints  302
 --DSIMesh BoundingMesh.msh
-
---DSIPoints2 590
-
---DSIRadius  5.0
-
   ````
 {.toc}
 
-These options request PFT calculations via the displaced-surface-integral
-(DSI) method.
+  ````
+--DSIPoints2 590
+  ````
+{.toc}
 
-To request a DSIPFT calculation using `N` cubature points
-a over a bounding sphere of radius `R,` say
-`--DSIPoints N --DSIRadius R`. To see the allowed values
-of `N`, type `buff-neq --help.`
-
-Alternatively, you can say `--DSIMesh BoundingMesh.msh`
-to request a DSIPFT calculation using 
-a one-point cubature over each triangular panel of 
-`BoundingMesh.msh`.
-
-To get a "second opinion," you can request a second 
-DSIPFT calculation by saying `--DSIPoints2 N`.
- This will perform a DSIPFT calculation over
-bounding sphere with `N` points (with the sphere radius
-set by `--DSIRadius`). This calculation will be 
-performed in addition to the first DSIPFT calculation
-you requested by specifying `--DSIPoints` or 
-`--DSIMesh.`
+  ````
+--DSIRadius  5.0
+  ````
+{.toc}
+> 
+> These options request PFT calculations via the displaced-surface-integral
+> (DSI) method.
+> 
+> To request a DSIPFT calculation using `N` cubature points
+> a over a bounding sphere of radius `R,` say
+> `--DSIPoints N --DSIRadius R`. To see the allowed values
+> of `N`, type `buff-neq --help.`
+> 
+> Alternatively, you can say `--DSIMesh BoundingMesh.msh`
+> to request a DSIPFT calculation using 
+> a one-point cubature over each triangular panel of 
+> `BoundingMesh.msh`.
+> 
+> To get a "second opinion," you can request a second 
+> DSIPFT calculation by saying `--DSIPoints2 N`.
+> This will perform a DSIPFT calculation over
+> bounding sphere with `N` points (with the sphere radius
+> set by `--DSIRadius`). This calculation will be 
+> performed in addition to the first DSIPFT calculation
+> you requested by specifying `--DSIPoints` or 
+> `--DSIMesh.`
 
 --------------------------------------------------
 
@@ -204,8 +239,11 @@ you requested by specifying `--DSIPoints` or
 # 3. Examples of calculations using <span class="SC">buff-neq</span>
 
 + [Thermal radiation and self-propulsion of photon torpedoes](../examples/PhotonTorpedoes/index.md)
-+ [Thermal self-rotation of a QED pinwheel](../examples/Pinwheels/index.md)
++ [Thermal self-rotation of QED pinwheels](../examples/Pinwheels/index.md)
 
-[CommonOptions]:                http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference#CommonOptions
+[scuffOptions]:                 http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference#CommonOptions
 [scuffGeneralReference]:        http://homerreid.github.io/scuff-em-documentation/applications/GeneralReference
 [scuffTransformations]:         http://homerreid.github.io/scuff-em-documentation/reference/Transformations
+[scuffNEQ]:                     http://homerreid.github.io/scuff-em-documentation/applications/scuff-neq/scuff-neq
+[FVCPaper]:                     http://arxiv.org/abs/1505.05026
+[SVTensors]:                    ../reference/SVTensors.md

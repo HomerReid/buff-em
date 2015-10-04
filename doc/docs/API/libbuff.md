@@ -1,7 +1,7 @@
 <h1> <span class="SC">buff-em</span> core library documentation
 </h1>
 
-The [[buff-em]] core library, `libbuff` exports a C++ class named 
+The [[buff-em]] core library, [[libbuff]], exports a C++ class named 
 `SWGGeometry.` The public methods of this class offer access to the 
 computational routines provided by [[buff-em]] to implement the 
 discretized volume-integral-equation (VIE) approach to 
@@ -12,16 +12,16 @@ the [<span class="SC">scuff-em</span> core library][libscuff]
 
 # Creating an SWGGeometry
 
-````C
+````c++
   SWGGeometry *G = new SWGGeometry("E10Sphere_533.buffgeo");
 ````
 
 # Setting up and solving the VIE system
 
 Note: Incident fields are handled the same way as in [[scuff-em]]; see
-[Incident fields in <span class="SC">scuff-em</span>][IncField].
+[Incident fields in <span class="SC">scuff-em</span>][IncidentFields].
 
-````C
+````c++
   HMatrix *M     = G->AllocateVIEMatrix();
   HVector *J     = G->AllocateRHSVector();
 
@@ -37,7 +37,7 @@ Note: Incident fields are handled the same way as in [[scuff-em]]; see
 
 # Computing scattered and total fields
 
-````C
+````c++
 
   HMatrix *XMatrix=new HMatrix("ListOfEvaluationPoints");
 
@@ -67,7 +67,8 @@ Note: Incident fields are handled the same way as in [[scuff-em]]; see
 
 To rotate the object named "SmallerTorus" by 90 degrees around the *z*
 axis, then displaced it upward by 3 length units:
-````C
+
+````c++
  SWGVolume *O = G->GetObjectByLabel("SmallerTorus");
  if (!O) 
   ErrExit("no such object"); 
@@ -78,7 +79,7 @@ axis, then displaced it upward by 3 length units:
 
 # Computing power, force, and torque
 
-````C
+````c
  PFTOptions MyOptions;
  InitPFTOptions(&MyOptions);
 
@@ -95,5 +96,5 @@ axis, then displaced it upward by 3 length units:
 
 ````
 
-libscuff:	http://homerreid.github.io/scuff-em-documentation/API/libscuff/
-IncField:	http://homerreid.com/scuff-EM/libscuff/IncField.shtml
+[libscuff]:		http://homerreid.github.io/scuff-em-documentation/API/libscuff/
+[IncidentFields]:	http://homerreid.github.io/scuff-em-documentation/reference/IncidentFields

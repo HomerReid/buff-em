@@ -45,7 +45,7 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    NumConstants=0;
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
-     EpsExpression[nx][ny]=MuExpression[nx][ny]=0;
+     QExpression[nx][ny]=0;
    NumMPs=0;
    Homogeneous=false;
    Isotropic=false;
@@ -91,7 +91,7 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
    for(int nx=0; nx<3; nx++)
     for(int ny=0; ny<3; ny++)
      { 
-       void *Expr = EpsExpression[nx][ny];
+       void *Expr = QExpression[nx][ny];
        if (Expr==0) continue;
 
        cevaluator_set_var_index(Expr, "w",     0);
@@ -101,6 +101,7 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
        cevaluator_set_var_index(Expr, "r",     4);
        cevaluator_set_var_index(Expr, "Theta", 5);
        cevaluator_set_var_index(Expr, "Phi",   6);
+
        // add variables named Eps1, Eps2, ... for scuff-em matprops
        for(int nmp=0; nmp<NumMPs; nmp++)
         { char str[10];
@@ -214,41 +215,40 @@ char *SVTensor::Parse(FILE *f)
 
      /*--------------------------------------------------------------*/
      /*- detect lines of the form -----------------------------------*/
-     /*-  Eps =                   -----------------------------------*/
+     /*-   Q   =                  -----------------------------------*/
+     /*- Eps   =                  -----------------------------------*/
+     /*- Qxx   =                  -----------------------------------*/
+     /*- EpsXX =                  -----------------------------------*/
      /*--------------------------------------------------------------*/
-     pp=strchr(p,'=');
-     if ( pp && Len>=4 && !strncasecmp(p,"Eps",3 )
-             && (p[4]=='=' || p[4]==' ')
-        )
+     char *q=0;
+     if ( Len>=3 && !strncasecmp(p,"Q",1) )
+      q=p+1;
+     else if ( Len>=5 && !strncasecmp(p,"Eps",1) )
+      q=p+3;
+     if ( q )
       { 
-        Isotropic=true;
-        ExtractMPs(pp+1,FileName,LineNum);
-        EpsExpression[0][0] = cevaluator_create(pp+1);
-        if (!EpsExpression[0][0])
-         return vstrdup("%s:%i: invalid expression",FileName,LineNum);
-      }
-     /*--------------------------------------------------------------*/
-     /*- detect lines of the form -----------------------------------*/
-     /*-  EpsXY =                 -----------------------------------*/
-     /*--------------------------------------------------------------*/
-     else if ( pp && Len>=5 && !strncasecmp(p, "Eps",3 ))
-      { 
-        ExtractMPs(pp+1,FileName,LineNum);
+        pp=strchr(q,'=');
+        int MN[2]={0,0};
 
-        // the user can specify either e.g. EpsXY or Eps12
-        int MN[2];
-        for(int n=0; n<2; n++)
-         { if( p[3+n]>='X' && p[3+n]<='Z')
-            MN[n] = p[3+n] - 'X';
-           else if (p[3+n]>=1 && p[3+n]<=3)
-            MN[n] = p[3+n] - '1';
-           else 
-            return vstrdup("%s:%i: invalid expression",FileName,LineNum);
-         };
+        // isotropic case
+        if ( *q=='=' || *q==' ' )
+         Isotropic=true;
+        // anisotropic case
+        else 
+         for(int n=0; n<2; n++)
+          { // the user can specify either e.g. EpsXY or Eps12
+            if( toupper(q[n])>='X' && toupper(q[n])<='Z')
+             MN[n] = toupper(q[n]) - 'X';
+            else if (q[n]>='1' && q[n]<='3')
+             MN[n] = q[n] - '1';
+            else 
+             return vstrdup("%s:%i: invalid expression",FileName,LineNum);
+          };
 
         int M=MN[0], N=MN[1];
-        EpsExpression[M][N]=cevaluator_create(pp+1);
-        if (!EpsExpression[M][N])
+        ExtractMPs(pp+1,FileName,LineNum);
+        QExpression[M][N]=cevaluator_create(pp+1);
+        if (!QExpression[M][N])
          return vstrdup("%s:%i: invalid expression",FileName,LineNum);
       }
      /*--------------------------------------------------------------*/
@@ -291,11 +291,8 @@ SVTensor::~SVTensor()
 
   for(int nx=0; nx<3; nx++)
    for(int ny=0; ny<3; ny++)
-    { if ( EpsExpression[nx][ny] )
-       cevaluator_destroy(EpsExpression[nx][ny]);
-      if ( MuExpression[nx][ny] )
-       cevaluator_destroy(MuExpression[nx][ny]);
-    };
+    if ( QExpression[nx][ny] )
+     cevaluator_destroy(QExpression[nx][ny]);
 
   for(int nmp=0; nmp<NumMPs; nmp++)
    delete MPs[nmp];
@@ -306,22 +303,18 @@ SVTensor::~SVTensor()
 }  
 
 /***************************************************************/
-/* get eps and mu at a given frequency and location  ***********/
+/* get tensor components at a given frequency and location  ****/
 /***************************************************************/
-void SVTensor::Evaluate(cdouble Omega, double x[3],
-                        cdouble Eps[3][3], cdouble Mu[3][3])
+void SVTensor::Evaluate(cdouble Omega, double x[3], cdouble Q[3][3])
 { 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   if (Homogeneous && Isotropic)
-   { cdouble EpsMP, MuMP;
-     MPs[0]->GetEpsMu(Omega, &EpsMP, &MuMP);
+   { cdouble QMP = MPs[0]->GetEps(Omega);
      for(int nx=0; nx<3; nx++)
       for(int ny=0; ny<3; ny++)
-       { Eps[nx][ny] = (nx==ny) ? EpsMP : 0.0;
-          Mu[nx][ny] = (nx==ny) ? MuMP  : 0.0;
-       };
+       Q[nx][ny] = (nx==ny) ? QMP : 0.0;
      return;
    };
 
@@ -353,65 +346,30 @@ void SVTensor::Evaluate(cdouble Omega, double x[3],
   /***************************************************************/
   for(int nx=0; nx<3; nx++)
    for(int ny=0; ny<3; ny++)
-    Eps[nx][ny] = Mu[nx][ny] = (nx==ny) ? 1.0 : 0.0; 
+    Q[nx][ny] = (nx==ny) ? 1.0 : 0.0; 
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if ( EpsExpression[0][0] )
-   Eps[0][0]=Eps[1][1]=Eps[2][2]
-    =cevaluator_evaluate(EpsExpression[0][0], NumVars, 
-                         const_cast<char **>(VNames), VValues);
+  char **VVNames = const_cast<char **>(VNames);
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    if (QExpression[Mu][Nu])
+     Q[Mu][Nu] = cevaluator_evaluate(QExpression[Mu][Nu], NumVars,
+                                     VVNames, VValues);
 
-  if ( EpsExpression[1][1] )
-   Eps[1][1]
-    =cevaluator_evaluate(EpsExpression[1][1], NumVars,
-                         const_cast<char **>(VNames), VValues);
-
-  if ( EpsExpression[2][2] )
-   Eps[2][2]
-    =cevaluator_evaluate(EpsExpression[2][2], NumVars,
-                         const_cast<char **>(VNames), VValues);
-
-  if ( EpsExpression[0][1] )
-   { Eps[0][1]=cevaluator_evaluate(EpsExpression[0][1], NumVars,
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[1][0]) Eps[1][0]=Eps[0][1];
+  // enforce symmetry of off-diagonals
+  for(int Mu=0; Mu<3; Mu++)
+   { int Nu = (Mu+1)%3;
+     cdouble QAvg = 0.5*(Q[Mu][Nu] + Q[Nu][Mu]);
+     Q[Mu][Nu]=Q[Nu][Mu]=QAvg;
    };
 
-  if ( EpsExpression[1][0] )
-   { Eps[1][0]=cevaluator_evaluate(EpsExpression[1][0], NumVars,
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[0][1]) Eps[0][1]=Eps[1][0];
+  // if Qyy and Qzz weren't specified but Qxx was,
+  // set Qyy=Qzz=Qxx
+  if (QExpression[0][0])
+   { if (QExpression[1][1]==0) Q[1][1]=Q[0][0];
+     if (QExpression[2][2]==0) Q[2][2]=Q[0][0];
    };
 
-  if ( EpsExpression[0][2] )
-   { Eps[0][2]=cevaluator_evaluate(EpsExpression[0][2], NumVars, 
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[2][0]) Eps[2][0]=Eps[0][2];
-   };
-
-  if ( EpsExpression[2][0] )
-   { Eps[2][0]=cevaluator_evaluate(EpsExpression[2][0], NumVars, 
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[0][2]) Eps[0][2]=Eps[2][0];
-   };
-
-  if ( EpsExpression[1][2] )
-   { Eps[1][2]=cevaluator_evaluate(EpsExpression[1][2], NumVars,
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[2][1]) Eps[2][1]=Eps[1][2];
-   };
-
-  if ( EpsExpression[2][1] )
-   { Eps[2][1]=cevaluator_evaluate(EpsExpression[2][1], NumVars,
-                                   const_cast<char **>(VNames), VValues);
-     if (!EpsExpression[1][2]) Eps[1][2]=Eps[2][1];
-   };
-}
-
-void SVTensor::Evaluate(cdouble Omega, double x[3],
-                        cdouble Eps[3][3])
-{ cdouble Mu[3][3];
-  Evaluate(Omega, x, Eps, Mu);
 }

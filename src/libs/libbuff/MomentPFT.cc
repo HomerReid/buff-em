@@ -366,7 +366,7 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
       }; 
 
      //
-     cdouble *p0=p[0]; //, *m0=m[0];
+     cdouble *p0=p[0], *m0=m[0];
      for(int Mu=0; Mu<3; Mu++)
       {
         PFTMatrix->AddEntry(no, PFT_PABS, 0.5*Omega*imag( conj(p0[Mu])*EH[Mu] ) );
@@ -395,7 +395,7 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
   for(int nm=0; nm<NumMoments; nm++)
    for(int Mu=0; Mu<3; Mu++)
     { 
-      PFTMatrix->AddEntry(no, PFT_PABS, 
+      PFTMatrix->AddEntry(no, PFT_PABS,
                               PPF*real( conj(p[nm][Mu])*p[nm][Mu] )
                          );
 

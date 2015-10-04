@@ -11,18 +11,27 @@
 * [Installation](reference/Installing.md)
 * [Geometry files](reference/Geometries.md)
 * [SVTensor files](reference/SVTensors.md)
-* [Key differences between <span class="SC">buff-em</sc> and <span class="SC">scuff-em</sc>](reference/BUFFvsSCUFF.md)
+* [Key differences between <span class="SC">buff-em</span> and <span class="SC">scuff-em</span>](reference/BUFFvsSCUFF.md)
+
+<a name="Examples"></a>
+## Tutorial examples
+
++ [Mie scattering](examples/MieScattering/index.md)
++ [Power, force, and torque on Janus particles irradiated by plane waves](examples/JanusParticles/index.md)
++ [Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres](examples/SiO2Spheres/index.md)
++ [Thermal radiation and self-propulsion of photon torpedoes](examples/PhotonTorpedoes/index.md)
++ [Thermal self-rotation of QED pinwheels](examples/Pinwheels/index.md)
 
 ## Command-line application reference
 
-* *Nanophotonics code*
-    * [buff-scatter][buff-scatter]    - general-purpose electromagnetic scattering
+#### *Nanophotonics code*
+- [buff-scatter][buff-scatter]    - general-purpose electromagnetic scattering
       
-* *Non-equilibrium Casimir/ heat-transfer code*
-    - [buff-neq][buff-neq]            - radiative heat transfer and non-equilibrium Casimir forces/torques
-  
-* *Utility codes*
-    - [buff-analyze][buff-analyze]    - diagnostic tool to print info on [[buff-em]] geometries
+#### *Non-equilibrium Casimir/ heat-transfer code*
+- [buff-neq][buff-neq]            - radiative heat transfer and non-equilibrium Casimir forces/torques
+
+#### *Utility code*
+- [buff-analyze][buff-analyze]    - diagnostic tool to print info on [[buff-em]] geometries
 
 ## API reference
 
@@ -30,7 +39,7 @@
 
 ## Technical memo
 
-* [<span class="SC">buff-em</span>technical memo][memo]
+* [<span class="SC">buff-em</span> technical memo][memo]
 
 [buffEMLogo]:         img/buffEMLogo.png
 [buff-scatter]:       applications/buff-scatter.md
