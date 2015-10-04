@@ -40,13 +40,13 @@ http://homerreid.github.io/buff-em-documentation
 ## Command-line application reference
 
 #### *Nanophotonics code*
-- [BUFF-SCATTER][buff-scatter]    - general-purpose electromagnetic scattering
+- [BUFF-SCATTER][buffScatter]    - general-purpose electromagnetic scattering
       
 #### *Non-equilibrium Casimir/ heat-transfer code*
-- [BUFF-NEQ][buff-neq]            - radiative heat transfer and non-equilibrium Casimir forces/torques
+- [BUFF-NEQ][buffNeq]            - radiative heat transfer and non-equilibrium Casimir forces/torques
 
 #### *Utility code*
-- [BUFF-ANALYZE][buff-analyze]    - diagnostic tool to print info on [[buff-em]] geometries
+- [BUFF-ANALYZE][buffAnalyze]    - diagnostic tool to print info on [[buff-em]] geometries
 
 ## API reference
 
@@ -56,9 +56,9 @@ http://homerreid.github.io/buff-em-documentation
 
 * [BUFF-EM technical memo][memo]
 
-[buff-scatter]:       http://homerreid.github.io/buff-em-documentation/applications/buff-scatter
-[buff-neq]:           http://homerreid.github.io/buff-em-documentation/applications/buff-neq
-[buff-analyze]:       http://homerreid.github.io/buff-em-documentation/applications/buff-analyze
+[buffScatter]:        http://homerreid.github.io/buff-em-documentation/applications/buff-scatter
+[buffNeq]:            http://homerreid.github.io/buff-em-documentation/applications/buff-neq
+[buffAnalyze]:        http://homerreid.github.io/buff-em-documentation/applications/buff-analyze
 [libbuff]:            http://homerreid.github.io/buff-em-documentation/API/libbuff
 [memo]:               http://homerreid.github.io/buff-em-documentation/tex/buff-em-tex
 [TopLevel]:           http://homerreid.github.io/buff-em-documentation/reference/TopLevel
