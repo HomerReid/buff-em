@@ -172,7 +172,7 @@ void OverlapIntegrand_PFT(double X[3],
 /***************************************************************/
 /* this is supposed to be a *general* routine for computing    */
 /* overlap integrals with arbitrary user-specified integrands, */
-/* as opposed to the *specific* rotines in VIEMatrix.cc for    */
+/* as opposed to the *specific* routines in VIEMatrix.cc for   */
 /* computing the particular overlap integrals needed to        */
 /* assemble the VIE matrix. but the two codes should really    */
 /* be merged into one.                                         */

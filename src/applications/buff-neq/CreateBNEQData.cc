@@ -187,6 +187,7 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
   /*--------------------------------------------------------------*/
   BNEQD->TEnvironment=0.0;
   BNEQD->TemperatureSVTs=(SVTensor **)mallocEC(NO*sizeof(SVTensor *));
+  BNEQD->MeanDeltaTheta=(double *)mallocEC(NO*sizeof(double));
   
   /*--------------------------------------------------------------*/
   /* write file preambles ----------------------------------------*/

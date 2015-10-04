@@ -75,7 +75,7 @@ void WriteDataToOutputFile(BNEQData *BNEQD, double *I, double *E)
       for(int nss=0; nss<NO; nss++)
        { fprintf(f,"%s %i%i ",BNEQD->GTCList[nt]->Tag,nss+1,nsd+1);
          for(nq=0; nq<NQ; nq++)
-          { int i = GetIndex(BNEQD, nt, nss, nsd, nq);
+          { int i = GetNEQIIndex(BNEQD, nt, nss, nsd, nq);
             fprintf(f,"%+16.8e %+16.8e ", I[i], E[i] );
             TotalQuantity[nq] += I[i];
             TotalError[nq] += E[i];
@@ -131,7 +131,7 @@ int SGJCIntegrand(unsigned ndim, const double *x, void *params,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
-  GetFlux(BNEQD, Omega, fval);
+  GetNEQIntegrand(BNEQD, Omega, fval);
   for(unsigned int nf=0; nf<fdim; nf++)
    fval[nf]*=Jacobian;
 
@@ -143,8 +143,7 @@ int SGJCIntegrand(unsigned ndim, const double *x, void *params,
 /***************************************************************/
 void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
                                         double OmegaMin, double OmegaMax,
-                                        double AbsTol, double RelTol,
-                                        double *I, double *E)
+                                        double AbsTol, double RelTol)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -169,6 +168,9 @@ void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
   int NT = BNEQD->NumTransformations;
   int NQ = BNEQD->NQ;
   int fdim = NT*NO*NO*NQ;
+  double *I = new double[ fdim ];
+  double *E = new double[ fdim ];
+
   pcubature_log(fdim, SGJCIntegrand, (void *)FID, 1, &OmegaMin, &OmegaMax,
                 1000, AbsTol, RelTol, ERROR_INDIVIDUAL, I, E, "buff-neq.SGJClog");
 
@@ -177,18 +179,27 @@ void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
   /***************************************************************/
   WriteDataToOutputFile(BNEQD, I, E);
 
+  delete[] I;
+  delete[] E;
+
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double OmegaMax,
-                                        int NumIntervals, double *I, double *E)
+void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD,
+                                        double OmegaMin, 
+                                        double OmegaMax,
+                                        int NumIntervals)
 { 
-  int NO = BNEQD->G->NumObjects;
-  int NT = BNEQD->NumTransformations;
-  int NQ = BNEQD->NQ;
+  SWGGeometry *G = BNEQD -> G;
+  int NO   = G->NumObjects;
+  int NT   = BNEQD->NumTransformations;
+  int NQ   = BNEQD->NQ;
   int fdim = NT*NO*NO*NQ;
+
+  double *I      = new double[fdim];
+  double *E      = new double[fdim];
   double *fLeft  = new double[fdim];
   double *fMid   = new double[fdim];
   double *fRight = new double[fdim];
@@ -232,7 +243,7 @@ void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double
   if (OmegaMin < OMEGAMIN)
    { 
      Omega=OMEGAMIN;
-     GetFlux(BNEQD, Omega, fLeft);
+     GetNEQIntegrand(BNEQD, Omega, fLeft);
      for(int nf=0; nf<fdim; nf++)
       { I[nf] = fLeft[nf] * (OMEGAMIN-OmegaMin);
         E[nf] = 0.0;
@@ -242,11 +253,10 @@ void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double
   else
    { 
      Omega=OmegaMin;
-     GetFlux(BNEQD, Omega, fLeft);
+     GetNEQIntegrand(BNEQD, Omega, fLeft);
      memset(I, 0, fdim*sizeof(double));
      memset(E, 0, fdim*sizeof(double));
    };
-
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -258,14 +268,14 @@ void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double
    { 
      // evaluate integrand at midpoint of interval 
      Omega += 0.5*Delta;
-     GetFlux(BNEQD, Omega, fMid);
+     GetNEQIntegrand(BNEQD, Omega, fMid);
 
      // evaluate integrand at right end of interval 
      Omega += 0.5*Delta;
-     GetFlux(BNEQD, Omega, fRight);
+     GetNEQIntegrand(BNEQD, Omega, fRight);
 
      // compute the simpson's rule and trapezoidal rule
-     // estimates of the integral over this interval  
+     // estimates of the integral over this interval
      // and take their difference as the error
      for(int nf=0; nf<fdim; nf++)
       { ISimp[nf] = (fLeft[nf] + 4.0*fMid[nf] + fRight[nf])*Delta/6.0;
@@ -288,5 +298,8 @@ void EvaluateFrequencyIntegral_TrapSimp(BNEQData *BNEQD, double OmegaMin, double
   /***************************************************************/
   /***************************************************************/
   WriteDataToOutputFile(BNEQD, I, E);
+
+  delete[] I;
+  delete[] E;
 
 }
