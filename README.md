@@ -66,8 +66,8 @@ http://homerreid.github.io/buff-em-documentation
 [Geometries]:         http://homerreid.github.io/buff-em-documentation/reference/Geometries
 [SVTensors]:          http://homerreid.github.io/buff-em-documentation/reference/SVTensors
 [BUFFvsSCUFF]:        http://homerreid.github.io/buff-em-documentation/reference/BUFFvsSCUFF
-[MieScattering]:      http://homerreid.github.io/buff-em-documentation/examples/MieScattering/MieScattering
-[JanusParticles]:     http://homerreid.github.io/buff-em-documentation/examples/JanusParticles/JanusParticles
-[SiO2Spheres]:        http://homerreid.github.io/buff-em-documentation/examples/SiO2Spheres/SiO2Spheres
-[PhotonTorpedoes]:    http://homerreid.github.io/buff-em-documentation/examples/PhotonTorpedoes/PhotonTorpedoes
-[QEDPinwheels]:       http://homerreid.github.io/buff-em-documentation/examples/Pinwheels/QEDPinwheels
+[MieScattering]:      http://homerreid.github.io/buff-em-documentation/examples/MieScattering
+[JanusParticles]:     http://homerreid.github.io/buff-em-documentation/examples/JanusParticles
+[SiO2Spheres]:        http://homerreid.github.io/buff-em-documentation/examples/SiO2Spheres
+[PhotonTorpedoes]:    http://homerreid.github.io/buff-em-documentation/examples/PhotonTorpedoes
+[QEDPinwheels]:       http://homerreid.github.io/buff-em-documentation/examples/Pinwheels
