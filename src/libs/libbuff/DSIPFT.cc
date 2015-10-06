@@ -247,7 +247,6 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
 #ifdef USE_OPENMP
   Log("DSI using %i OpenMP threads",NumThreads);
 #pragma omp parallel for num_threads(NumThreads), \
-                         collapse(2),             \
                          schedule(dynamic,1)
 #endif
   for(int nx=0; nx<NX; nx++)
