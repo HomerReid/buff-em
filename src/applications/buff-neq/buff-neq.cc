@@ -267,8 +267,8 @@ int main(int argc, char *argv[])
   /*******************************************************************/
   if (NumFreqs>0)
    { 
-     int OutputVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects* BNEQD->NQ;
-     double *Flux=new double[OutputVectorLength];
+     int FluxVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects*NUMPFT;
+     double *Flux=new double[FluxVectorLength];
      for (int nFreq=0; nFreq<NumFreqs; nFreq++)
       GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), Flux);
    }
