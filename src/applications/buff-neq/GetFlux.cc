@@ -273,6 +273,9 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      MeanDeltaTheta[no]=GetMeanDeltaTheta(G->Objects[no], TemperatureSVTs[no],
                                           Omega, ThetaEnvironment);
 
+     Log("Object %i: MeanDeltaTheta=%e (%e)",
+          no,MeanDeltaTheta[no],GetThetaFactor(real(Omega),300.0));
+
      Log(" Assembling V_{%i} and Rytov_{%i} ...",no,no);
      G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
                               ThetaEnvironment, MeanDeltaTheta[no],
