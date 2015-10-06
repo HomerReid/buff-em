@@ -186,7 +186,7 @@ int main(int argc, char *argv[])
    };
 
   /*******************************************************************/
-  /* determine which output quantities were requested ****************/
+  /* determine which output quantities were requested. ***************/
   /*******************************************************************/
   int QuantityFlags=0;
   if (PAbs)    QuantityFlags|=QFLAG_PABS;
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
   if (XTorque) QuantityFlags|=QFLAG_XTORQUE;
   if (YTorque) QuantityFlags|=QFLAG_YTORQUE;
   if (ZTorque) QuantityFlags|=QFLAG_ZTORQUE;
-  if (NumFreqs==0 && QuantityFlags==0)
+  if (NumFreqs>0 && QuantityFlags==0)
    ErrExit("you must specify at least one quantity to compute");
 
   /*******************************************************************/
