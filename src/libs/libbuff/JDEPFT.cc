@@ -246,8 +246,9 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   int NONQ = NO*NQ;
   static int DeltaPFTSize=0;
   static double *DeltaPFT=0;
-  if ( DeltaPFTSize != (NumThreads*NONQ) )
-   { DeltaPFTSize=NumThreads*NONQ;
+  if ( DeltaPFTSize < (NumThreads*NONQ) )
+   { Log("(re)allocating DeltaPFT (%i,%i)",DeltaPFTSize,NumThreads*NONQ);
+     DeltaPFTSize=NumThreads*NONQ;
      if (DeltaPFT) free(DeltaPFT);
      DeltaPFT = (double *)mallocEC(DeltaPFTSize*sizeof(double));
    };
