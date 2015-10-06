@@ -105,8 +105,8 @@ int main(int argc, char *argv[])
 /**/     
      {"TransFile",      PA_STRING,  1, 1,       (void *)&TransFile,  0,             "list of geometrical transformation"},
 /**/     
-     {"TempArgs",       PA_STRING,  2, MAXOBJS, (void *)TempArgs,     &nTempArgs,     ""},
-     {"TempFileArgs",   PA_STRING,  2, MAXOBJS, (void *)TempFileArgs, &nTempFileArgs, ""},
+     {"Temperature",     PA_STRING,  2, MAXOBJS, (void *)TempArgs,     &nTempArgs,     ""},
+     {"TemperatureFile", PA_STRING,  2, MAXOBJS, (void *)TempFileArgs, &nTempFileArgs, ""},
 /**/     
      {"Power",          PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "compute power transfer"},
      {"PAbs",           PA_BOOL,    0, 1,       (void *)&PAbs,       0,             "(synonym for --power)"},
