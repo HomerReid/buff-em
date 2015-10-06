@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 
   for(int n=0; n<nTempFileArgs; n++)
    { int no;
-     G->GetObjectByLabel(TempArgs[2*n],&no);
+     G->GetObjectByLabel(TempFileArgs[2*n],&no);
      if (no==-1) 
       ErrExit("unknown object %s in --TempFile specification",TempFileArgs[2*n]);
      BNEQD->TemperatureSVTs[no]=new SVTensor(TempFileArgs[2*n+1],true);
