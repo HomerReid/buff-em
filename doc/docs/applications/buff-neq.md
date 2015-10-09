@@ -51,23 +51,12 @@ bodies at thermal equilibrium.)
 
 # 1. What <span class="SC">buff-neq</span> actually computes
 
-[[buff-neq]] implements the
-FVC approach to non-equilibrium fluctuation phenomena.
-This is 
-an algorithm for computing the thermal averages of power,
-force, and torque (PFT) quantities in geometries consisting
-of compact material bodies at various temperatures embedded
-in an finite-temperature or zero-temperature environment.
-[[buff-neq]] can compute both
-spatially-*resolved* and spatially-*integrated* PFT quantities.
-(Examples of spatially-resolved quantities include components
-of the average Poynting flux or Maxwell stress tensor at individual
-points in space. Examples of spatially-integrated quantities 
-include the total power absorbed by, or the total force or torque 
-on, a compact homogeneous body. Spatially-integrated quantities 
-are generally obtained by integrating spatially-resolved quantities
-over closed bounding surfaces, although this is not necessarily
-the way they are computed by [[buff-neq]].)
+[[buff-neq]] implements the FVC approach to non-equilibrium 
+fluctuation phenomena.  This is an algorithm for computing the 
+thermal averages of power, force, and torque (PFT) quantities 
+in geometries consisting of compact material bodies at various 
+temperatures embedded in an finite-temperature or 
+zero-temperature environment.
 
 <a name="CommandLineOptions"></a>
 # 2. <span class="SC">buff-neq</span> command-line options
