@@ -93,7 +93,7 @@ typedef struct BNEQData
    SWGGeometry *G;
 
    SVTensor **TemperatureSVTs; // one for each object in G
-   double *MeanDeltaTheta;     // one for each object in G
+   double *TAvg;               // one for each object in G
    double TEnvironment;
 
    GTComplex **GTCList;

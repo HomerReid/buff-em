@@ -82,25 +82,22 @@ double GetThetaFactor(double Omega, double T)
   return Omega / ( exp( Omega/(BOLTZMANNK*T) ) - 1.0 );
 }
 
-double GetMeanDeltaTheta(SWGVolume *O, SVTensor *TemperatureSVT,
-                         cdouble Omega, double ThetaEnvironment)
+double GetAverageTemperature(SWGVolume *O, SVTensor *TemperatureSVT)
 {
   if (TemperatureSVT==0)
-   return 1.0;
+   return 0.0;
 
-  double MeanDeltaTheta=0.0, TotalVolume=0.0;
+  double TAvg=0.0, TotalVolume=0.0;
   for(int nt=0; nt<O->NumTets; nt++)
    { 
      double *X0   = O->Tets[nt]->Centroid;
      double V     = O->Tets[nt]->Volume;
-     double T     = TemperatureSVT->EvaluateD(Omega, X0);
-     double Theta = GetThetaFactor( real(Omega), T );
-
+     double T     = TemperatureSVT->EvaluateD(0.0, X0);
      TotalVolume += V;
-     MeanDeltaTheta += V*(Theta-ThetaEnvironment);
+     TAvg        += V*T;
    };
 
-  return MeanDeltaTheta/TotalVolume;
+  return TAvg/TotalVolume;
 
 }
 
@@ -119,8 +116,7 @@ typedef struct GOData
    SVTensor *EpsSVT;
    SVTensor *TemperatureSVT;
    double ThetaEnvironment;
-   double MeanDeltaTheta;
-
+   double DeltaThetaHat;
  } GOData;
 
 void GetOverlapIntegrand(double *x, double *b, double DivB,
@@ -134,11 +130,11 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   double PreFacA           = Data->PreFacA;
   double *QB               = Data->QB;
   double PreFacB           = Data->PreFacB;
-  cdouble Omega            = Data->Omega;
+  double Omega             = real(Data->Omega);
   SVTensor *EpsSVT         = Data->EpsSVT;
   SVTensor *TemperatureSVT = Data->TemperatureSVT;
   double ThetaEnvironment  = Data->ThetaEnvironment;
-  double MeanDeltaTheta    = Data->MeanDeltaTheta;
+  double DeltaThetaHat     = Data->DeltaThetaHat;
 
   cdouble EpsM1[3][3], InvEpsM1[3][3];
   EpsSVT->Evaluate( Omega, x, EpsM1 );
@@ -155,14 +151,12 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   FB[1] = PreFacB * (x[1] - QB[1]);
   FB[2] = PreFacB * (x[2] - QB[2]);
 
-  // DeltaTheta(x) = Theta( \omega, T(x) ) - Theta(\omega, TEnvironment)
-  // RelDeltaTheta = DeltaTheta(x) / { volume average of DeltaTheta(x) }
   double RelDeltaTheta=1.0;
   if (TemperatureSVT)
    { 
      double T = TemperatureSVT->EvaluateD(0,x);
-     double Theta = GetThetaFactor( real(Omega), T );
-     RelDeltaTheta= ( Theta - ThetaEnvironment ) / MeanDeltaTheta;
+     RelDeltaTheta = GetThetaFactor( Omega, T ) - ThetaEnvironment;
+     if (DeltaThetaHat!=0.0) RelDeltaTheta/=DeltaThetaHat;
    };
 
   cdouble V=0.0, VInv=0.0;
@@ -171,11 +165,11 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
    for(int Nu=0; Nu<3; Nu++)
     { V     += FA[Mu]*EpsM1[Mu][Nu]*FB[Nu];
       VInv  += FA[Mu]*InvEpsM1[Mu][Nu]*FB[Nu];
-      Rytov += RelDeltaTheta*FA[Mu]*imag(EpsM1[Mu][Nu])*FB[Nu];
+      Rytov += FA[Mu]*imag(EpsM1[Mu][Nu])*FB[Nu];
     };
   V     *= -1.0*Omega*Omega;
   VInv  *= -1.0/(Omega*Omega);
-  Rytov *= 2.0*real(Omega) / (M_PI*ZVAC);
+  Rytov *= 2.0*Omega*RelDeltaTheta/(M_PI*ZVAC);
  
   I[0] = real(V);
   I[1] = imag(V);
@@ -197,15 +191,15 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /*    Rytov = (2k / Pi*ZVAC) * (RelDelTheta(T)) * Im Eps       */
 /*                                                             */
 /* where RelDelTheta is defined as follows:                    */
-/*  DelTheta(x) = Theta( T(x) ) - Theta( TEnvironment )        */
-/*  RelDelTheta = DelTheta(x) / {volume average of DelTheta(x)}  */
+/*  DelTheta(x)    = Theta( T(x) ) - Theta( TEnvironment )     */
+/*  DelThetaHat(x) = Theta( TAvg ) - Theta( TEnvironment )     */
+/*  RelDelTheta    = DelTheta(x) / DeltaThetaHat               */
 /*                                                             */
-/* If TemperatureSVT==NULL then the factor Theta(T)-Theta(TEnv)*/
-/* is replaced by 1.                                           */
+/* If DeltaThetaHat==0.0 then we do not divide by DeltaThetaHat.*/
 /***************************************************************/
 int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
                 SVTensor *TemperatureSVT,
-                double ThetaEnvironment, double MeanDeltaTheta,
+                double TAvg, double TEnvironment,
                 int Indices[MAXOVERLAP],
                 cdouble VEntries[MAXOVERLAP],
                 cdouble VInvEntries[MAXOVERLAP],
@@ -217,13 +211,16 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
   RytovEntries[0]=0.0;
   int NNZ=1;
 
+  double ThetaAvg         = GetThetaFactor( real(Omega), TAvg);
+  double ThetaEnvironment = GetThetaFactor( real(Omega), TEnvironment);
+
   SWGFace *FA = O->Faces[nfA];
   struct GOData MyGOData, *Data=&MyGOData;
   Data->Omega            = Omega;
   Data->EpsSVT           = O->SVT;
   Data->TemperatureSVT   = TemperatureSVT;
   Data->ThetaEnvironment = ThetaEnvironment;
-  Data->MeanDeltaTheta   = MeanDeltaTheta;
+  Data->DeltaThetaHat    = ThetaAvg - ThetaEnvironment;
 
   /*--------------------------------------------------------------*/
   /* handle interactions between face #nfA and face #nfB, where   */
@@ -323,8 +320,8 @@ int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
 /***************************************************************/
 void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
                                         SVTensor *TemperatureSVT,
-                                        double ThetaEnvironment,
-                                        double MeanDeltaTheta,
+                                        double TAvg,
+                                        double TEnvironment,
                                         SMatrix *V,
                                         SMatrix *VInv,
                                         SMatrix *Rytov,
@@ -345,7 +342,7 @@ void SWGGeometry::AssembleOverlapBlocks(int no, cdouble Omega,
       cdouble VInvEntries[MAXOVERLAP];
       double RytovEntries[MAXOVERLAP];
       int NNZ = GetOverlaps(O, nr, Omega,
-                            TemperatureSVT, ThetaEnvironment, MeanDeltaTheta,
+                            TemperatureSVT, TAvg, TEnvironment,
                             ncList, VEntries, VInvEntries, RytovEntries);
       for(int nnz=0; nnz<NNZ; nnz++)
         { int nc = ncList[nnz];

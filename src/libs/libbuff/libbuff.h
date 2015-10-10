@@ -232,8 +232,8 @@ class SWGGeometry
 
    void AssembleOverlapBlocks(int no, cdouble Omega,
                               SVTensor *TemperatureSVT,
+                              double TAvg,
                               double ThetaEnvironment,
-                              double MeanDeltaTheta,
                               SMatrix *V, SMatrix *VInv,
                               SMatrix *Rytov, HMatrix *TInv=0,
                               int Offset=0);

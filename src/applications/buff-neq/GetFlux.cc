@@ -37,10 +37,10 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                   double QPF[3], char *FileBase);
 
 double GetThetaFactor(double Omega, double T);
-
-double GetMeanDeltaTheta(SWGVolume *O, SVTensor *TemperatureSVT,
-                         cdouble Omega, double ThetaEnvironment);
+double GetAverageTemperature(SWGVolume *O, SVTensor *TemperatureSVT);
                }
+
+using namespace buff;
 
 /***************************************************************/
 /* the GetFlux() routine computes a large number of quantities.*/
@@ -252,8 +252,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   /***************************************************************/
   SWGGeometry *G             = BNEQD->G;
   SVTensor **TemperatureSVTs = BNEQD->TemperatureSVTs;
+  double *TAvg               = BNEQD->TAvg;
   double TEnvironment        = BNEQD->TEnvironment;
-  double *MeanDeltaTheta     = BNEQD->MeanDeltaTheta;
   HMatrix ***GBlocks         = BNEQD->GBlocks;
   SMatrix **VBlocks          = BNEQD->VBlocks;
   SMatrix **RBlocks          = BNEQD->RBlocks;
@@ -270,15 +270,13 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   int NO=G->NumObjects;
   for(int no=0; no<NO; no++)
    { 
-     MeanDeltaTheta[no]=GetMeanDeltaTheta(G->Objects[no], TemperatureSVTs[no],
-                                          Omega, ThetaEnvironment);
-
-     Log("Object %i: MeanDeltaTheta=%e (%e)",
-          no,MeanDeltaTheta[no],GetThetaFactor(real(Omega),300.0));
+     TAvg[no]=GetAverageTemperature(G->Objects[no], 
+                                    TemperatureSVTs[no]);
+     Log("Object %i: TAvg=%e",no, TAvg[no]);
 
      Log(" Assembling V_{%i} and Rytov_{%i} ...",no,no);
      G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
-                              ThetaEnvironment, MeanDeltaTheta[no],
+                              TAvg[no], ThetaEnvironment,
                               VBlocks[no], 0, RBlocks[no]);
 
      if (G->Mate[no]!=-1)
@@ -377,11 +375,20 @@ void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand)
   int NT                 = BNEQD->NumTransformations;
   int NQ                 = BNEQD->NQ;
   int QuantityFlags      = BNEQD->QuantityFlags;
+  double *TAvg           = BNEQD->TAvg;
+  double TEnvironment    = BNEQD->TEnvironment;
 
   double *Flux = new double[NT*NO*NO*NUMPFT];
   GetFlux(BNEQD, Omega, Flux);
  
-  double *MeanDeltaTheta = BNEQD->MeanDeltaTheta;
+  double *DeltaThetaHat = new double[NO];
+  double ThetaEnvironment = GetThetaFactor( real(Omega), TEnvironment);
+  for(int no=0; no<NO; no++)
+   { DeltaThetaHat[no] 
+      = GetThetaFactor( real(Omega), TAvg[no]) - ThetaEnvironment;
+     if (DeltaThetaHat[no]==0.0)
+      DeltaThetaHat[no]=1.0;
+   };
 
   for(int nt=0; nt<NT; nt++)
    for(int nos=0; nos<NO; nos++)
@@ -391,7 +398,7 @@ void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand)
        { int FluxIndex=GetFluxIndex(BNEQD, nt, nos, nod, nPFT);
          int NEQIIndex=GetNEQIIndex(BNEQD, nt, nos, nod, nq++);
          NEQIntegrand[NEQIIndex]
-          = HBAROMEGA02*MeanDeltaTheta[nos]*Flux[FluxIndex];
+          = HBAROMEGA02*DeltaThetaHat[nos]*Flux[FluxIndex];
        };
 
   FILE *f=vfopen("%s.SIIntegrand","a",BNEQD->FileBase);
@@ -406,4 +413,5 @@ void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand)
   fclose(f);
 
   delete[] Flux;
+  delete[] DeltaThetaHat;
 }
