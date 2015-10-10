@@ -151,11 +151,12 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
   FB[1] = PreFacB * (x[1] - QB[1]);
   FB[2] = PreFacB * (x[2] - QB[2]);
 
-  double DeltaTheta=1.0;
+  double RelDeltaTheta=1.0;
   if (TemperatureSVT)
    { 
      double T = TemperatureSVT->EvaluateD(0,x);
-     DeltaTheta = GetThetaFactor( Omega, T ) - ThetaEnvironment;
+     RelDeltaTheta = GetThetaFactor( Omega, T ) - ThetaEnvironment;
+     if (DeltaThetaHat!=0.0) RelDeltaTheta/=DeltaThetaHat;
    };
 
   cdouble V=0.0, VInv=0.0;
@@ -168,7 +169,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
     };
   V     *= -1.0*Omega*Omega;
   VInv  *= -1.0/(Omega*Omega);
-  Rytov *= 2.0*Omega*DeltaTheta/(M_PI*ZVAC*DeltaThetaHat);
+  Rytov *= 2.0*Omega*RelDeltaTheta/(M_PI*ZVAC);
  
   I[0] = real(V);
   I[1] = imag(V);
@@ -194,8 +195,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /*  DelThetaHat(x) = Theta( TAvg ) - Theta( TEnvironment )     */
 /*  RelDelTheta    = DelTheta(x) / DeltaThetaHat               */
 /*                                                             */
-/* If TemperatureSVT==NULL then the factor Theta(T)-Theta(TEnv)*/
-/* is replaced by 1.                                           */
+/* If DeltaThetaHat==0.0 then we do not divide by DeltaThetaHat.*/
 /***************************************************************/
 int GetOverlaps(SWGVolume *O, int nfA, cdouble Omega,
                 SVTensor *TemperatureSVT,

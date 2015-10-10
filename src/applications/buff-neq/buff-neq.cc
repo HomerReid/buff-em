@@ -261,6 +261,11 @@ int main(int argc, char *argv[])
      Log("Read temperature SVT for object %s from %s.",TempFileArgs[2*n],TempFileArgs[2*n+1]);
    };
 
+  if (nTempArgs>0 || nTempFileArgs>0)
+   for(int no=0; no<G->NumObjects; no++)
+    if (BNEQD->TemperatureSVTs[no]==0)
+     BNEQD->TemperatureSVTs[no]==new SVTensor("CONST_EPS_0.0",true);
+
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */
   /* perform the actual calculations                                 */
@@ -270,7 +275,10 @@ int main(int argc, char *argv[])
      int FluxVectorLength = BNEQD->NumTransformations * G->NumObjects* G->NumObjects*NUMPFT;
      double *Flux=new double[FluxVectorLength];
      for (int nFreq=0; nFreq<NumFreqs; nFreq++)
-      GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), Flux);
+      if (nTempArgs>0 || nTempFileArgs>0)
+       GetNEQIntegrand(BNEQD, OmegaPoints->GetEntry(nFreq), Flux);
+      else
+       GetFlux(BNEQD, OmegaPoints->GetEntry(nFreq), Flux);
    }
   else
    { if ( !strcasecmp(OmegaQuadrature,"adaptive") )

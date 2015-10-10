@@ -384,8 +384,11 @@ void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand)
   double *DeltaThetaHat = new double[NO];
   double ThetaEnvironment = GetThetaFactor( real(Omega), TEnvironment);
   for(int no=0; no<NO; no++)
-   DeltaThetaHat[no] 
-    = GetThetaFactor( real(Omega), TAvg[no]) - ThetaEnvironment;
+   { DeltaThetaHat[no] 
+      = GetThetaFactor( real(Omega), TAvg[no]) - ThetaEnvironment;
+     if (DeltaThetaHat[no]==0.0)
+      DeltaThetaHat[no]=1.0;
+   };
 
   for(int nt=0; nt<NT; nt++)
    for(int nos=0; nos<NO; nos++)
