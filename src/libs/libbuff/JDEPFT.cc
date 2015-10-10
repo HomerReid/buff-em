@@ -325,6 +325,10 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
     for(int nt=0; nt<NumThreads; nt++)
      PFTMatrix->AddEntry(no, nq, DeltaPFT[ nt*NONQ + no*NQ + nq ]);
 
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+HMatrix *JOnly=new HMatrix(PFTMatrix);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
   /***************************************************************/
   /* add incident-field contributions ****************************/
   /***************************************************************/
@@ -378,6 +382,27 @@ NumThreads = GetNumThreads();
    }; // if (IF)
   Elapsed = Secs() - Elapsed;
   //AddTaskTiming(5,Elapsed);
+
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+FILE *f=vfopen("%s.Resolved.Lower","a",GetFileBase(G->GeoFileName));
+fprintf(f,"%e ",real(Omega));
+for(int nq=0; nq<NUMPFT; nq++)
+ fprintf(f,"%e ",JOnly->GetEntryD(0,nq));
+for(int nq=0; nq<NUMPFT; nq++)
+ fprintf(f,"%e ",PFTMatrix->GetEntryD(0,nq) - JOnly->GetEntryD(0,nq));
+fprintf(f,"\n");
+fclose(f);
+
+f=vfopen("%s.Resolved.Upper","a",GetFileBase(G->GeoFileName));
+fprintf(f,"%e ",real(Omega));
+for(int nq=0; nq<NUMPFT; nq++)
+ fprintf(f,"%e ",JOnly->GetEntryD(1,nq));
+for(int nq=0; nq<NUMPFT; nq++)
+ fprintf(f,"%e ",PFTMatrix->GetEntryD(1,nq) - JOnly->GetEntryD(1,nq));
+fprintf(f,"\n");
+fclose(f);
+/*!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
 
   /***************************************************************/
   /* compute scattered power only if RHSVector is present        */

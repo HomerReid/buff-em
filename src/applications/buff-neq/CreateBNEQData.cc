@@ -148,12 +148,6 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.OPFT",FileBase);
      nPFT++;
    };
-  if (DoJDEPFT)
-   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_JDE;
-     BNEQD->DSIPoints[nPFT]    = 0;
-     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
-     nPFT++;
-   };
   if (DoMomentPFT)
    { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_MOMENTS;
      BNEQD->DSIPoints[nPFT]    = 0;
@@ -173,6 +167,12 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
    { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_DSI;
      BNEQD->DSIPoints[nPFT]    = DSIPoints2;
      BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.DSI%i",FileBase,DSIPoints2);
+     nPFT++;
+   };
+  if (DoJDEPFT || nPFT==0)
+   { BNEQD->PFTMethods[nPFT]   = BUFF_PFT_JDE;
+     BNEQD->DSIPoints[nPFT]    = 0;
+     BNEQD->PFTFileNames[nPFT] = vstrdup("%s.SIFlux.JDEPFT",FileBase);
      nPFT++;
    };
   BNEQD->NumPFTMethods=nPFT;
