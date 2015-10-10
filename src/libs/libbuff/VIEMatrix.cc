@@ -441,14 +441,13 @@ HMatrix *SWGGeometry::AssembleVIEMatrix(cdouble Omega, HMatrix *M)
   for(int noa=0; noa<NumObjects; noa++)
    for(int nob=noa; nob<NumObjects; nob++)
     { 
-      AssembleGBlock(noa, nob, Omega, M, 
+      AssembleGBlock(noa, nob, Omega, M,
                      BFIndexOffset[noa], BFIndexOffset[nob]);
 
       if (nob==noa)
        { Log("Adding VInv(%i)",noa);
          AssembleOverlapBlocks(noa, Omega, 0, 0.0, 0.0, 0, 0, 0,
                                M, BFIndexOffset[noa]);
- 
        };
     };
 
