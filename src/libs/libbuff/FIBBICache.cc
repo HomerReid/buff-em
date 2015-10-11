@@ -119,6 +119,7 @@ FIBBICache::FIBBICache(char *MeshFileName)
   /*--------------------------------------------------------------*/
   PreloadFileName=0;
   RecordsPreloaded=0;
+  RecordsWritten=0;
   if (MeshFileName)
    { 
      char CacheFileName[MAXSTR];
@@ -300,6 +301,11 @@ void FIBBICache::Store(const char *MeshFileName)
   /*- file identical to the one that already exists.             -*/
   /*--------------------------------------------------------------*/
   unsigned int NumRecords = KDM->size();
+  if (NumRecords==RecordsWritten)
+   { Log("FC::S FIBBI cache unchanged since last written to disk (skipping cache dump");
+     return;
+   };
+
   if (     PreloadFileName
        && !strcmp(PreloadFileName, FileName)
        && NumRecords==RecordsPreloaded
@@ -329,7 +335,7 @@ void FIBBICache::Store(const char *MeshFileName)
   /*---------------------------------------------------------------------*/
   /*- iterate through the table and write entries to the file one-by-one */
   /*---------------------------------------------------------------------*/
-  int NumWritten=0;
+  RecordsWritten=0;
   KDMap::iterator it;
   for ( it = KDM->begin(); it != KDM->end(); it++ )
    { 
@@ -338,14 +344,14 @@ void FIBBICache::Store(const char *MeshFileName)
      if (    (1 != fwrite(Key,  KEYSIZE,  1, f )) 
           || (1 != fwrite(Data, DATASIZE, 1, f ))
         ) break;
-     NumWritten++;
+     RecordsWritten++;
    };
 
   /*---------------------------------------------------------------------*/
   /*- and that's it -----------------------------------------------------*/
   /*---------------------------------------------------------------------*/
   fclose(f);
-  Log("FC::S ...wrote %i/%i FIBBI records.",NumWritten,NumRecords);
+  Log("FC::S ...wrote %i/%i FIBBI records.",RecordsWritten,NumRecords);
 
   //FCLock.read_unlock();
 }
@@ -353,6 +359,7 @@ void FIBBICache::Store(const char *MeshFileName)
 // return 0 on success, nonzero on failure
 int FIBBICache::PreLoad(const char *FileName)
 {
+  
   /*--------------------------------------------------------------*/
   /*- try to open the file ---------------------------------------*/
   /*--------------------------------------------------------------*/

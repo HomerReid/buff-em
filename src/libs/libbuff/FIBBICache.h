@@ -92,6 +92,7 @@ class FIBBICache
 
     char *PreloadFileName;
     unsigned int RecordsPreloaded;
+    unsigned int RecordsWritten;
 
  };
 
