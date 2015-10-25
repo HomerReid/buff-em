@@ -37,9 +37,23 @@ using namespace buff;
 using namespace scuff;
 
 namespace buff {
+
 void GetMoments(SWGGeometry *G, int no, cdouble Omega,
                 HVector *JVector,
                 cdouble p[3], cdouble m[3], cdouble Qp[3]);
+
+void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
+                                IncField *IF, cdouble Omega,
+                                HMatrix *PFTMatrix);
+
+HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+                   HVector *JVector, HVector *RHSVector,
+                   HMatrix *DMatrix, HMatrix *PFTMatrix);
+
+void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
+                  IncField *IF, HVector *JVector, HMatrix *DMatrix,
+                  HMatrix *PFTMatrix, bool KeepQpTerm, 
+                  char *FileBase);
                }
 
 /***************************************************************/
@@ -165,6 +179,93 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
 
   delete PFTMatrix;
 
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void WriteJDEMomentPFTFile(BSData *BSD, char *PFTFile)
+{ 
+  /***************************************************************/
+  /* write file preamble as necessary ****************************/
+  /***************************************************************/
+  FILE *f=fopen(PFTFile,"r");
+  if (!f)
+   { 
+     f=fopen(PFTFile,"w");
+     fprintf(f,"# data columns:          \n");
+     fprintf(f,"# 1 frequency            \n");
+     fprintf(f,"# 2 object label         \n");
+     fprintf(f,"# 3-5   re (Px, Py, Pz)  \n");
+     fprintf(f,"# 6-8   im (Px, Py, Pz)  \n");
+     fprintf(f,"# 9-11  re (Mx, My, Mz)  \n");
+     fprintf(f,"# 12-14 im (Mx, My, Mz)  \n");
+     fprintf(f,"# 15-22 J--I PFT         \n");
+     fprintf(f,"# 23-30 J--J PFT (JDE)   \n");
+     fprintf(f,"# 31-38 J--J PFT (moments) \n");
+     fprintf(f,"\n");
+   };
+  fclose(f);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  SWGGeometry *G     = BSD->G;
+  HVector *J         = BSD->J;
+  cdouble Omega      = BSD->Omega;
+  IncField *IF       = BSD->IF;
+  HVector *RHSVector = BSD->RHS;
+
+  /*--------------------------------------------------------------*/
+  /*- get J-I and J-J contributions to JDEPFT --------------------*/
+  /*--------------------------------------------------------------*/
+  int NO=G->NumObjects;
+  HMatrix *PFTMatrix1 = new HMatrix(NO, NUMPFT);
+  HMatrix *PFTMatrix2 = new HMatrix(NO, NUMPFT);
+  HMatrix *PFTMatrix3 = new HMatrix(NO, NUMPFT);
+  HMatrix *PFTMatrix4 = new HMatrix(NO, NUMPFT);
+  PFTMatrix1->Zero();
+  PFTMatrix2->Zero();
+  PFTMatrix3->Zero();
+  PFTMatrix4->Zero();
+  AddIFContributionsToJDEPFT(G, J, IF, Omega, PFTMatrix1);
+  GetJDEPFT(G, Omega, 0, J, RHSVector, 0, PFTMatrix2);
+
+  /***************************************************************/
+  /* write results to output file ********************************/
+  /***************************************************************/
+  f=fopen(PFTFile,"a");
+  for(int no=0; no<G->NumObjects; no++)
+   { 
+     fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
+      
+     cdouble p[3], m[3], Qp[3];
+     GetMoments(G, no, Omega, J, p, m, Qp);
+     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",real(p[Mu]));
+     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",imag(p[Mu]));
+     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",real(m[Mu]));
+     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",imag(m[Mu]));
+
+     char *FileBase = GetFileBase(G->GeoFileName);
+     GetMomentPFT(G, no, Omega, 0, J, 0, PFTMatrix3, false, FileBase);
+     GetMomentPFT(G, no, Omega, 0, J, 0, PFTMatrix4, true, 0);
+     for(int nq=0; nq<NUMPFT; nq++)
+      fprintf(f,"%e ",PFTMatrix1->GetEntryD(no,nq));
+     for(int nq=0; nq<NUMPFT; nq++)
+      fprintf(f,"%e ",PFTMatrix2->GetEntryD(no,nq));
+     for(int nq=0; nq<NUMPFT; nq++)
+      fprintf(f,"%e ",PFTMatrix3->GetEntryD(no,nq));
+     for(int nq=0; nq<NUMPFT; nq++)
+      fprintf(f,"%e ",PFTMatrix4->GetEntryD(no,nq));
+
+     fprintf(f,"\n");
+   };
+  fclose(f);
+
+  delete PFTMatrix1;
+  delete PFTMatrix2;
+  delete PFTMatrix3;
+  delete PFTMatrix4;
 }
 
 /***************************************************************/
