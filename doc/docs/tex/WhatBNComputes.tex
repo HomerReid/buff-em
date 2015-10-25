@@ -1,0 +1,136 @@
+
+\documentclass[letterpaper]{article}
+
+\input{bufftex}
+\usepackage{cite}
+
+\graphicspath{{figures/}}
+\newcommand{\TInv}{\rotatebox[origin=c]{180}{$T$}}
+\newcommand{\vbTInv}{\rotatebox[origin=c]{180}{$\vb T$}}
+\newcommand{\vbTInvSmall}{\rotatebox[origin=c]{180}{\scriptsize{$\vb T$}}}
+\newcommand{\bbTInv}{\rotatebox[origin=c]{180}{$\mathbb{T}$}}
+\newcommand{\bbVInv}{\rotatebox[origin=c]{180}{$\mathbb{V}$}}
+\newcommand{\vbSigma}{\boldsymbol{\Sigma}}
+\newcommand{\fd}{^{\text{\tiny{F}}\dagger}}
+
+% 'IEM' stands for 'imaginary part of epsilon matrix'
+\newcommand{\vbIEM}{\boldsymbol{\Sigma}}
+\newcommand{\IEM}{\Sigma}
+
+\newcommand{\citeasnoun}[1]{Ref.~\citen{#1}}
+\newcommand{\citeasnouns}[1]{Refs.~\citen{#1}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Special commands for this document -----------------------
+%------------------------------------------------------------
+%------------------------------------------------------------
+\newcommand{\vbxi}{\boldsymbol{\xi}}
+\newcommand{\im}{\text{Im }}
+\newcommand{\vbeps}{\boldsymbol{\epsilon}}
+
+%------------------------------------------------------------
+%------------------------------------------------------------
+%- Start of actual document
+%------------------------------------------------------------
+%------------------------------------------------------------
+
+\begin{document}
+
+In the FVC approach, the thermal average of 
+a power, force, or torque quantity $Q$ is 
+computed by integrating a spectral density over all 
+frequencies:
+%====================================================================%
+\begin{align*}
+ Q &= \int_0^\infty \big\langle Q\big\rangle_\omega \, d\omega
+\\
+ \big\langle Q \big \rangle_\omega
+   &=\text{Tr }\Big[\vb Q\sups{PFT} \vb W \vb R \vb W^\dagger\Big]
+\end{align*}
+%====================================================================%
+where
+\begin{itemize}
+  \item the $\vb Q\supt{PFT}$ matrix is the matrix one sandwiches
+        between the vectors of volume-current coefficients to 
+        obtain the power, force, or torque
+  \item $\vb R$ is a matrix describing the Rytov source density, and
+  \item $\vb W$ is a matrix describing the ``dressing'' of the 
+        Rytov density by the polarization response of the material
+        geometry.
+\end{itemize}
+The elements of the $\vb R$ matrix are
+%====================================================================%
+$$ R_{\alpha\beta}=\frac{2k}{\pi Z_0}
+   \EXPTWO{\vb b_\alpha}{ \Delta\Theta(\vb x) (\vbeps(\vb x) - \vb 1)}{\vb b_\beta}
+$$
+%====================================================================%
+where $\Delta\Theta(\vb x)$ is the difference between the Bose-Einstein
+factor at the local temperature at $\vb x$ and the Bose-Einstein
+factor at the temperature of the environment:
+%====================================================================%
+$$\Delta\Theta(\vb x) = \Theta\Big( T(\vb x), \omega \Big) 
+                       -\Theta\Big( T\sups{env}, \omega \Big).
+$$
+%====================================================================%
+It is now convenient to split the $\vb R$ matrix into separate
+contributions from the various objects in the geometry:
+%====================================================================%
+$$ \vb R = \vb R_1 + \vb R_2 + \cdots + \vb R_{N} $$
+%====================================================================%
+and to extract from the $n$th term a scalar
+prefactor $\wh{\Delta\Theta}_n$ that involves the 
+volume average of the temperature in body $n$:
+%====================================================================%
+\begin{align*}
+ \wh{\Delta\Theta}_n 
+&\equiv \Theta\Big( \wh{T}_n, \omega \Big) - 
+        \Theta\Big( T\sups{env}, \omega \Big)
+\\
+\wh{T}_n 
+&\equiv 
+   \frac{1}{\mc V_n} \int_{\mc V_n} T(\vb x) \, d\vb x.
+\end{align*}
+%====================================================================%
+The $\vb R$ matrix then reads
+%====================================================================%
+$$ \vb R = 
+     \wh{\Delta\Theta}_1 \, \wh{\vb R}_1
+    +\wh{\Delta\Theta}_2 \, \wh{\vb R}_2
+    +\cdots
+    +\wh{\Delta\Theta}_N \, \wh{\vb R}_N
+$$
+%====================================================================%
+where the elements of the $\wh{R}_n$ matrices are just the 
+$\vb R$-matrix elements normalized by $\wh{\Delta\Theta}_n$:
+%====================================================================%
+\numeq{NormalizedRMatrix}
+{
+\wh R_{n;\alpha\beta}=
+   \frac{2k}{\pi Z_0 \wh{\Delta\Theta}}
+   \EXPTWO{\vb b_\alpha}
+          { \Delta\Theta(\vb x) (\vbeps(\vb x) - \vb 1)}{\vb b_\beta}.
+}
+%====================================================================%
+This allows us to resolve the quantity $Q$ into contributions
+from thermal sources in each object:
+%====================================================================%
+\begin{align*}
+ Q&=\sum Q_n
+\\
+\int_0^\infty \sum_n \Delta\Theta(T_n,\omega)\Phi_n(\omega) \,d\omega
+\label{Qn}
+\Phi_n(\omega)
+  &=\text{Tr }\Big[\vb Q\sups{PFT} \vb W \wh{\vb R}_n \vb W^\dagger\Big].
+\end{align*}
+%====================================================================%
+For bodies of uniform temperature, the $\Phi_n$ factor here is just
+the same flux quantity computed by {\sc scuff-neq}. 
+
+This normalization scheme does not work for objects whose average
+temperature is equal to that of the environment, $\wh T_n=T\sups{env}$.
+In this case we remove the factor $\wh{\Delta\Theta}$ from both
+the denominator of (\ref{NormalizedRMatrix})
+and the numerator of (\ref{Qn}).
+
+\end{document}
