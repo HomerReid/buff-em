@@ -219,6 +219,65 @@ void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
+                                IncField *IF, cdouble Omega,
+                                HMatrix *PFTMatrix)
+{
+  if ( PFTMatrix->NR!=G->NumObjects || PFTMatrix->NC != NUMPFT )
+   ErrExit("%s:%i: internal error", __FILE__, __LINE__);
+
+  int NT=1;
+#ifdef USE_OPENMP
+  NT = GetNumThreads();
+#endif
+  int NO=G->NumObjects;
+  int NQ=NUMPFT;
+  double *PartialPFT=new double[NT*NO*NQ];
+  memset(PartialPFT, 0, NT*NO*NQ*sizeof(double));
+
+#ifdef USE_OPENMP
+#pragma omp parallel for schedule(dynamic,1), num_threads(NT)
+#endif
+  for(int nbf=0; nbf<G->TotalBFs; nbf++)
+   { 
+     cdouble J = conj(JVector->GetEntry(nbf));
+
+     int no, nf;
+     SWGVolume *O = ResolveNBF(G, nbf, &no, &nf);
+
+     cdouble IPFT[7];
+     GetPFTIntegrals_BFInc(O, nf, IF, Omega, IPFT);
+
+     int nt=0;
+#ifdef USE_OPENMP
+     nt = omp_get_thread_num();
+#endif
+     double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
+     dPFT[0] += real(J*IPFT[0]);
+     for(int nq=1; nq<7; nq++)
+      dPFT[nq] += imag(J*IPFT[nq]);
+   };
+
+   /*--------------------------------------------------------------*/
+   /*--------------------------------------------------------------*/
+   /*--------------------------------------------------------------*/
+   double PFactor = 0.5;
+   double FTFactor = 0.5*TENTHIRDS/real(Omega);
+   for(int nt=0; nt<NT; nt++)
+    for(int no=0; no<NO; no++)
+     { 
+       double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
+       PFTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFT[0]);
+       for(int nq=0; nq<6; nq++)
+        PFTMatrix->AddEntry(no, PFT_XFORCE + nq, FTFactor*dPFT[1+nq]);
+     };
+
+  delete[] PartialPFT;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
                    HMatrix *DMatrix, HMatrix *PFTMatrix)
@@ -228,7 +287,6 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   int NO              = G->NumObjects;
   SWGVolume **Objects = G->Objects;
-  int *BFIndexOffset  = G->BFIndexOffset;
   if (    (PFTMatrix==0)
        || (PFTMatrix->NR != NO)
        || (PFTMatrix->NC != NUMPFT)
@@ -280,10 +338,6 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       cdouble JJ = GetJJ(JVector, DMatrix, nbfa, nbfb);
       if (JJ==0.0) continue;
 
-/*   
-      FIBBICache *GCache = (noa==nob) ? G->ObjectGCaches[noa] : 0;
-      cdouble GG=GetGMatrixElement(OA, nfa, OB, nfb, Omega, GCache);
-*/   
       double ImGdG[7];
       GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, ImGdG);
       double ImG=ImGdG[0];
@@ -328,56 +382,8 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /* add incident-field contributions ****************************/
   /***************************************************************/
-  double Elapsed=Secs();
   if (IF)
-   { 
-      for(int no=0; no<NO; no++)
-       { 
-         SWGVolume *O = Objects[no];
-         int Offset   = BFIndexOffset[no];
-         int NBF      = O->NumInteriorFaces;
-
-         /*--------------------------------------------------------------*/
-         /*--------------------------------------------------------------*/
-         /*--------------------------------------------------------------*/
-         double P=0.0, Fx=0.0, Fy=0.0, Fz=0.0, Tx=0.0, Ty=0.0, Tz=0.0; 
-#ifdef USE_OPENMP
-NumThreads = GetNumThreads();
-#pragma omp parallel for schedule(dynamic,1),      \
-                         num_threads(NumThreads),  \
-                         reduction(+:P, Fx, Fy, Fz, Tx, Ty, Tz)
-#endif
-         for(int nbf=0; nbf<NBF; nbf++)
-          { 
-            cdouble IPFT[7];
-            GetPFTIntegrals_BFInc(O, nbf, IF, Omega, IPFT);
-            cdouble J = conj(JVector->GetEntry(Offset + nbf));
-            P  += real( J*IPFT[0] );
-            Fx += imag( J*IPFT[1] );
-            Fy += imag( J*IPFT[2] );
-            Fz += imag( J*IPFT[3] );
-            Tx += imag( J*IPFT[4] );
-            Ty += imag( J*IPFT[5] );
-            Tz += imag( J*IPFT[6] );
-          };
-
-         /*--------------------------------------------------------------*/
-         /*--------------------------------------------------------------*/
-         /*--------------------------------------------------------------*/
-         double Factor = 0.5;
-         PFTMatrix->AddEntry(no, PFT_PABS, Factor * P );
-         Factor*=TENTHIRDS/real(Omega);
-         PFTMatrix->AddEntry(no, PFT_XFORCE, Factor * Fx );
-         PFTMatrix->AddEntry(no, PFT_YFORCE, Factor * Fy );
-         PFTMatrix->AddEntry(no, PFT_ZFORCE, Factor * Fz );
-         PFTMatrix->AddEntry(no, PFT_XTORQUE, Factor * Tx );
-         PFTMatrix->AddEntry(no, PFT_YTORQUE, Factor * Ty );
-         PFTMatrix->AddEntry(no, PFT_ZTORQUE, Factor * Tz );
-       };
-
-   }; // if (IF)
-  Elapsed = Secs() - Elapsed;
-  //AddTaskTiming(5,Elapsed);
+   AddIFContributionsToJDEPFT(G, JVector, IF, Omega, PFTMatrix);
 
   /***************************************************************/
   /* compute scattered power only if RHSVector is present        */

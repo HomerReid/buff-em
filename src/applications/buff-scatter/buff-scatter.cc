@@ -74,15 +74,16 @@ int main(int argc, char *argv[])
 
   char *JPlotFile=0;
 
-  char *PFTFile       = 0;
-  char *OPFTFile      = 0;
-  char *JDEPFTFile    = 0;
-  char *MomentPFTFile = 0;
-  char *DSIPFTFile    = 0;
-  double DSIRadius    = 10.0;
-  int DSIPoints       = 302;
-  char *DSIMesh       = 0;
-  bool NeedFT[6]={false, false, false, false, false, false};
+  char *PFTFile          = 0;
+  char *OPFTFile         = 0;
+  char *JDEPFTFile       = 0;
+  char *MomentPFTFile    = 0;
+  char *JDEMomentPFTFile = 0;
+  char *DSIPFTFile       = 0;
+  double DSIRadius       = 10.0;
+  int DSIPoints          = 302;
+  int DSIPoints2         = 0;
+  char *DSIMesh          = 0;
 
   char *MomentFile=0;
 
@@ -90,43 +91,38 @@ int main(int argc, char *argv[])
   /* name               type    #args  max_instances  storage           count         description*/
   OptStruct OSArray[]=
    { 
-     {"geometry",       PA_STRING,  1, 1,       (void *)&GeoFile,    0,             "geometry file"},
+     {"geometry",       PA_STRING,  1, 1,       (void *)&GeoFile,    0,            "geometry file"},
 /**/
-     {"Omega",          PA_CDOUBLE, 1, MAXFREQ, (void *)OmegaVals,   &nOmegaVals,   "(angular) frequency"},
-     {"OmegaFile",      PA_STRING,  1, 1,       (void *)&OmegaFile,  &nOmegaFiles,  "list of (angular) frequencies"},
+     {"Omega",          PA_CDOUBLE, 1, MAXFREQ, (void *)OmegaVals,   &nOmegaVals,  "(angular) frequency"},
+     {"OmegaFile",      PA_STRING,  1, 1,       (void *)&OmegaFile,  &nOmegaFiles, "list of (angular) frequencies"},
 /**/
-     {"pwDirection",    PA_DOUBLE,  3, MAXPW,   (void *)pwDir,       &npwDir,       "plane wave direction"},
-     {"pwPolarization", PA_CDOUBLE, 3, MAXPW,   (void *)pwPol,       &npwPol,       "plane wave polarization"},
+     {"pwDirection",    PA_DOUBLE,  3, MAXPW,   (void *)pwDir,       &npwDir,      "plane wave direction"},
+     {"pwPolarization", PA_CDOUBLE, 3, MAXPW,   (void *)pwPol,       &npwPol,      "plane wave polarization"},
 /**/
-     {"gbDirection",    PA_DOUBLE,  3, MAXGB,   (void *)gbDir,       &ngbDir,       "gaussian beam direction"},
-     {"gbPolarization", PA_CDOUBLE, 3, MAXGB,   (void *)gbPol,       &ngbPol,       "gaussian beam polarization"},
-     {"gbCenter",       PA_DOUBLE,  3, MAXGB,   (void *)gbCenter,    &ngbCenter,    "gaussian beam center"},
-     {"gbWaist",        PA_DOUBLE,  1, MAXGB,   (void *)gbWaist,     &ngbWaist,     "gaussian beam waist"},
+     {"gbDirection",    PA_DOUBLE,  3, MAXGB,   (void *)gbDir,       &ngbDir,      "gaussian beam direction"},
+     {"gbPolarization", PA_CDOUBLE, 3, MAXGB,   (void *)gbPol,       &ngbPol,      "gaussian beam polarization"},
+     {"gbCenter",       PA_DOUBLE,  3, MAXGB,   (void *)gbCenter,    &ngbCenter,   "gaussian beam center"},
+     {"gbWaist",        PA_DOUBLE,  1, MAXGB,   (void *)gbWaist,     &ngbWaist,    "gaussian beam waist"},
 /**/
-     {"psLocation",     PA_DOUBLE,  3, MAXPS,   (void *)psLoc,       &npsLoc,       "point source location"},
-     {"psStrength",     PA_CDOUBLE, 3, MAXPS,   (void *)psStrength,  &npsStrength,  "point source strength"},
+     {"psLocation",     PA_DOUBLE,  3, MAXPS,   (void *)psLoc,       &npsLoc,      "point source location"},
+     {"psStrength",     PA_CDOUBLE, 3, MAXPS,   (void *)psStrength,  &npsStrength, "point source strength"},
 /**/
-     {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,     "list of evaluation points"},
+     {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,    "list of evaluation points"},
 /**/
-     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,           "name of PFT output file (computed by default JDEPFT method)"},
-     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile, 0,           "name of J \\dot E PFT output file"},
-     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,           "name of overlap PFT output file"},
-     {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,           "name of moment PFT output file"},
-     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,           "name of DSIPFT output file"},
-     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,           "mesh file for surface-integral PFT"},
-     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,             "radius of bounding sphere for surface-integral PFT"},
-     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,             "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
+     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,            "name of PFT output file (computed by default JDEPFT method)"},
+     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile, 0,            "name of J \\dot E PFT output file"},
+     {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,            "name of overlap PFT output file"},
+     {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,          "name of moment PFT output file"},
+     {"JDEMomentPFTFile", PA_STRING,  1, 1,     (void *)&JDEMomentPFTFile,0,       "name of JDE/moment PFT output file"},
+     {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,            "name of DSIPFT output file"},
+     {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,            "mesh file for surface-integral PFT"},
+     {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,            "radius of bounding sphere for surface-integral PFT"},
+     {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,            "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
+     {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints2, 0,            "number of quadrature points for DSIPFT second opinion"},
 /**/
-     {"XForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[0])), 0,  "compute x-directed force"},
-     {"YForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[1])), 0,  "compute y-directed force"},
-     {"ZForce",         PA_BOOL,    0, 1,       (void *)(&(NeedFT[2])), 0,  "compute z-directed force"},
-     {"XTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[3])), 0,  "compute x-directed torque"},
-     {"YTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[4])), 0,  "compute y-directed torque"},
-     {"ZTorque",        PA_BOOL,    0, 1,       (void *)(&(NeedFT[5])), 0,  "compute z-directed torque"},
+     {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,            "name of J-plot file"},
 /**/
-     {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,             "name of J-plot file"},
-/**/
-     {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,             "name of induced-dipole-moment output file"},
+     {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,            "name of induced-dipole-moment output file"},
 /**/
      {0,0,0,0,0,0,0}
    };
@@ -139,7 +135,10 @@ int main(int argc, char *argv[])
   BUFF_InitPFTOptions(pftOptions);
   pftOptions->DSIMesh   = DSIMesh;
   pftOptions->DSIRadius = DSIRadius;
-  pftOptions->DSIPoints = DSIPoints;
+
+  char *DSIPFTFile2=0;
+  if (DSIPFTFile && DSIPoints2!=0)
+   DSIPFTFile2=vstrdup("%s.DSI%i",GetFileBase(DSIPFTFile),DSIPoints2);
 
   /*******************************************************************/
   /* process frequency-related options to construct a list of        */
@@ -314,8 +313,23 @@ int main(int argc, char *argv[])
      if (MomentPFTFile)
       WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
 
+     if (MomentPFTFile)
+      WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
+
      if (DSIPFTFile)
-      WritePFTFile(BSD, DSIPFTFile, pftOptions, BUFF_PFT_DSI);
+      { 
+        pftOptions->DSIPoints = DSIPoints;
+        WritePFTFile(BSD, DSIPFTFile, pftOptions, BUFF_PFT_DSI);
+
+        if (DSIPoints2)
+         { pftOptions->DSIPoints = DSIPoints2;
+           WritePFTFile(BSD, DSIPFTFile2, pftOptions, BUFF_PFT_DSI);
+         };
+
+      };
+
+     if (JDEMomentPFTFile)
+      WriteJDEMomentPFTFile(BSD, JDEMomentPFTFile);
 
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
@@ -337,4 +351,3 @@ int main(int argc, char *argv[])
   printf("Thank you for your support.\n");
 
 }
-
