@@ -78,8 +78,10 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
   (void) DivbB; // unused
 
   PFTIntegrandData *PFTIData=(PFTIntegrandData *)UserData;
+  double k       = real(PFTIData->k);
 
-  double k    = real(PFTIData->k);
+  double XmXT[3]; 
+  VecSub(xA, PFTIData->XTorque, XmXT);
 
   double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
   double ScalarProduct = DivbA*DivbB;
@@ -90,8 +92,8 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
   double r=VecNorm(R);
   if (r==0.0) 
    { 
-     I[0] = PEFIE * k/(4.0*M_PI);
-     memset(I+1, 0, 6*sizeof(double));
+     memset(I, 0, NUMPFT*sizeof(double));
+     I[PFT_PABS] = PEFIE * k/(4.0*M_PI);
      return;
    };
 
@@ -99,11 +101,15 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
   double ImG = sinkr/(4.0*M_PI*r);
   double f1  = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
 
-  I[0] = PEFIE * ImG;
-  I[1] = PEFIE * R[0] * f1;
-  I[2] = PEFIE * R[1] * f1;
-  I[3] = PEFIE * R[2] * f1;
+  I[PFT_PABS]    = PEFIE * ImG;
+  I[PFT_XFORCE]  = PEFIE * R[0] * f1;
+  I[PFT_YFORCE]  = PEFIE * R[1] * f1;
+  I[PFT_ZFORCE]  = PEFIE * R[2] * f1;
+  I[PFT_XTORQUE] = PEFIE * (XmXT[1]*R[2]-XmXT[2]*R[1]) * f1;
+  I[PFT_YTORQUE] = PEFIE * (XmXT[2]*R[0]-XmXT[0]*R[2]) * f1;
+  I[PFT_ZTORQUE] = PEFIE * (XmXT[0]*R[1]-XmXT[1]*R[0]) * f1;
 
+  double k2  = k*k;
   double kr2 = kr*kr;
   double f2  = (kr*coskr + (kr2-1.0)*sinkr) / (4.0*M_PI*kr2*r);
   double f3  = (-3.0*kr*coskr + (3.0-kr2)*sinkr) / (4.0*M_PI*kr2*r*r*r);
@@ -115,10 +121,14 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
      bAxR[Mu]  = bA[MP1]*R[MP2]  - bA[MP2]*R[MP1];
      bBdotR   += bB[Mu]*R[Mu];
    };
+ 
+  I[PFT_XTORQUE] -=  DivbB*(bA[1]*R[2]-bA[2]*R[1])*f1/k2;
+  I[PFT_YTORQUE] -=  DivbB*(bA[2]*R[0]-bA[0]*R[2])*f1/k2;
+  I[PFT_ZTORQUE] -=  DivbB*(bA[0]*R[1]-bA[1]*R[0])*f1/k2;
 
-  I[4] = f2*bAxbB[0] + f3*bBdotR*bAxR[0];
-  I[5] = f2*bAxbB[1] + f3*bBdotR*bAxR[1];
-  I[6] = f2*bAxbB[2] + f3*bBdotR*bAxR[2];
+  I[PFT_XTORQUE] += f2*bAxbB[0] + f3*bBdotR*bAxR[0];
+  I[PFT_YTORQUE] += f2*bAxbB[1] + f3*bBdotR*bAxR[1];
+  I[PFT_ZTORQUE] += f2*bAxbB[2] + f3*bBdotR*bAxR[2];
 
 }
 
@@ -126,7 +136,7 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /***************************************************************/
 void PFTIntegrand_BFInc(double *x, double *b, double Divb,
-                        void *UserData, double *I)
+                        void *UserData, double I[NUMPFT])
 {
   (void) Divb; // unused
 
@@ -163,20 +173,20 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
   VecSub(x, PFTIData->XTorque, XmXT);
 
   cdouble *zI = (cdouble *)I;
-  memset(zI, 0, 7*sizeof(cdouble));
+  memset(zI, 0, NUMPFT*sizeof(cdouble));
   for(int Mu=0; Mu<3; Mu++)
-   { zI[0] += b[Mu]*EH[Mu];
-     zI[1] += b[Mu]*dEH[0][Mu];
-     zI[2] += b[Mu]*dEH[1][Mu];
-     zI[3] += b[Mu]*dEH[2][Mu];
-     zI[4] += b[Mu]*(XmXT[1]*dEH[2][Mu]-XmXT[2]*dEH[1][Mu]);
-     zI[5] += b[Mu]*(XmXT[2]*dEH[0][Mu]-XmXT[0]*dEH[2][Mu]);
-     zI[6] += b[Mu]*(XmXT[0]*dEH[1][Mu]-XmXT[1]*dEH[0][Mu]);
+   { zI[PFT_PABS]    += b[Mu]*EH[Mu];
+     zI[PFT_XFORCE]  += b[Mu]*dEH[0][Mu];
+     zI[PFT_YFORCE]  += b[Mu]*dEH[1][Mu];
+     zI[PFT_ZFORCE]  += b[Mu]*dEH[2][Mu];
+     zI[PFT_XTORQUE] += b[Mu]*(XmXT[1]*dEH[2][Mu]-XmXT[2]*dEH[1][Mu]);
+     zI[PFT_YTORQUE] += b[Mu]*(XmXT[2]*dEH[0][Mu]-XmXT[0]*dEH[2][Mu]);
+     zI[PFT_ZTORQUE] += b[Mu]*(XmXT[0]*dEH[1][Mu]-XmXT[1]*dEH[0][Mu]);
    };
 
-  zI[4 + 0] += b[1]*EH[2] - b[2]*EH[1];
-  zI[4 + 1] += b[2]*EH[0] - b[0]*EH[2];
-  zI[4 + 2] += b[0]*EH[1] - b[1]*EH[0];
+  zI[PFT_XTORQUE] += b[1]*EH[2] - b[2]*EH[1];
+  zI[PFT_YTORQUE] += b[2]*EH[0] - b[0]*EH[2];
+  zI[PFT_ZTORQUE] += b[0]*EH[1] - b[1]*EH[0];
 
 }
 
@@ -185,7 +195,7 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
 /* external field                                              */
 /***************************************************************/
 void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
-                           cdouble Omega, cdouble IPFT[7])
+                           cdouble Omega, cdouble IBFInc[NUMPFT])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
@@ -194,9 +204,10 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   if (O->OTGT) O->OTGT->Apply(PFTIData->XTorque);
   if (O->GT) O->GT->Apply(PFTIData->XTorque);
 
-  cdouble Error[7];
+  cdouble Error[NUMPFT];
+  int fdim=2*NUMPFT;
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
-        14, (double *)IPFT, (double *)Error, 33, 0, 0);
+        fdim, (double *)IBFInc, (double *)Error, 33, 0, 0);
 }
 
 /***************************************************************/
@@ -204,16 +215,17 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
                           SWGVolume *Ob, int nbfb,
-                          cdouble Omega, double IPFT[7])
+                          cdouble Omega, double IBFBF[NUMPFT])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
 
-  double Error[7];
+  double Error[NUMPFT];
   int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
   int NumPts = (ncv > 0) ? 33 : 16;
+  int fdim = NUMPFT;
   BFBFInt(Oa, nbfa, Ob, nbfb, PFTIntegrand_BFBF, (void *)PFTIData,
-          7, IPFT, Error, NumPts, 0, 0);
+          fdim, IBFBF, Error, NumPts, 0, 0);
 }
 
 /***************************************************************/
@@ -240,22 +252,22 @@ void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
 #endif
   for(int nbf=0; nbf<G->TotalBFs; nbf++)
    { 
-     cdouble J = conj(JVector->GetEntry(nbf));
+     cdouble JStar = conj(JVector->GetEntry(nbf));
 
      int no, nf;
      SWGVolume *O = ResolveNBF(G, nbf, &no, &nf);
 
-     cdouble IPFT[7];
-     GetPFTIntegrals_BFInc(O, nf, IF, Omega, IPFT);
+     cdouble IBFInc[NUMPFT];
+     GetPFTIntegrals_BFInc(O, nf, IF, Omega, IBFInc);
 
      int nt=0;
 #ifdef USE_OPENMP
      nt = omp_get_thread_num();
 #endif
      double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-     dPFT[0] += real(J*IPFT[0]);
-     for(int nq=1; nq<7; nq++)
-      dPFT[nq] += imag(J*IPFT[nq]);
+     dPFT[PFT_PABS] += real(JStar*IBFInc[PFT_PABS]);
+     for(int Mu=0; Mu<6; Mu++)
+      dPFT[PFT_XFORCE+Mu] += imag(JStar*IBFInc[PFT_XFORCE+Mu]);
    };
 
    /*--------------------------------------------------------------*/
@@ -267,9 +279,9 @@ void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
     for(int no=0; no<NO; no++)
      { 
        double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-       PFTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFT[0]);
-       for(int nq=0; nq<6; nq++)
-        PFTMatrix->AddEntry(no, PFT_XFORCE + nq, FTFactor*dPFT[1+nq]);
+       PFTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFT[PFT_PABS]);
+       for(int nq=2; nq<NUMPFT; nq++)
+        PFTMatrix->AddEntry(no, nq, FTFactor*dPFT[nq]);
      };
 
   delete[] PartialPFT;
@@ -285,7 +297,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  int NO              = G->NumObjects;
+  int NO = G->NumObjects;
   SWGVolume **Objects = G->Objects;
   if (    (PFTMatrix==0)
        || (PFTMatrix->NR != NO)
@@ -338,10 +350,10 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       cdouble JJ = GetJJ(JVector, DMatrix, nbfa, nbfb);
       if (JJ==0.0) continue;
 
-      double ImGdG[7];
-      GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, ImGdG);
-      double ImG=ImGdG[0];
-      double *ImdG=ImGdG+1;
+      double IBFBF[NUMPFT];
+      GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, IBFBF);
+      double ImG=IBFBF[0];
+      double *ImdG=IBFBF+PFT_XFORCE;
 
       int nt=0;
 #ifdef USE_OPENMP
