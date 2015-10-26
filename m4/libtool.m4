@@ -1,1 +1,1 @@
-/usr/share/aclocal/libtool.m4
+/usr/local/autotools/share/aclocal/libtool.m4
