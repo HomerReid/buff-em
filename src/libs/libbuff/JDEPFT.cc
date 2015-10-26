@@ -290,65 +290,6 @@ void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
-                                IncField *IF, cdouble Omega,
-                                HMatrix *PFTMatrix)
-{
-  if ( PFTMatrix->NR!=G->NumObjects || PFTMatrix->NC != NUMPFT )
-   ErrExit("%s:%i: internal error", __FILE__, __LINE__);
-
-  int NT=1;
-#ifdef USE_OPENMP
-  NT = GetNumThreads();
-#endif
-  int NO=G->NumObjects;
-  int NQ=NUMPFT;
-  double *PartialPFT=new double[NT*NO*NQ];
-  memset(PartialPFT, 0, NT*NO*NQ*sizeof(double));
-
-#ifdef USE_OPENMP
-#pragma omp parallel for schedule(dynamic,1), num_threads(NT)
-#endif
-  for(int nbf=0; nbf<G->TotalBFs; nbf++)
-   { 
-     cdouble J = conj(JVector->GetEntry(nbf));
-
-     int no, nf;
-     SWGVolume *O = ResolveNBF(G, nbf, &no, &nf);
-
-     cdouble IPFT[7];
-     GetPFTIntegrals_BFInc(O, nf, IF, Omega, IPFT);
-
-     int nt=0;
-#ifdef USE_OPENMP
-     nt = omp_get_thread_num();
-#endif
-     double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-     dPFT[0] += real(J*IPFT[0]);
-     for(int nq=1; nq<7; nq++)
-      dPFT[nq] += imag(J*IPFT[nq]);
-   };
-
-   /*--------------------------------------------------------------*/
-   /*--------------------------------------------------------------*/
-   /*--------------------------------------------------------------*/
-   double PFactor = 0.5;
-   double FTFactor = 0.5*TENTHIRDS/real(Omega);
-   for(int nt=0; nt<NT; nt++)
-    for(int no=0; no<NO; no++)
-     { 
-       double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-       PFTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFT[0]);
-       for(int nq=0; nq<6; nq++)
-        PFTMatrix->AddEntry(no, PFT_XFORCE + nq, FTFactor*dPFT[1+nq]);
-     };
-
-  delete[] PartialPFT;
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
                    HMatrix *DMatrix, HMatrix *PFTMatrix)
