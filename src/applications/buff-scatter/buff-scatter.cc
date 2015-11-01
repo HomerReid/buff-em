@@ -76,9 +76,9 @@ int main(int argc, char *argv[])
 
   char *PFTFile          = 0;
   char *OPFTFile         = 0;
-  char *JDEPFTFile       = 0;
+  char *EMTPFTFile       = 0;
   char *MomentPFTFile    = 0;
-  char *JDEMomentPFTFile = 0;
+  char *EMTMomentPFTFile = 0;
   char *DSIPFTFile       = 0;
   double DSIRadius       = 10.0;
   int DSIPoints          = 302;
@@ -109,11 +109,11 @@ int main(int argc, char *argv[])
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,    "list of evaluation points"},
 /**/
-     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,            "name of PFT output file (computed by default JDEPFT method)"},
-     {"JDEPFTFile",     PA_STRING,  1, 1,       (void *)&JDEPFTFile, 0,            "name of J \\dot E PFT output file"},
+     {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,            "name of PFT output file (computed by default EMTPFT method)"},
+     {"EMTPFTFile",     PA_STRING,  1, 1,       (void *)&EMTPFTFile, 0,            "name of J \\dot E PFT output file"},
      {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,            "name of overlap PFT output file"},
      {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,          "name of moment PFT output file"},
-     {"JDEMomentPFTFile", PA_STRING,  1, 1,     (void *)&JDEMomentPFTFile,0,       "name of JDE/moment PFT output file"},
+     {"EMTMomentPFTFile", PA_STRING,  1, 1,     (void *)&EMTMomentPFTFile,0,       "name of EMT/moment PFT output file"},
      {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,            "name of DSIPFT output file"},
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,            "mesh file for surface-integral PFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,            "radius of bounding sphere for surface-integral PFT"},
@@ -302,16 +302,13 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (PFTFile)
-      WritePFTFile(BSD, PFTFile, pftOptions, BUFF_PFT_JDE);
+      WritePFTFile(BSD, PFTFile, pftOptions, BUFF_PFT_EMT);
 
-     if (JDEPFTFile)
-      WritePFTFile(BSD, JDEPFTFile, pftOptions, BUFF_PFT_JDE);
+     if (EMTPFTFile)
+      WritePFTFile(BSD, EMTPFTFile, pftOptions, BUFF_PFT_EMT);
 
      if (OPFTFile)
       WritePFTFile(BSD, OPFTFile, pftOptions, BUFF_PFT_OVERLAP);
-
-     if (MomentPFTFile)
-      WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
 
      if (MomentPFTFile)
       WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
@@ -328,8 +325,8 @@ int main(int argc, char *argv[])
 
       };
 
-     if (JDEMomentPFTFile)
-      WriteJDEMomentPFTFile(BSD, JDEMomentPFTFile);
+     if (EMTMomentPFTFile)
+      WriteEMTMomentPFTFile(BSD, EMTMomentPFTFile);
 
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/

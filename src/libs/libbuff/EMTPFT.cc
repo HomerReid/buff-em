@@ -18,9 +18,9 @@
  */
 
 /*
- * JDEPFT.cc     -- libbuff class methods for computing power, force,
+ * EMTPFT.cc     -- libbuff class methods for computing power, force,
  *               -- and torque in classical deterministic scattering
- *               -- problems using the "J \dot E" formalism
+ *               -- problems using the "energy/momentum transfer" approach
  *
  * homer reid    -- 1/2015
  */
@@ -143,34 +143,15 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
   PFTIntegrandData *PFTIData=(PFTIntegrandData *)UserData;
 
   cdouble k    = PFTIData->k;
-  double kabs  = abs(k);
   IncField *IF = PFTIData->IF; 
-
-  // get fields and derivatives at eval point by finite-differencing
-  cdouble EH[6], EHP[6], EHM[6], dEH[3][6];
-  IF->GetFields(x, EH);
-  for(int Mu=0; Mu<3; Mu++)
-   { 
-     double xTweaked[3];
-     xTweaked[0]=x[0];
-     xTweaked[1]=x[1];
-     xTweaked[2]=x[2];
-
-     double Delta = (x[Mu]==0.0 ? 1.0e-4 : 1.0e-4*fabs(x[Mu]));
-     if ( kabs > 1.0 )
-      Delta = fmin(Delta, 1.0e-4/kabs);
-
-     xTweaked[Mu] += Delta;
-     IF->GetFields(xTweaked, EHP);
-     xTweaked[Mu] -= 2.0*Delta;
-     IF->GetFields(xTweaked, EHM);
-
-     for(int Nu=0; Nu<6; Nu++)
-      dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
-   };
 
   double XmXT[3];
   VecSub(x, PFTIData->XTorque, XmXT);
+
+  // get fields and derivatives at eval point
+  cdouble EH[6], dEH[3][6];
+  IF->GetFields(x, EH);
+  IF->GetFieldGradients(x, dEH);
 
   cdouble *zI = (cdouble *)I;
   memset(zI, 0, NUMPFT*sizeof(cdouble));
@@ -231,7 +212,7 @@ void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
+void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
                                 IncField *IF, cdouble Omega,
                                 HMatrix *PFTMatrix)
 {
@@ -290,7 +271,7 @@ void AddIFContributionsToJDEPFT(SWGGeometry *G, HVector *JVector,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
                    HMatrix *DMatrix, HMatrix *PFTMatrix)
 { 
@@ -303,7 +284,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
        || (PFTMatrix->NR != NO)
        || (PFTMatrix->NC != NUMPFT)
      )
-   ErrExit("invalid PFTMatrix in GetJDEPFT");
+   ErrExit("invalid PFTMatrix in GetEMTPFT");
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -331,7 +312,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   double PPreFac  = real(Omega)*ZVAC;
   double FTPreFac = TENTHIRDS*ZVAC;
 #ifdef USE_OPENMP
-  Log("JDE OpenMP multithreading (%i threads)",NumThreads);
+  Log("EMT OpenMP multithreading (%i threads)",NumThreads);
 #pragma omp parallel for schedule(dynamic,1),      	\
                          num_threads(NumThreads)
 #endif
@@ -395,7 +376,7 @@ HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /* add incident-field contributions ****************************/
   /***************************************************************/
   if (IF)
-   AddIFContributionsToJDEPFT(G, JVector, IF, Omega, PFTMatrix);
+   AddIFContributionsToEMTPFT(G, JVector, IF, Omega, PFTMatrix);
 
   /***************************************************************/
   /* compute scattered power only if RHSVector is present        */

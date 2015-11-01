@@ -344,28 +344,10 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
      SWGVolume *O=G->Objects[no];
      if (O->OTGT) O->OTGT->Apply(X0);
      if (O->GT)   O->GT->Apply(X0);
-     cdouble EH[6], EHP[6], EHM[6], dEH[3][6];
+     cdouble EH[6], dEH[3][6];
      IF->GetFields(X0, EH);
-     for(int Mu=0; Mu<3; Mu++)
-      { 
-        double xTweaked[3];
-        xTweaked[0]=X0[0];
-        xTweaked[1]=X0[1];
-        xTweaked[2]=X0[2];
+     IF->GetFieldGradients(X0, dEH);
 
-        double Delta = (X0[Mu]==0.0 ? 1.0e-4 : 1.0e-4*fabs(X0[Mu]));
-        if ( abs(Omega) > 1.0 )
-         Delta = fmin(Delta, 1.0e-4/abs(Omega) );
-
-        xTweaked[Mu] += Delta;
-        IF->GetFields(xTweaked, EHP);
-        xTweaked[Mu] -= 2.0*Delta;
-        IF->GetFields(xTweaked, EHM);
-        for(int Nu=0; Nu<6; Nu++)
-         dEH[Mu][Nu] = (EHP[Nu]-EHM[Nu])/(2.0*Delta);
-      }; 
-
-     //
      cdouble *p0=p[0];
      for(int Mu=0; Mu<3; Mu++)
       {

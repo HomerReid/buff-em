@@ -75,8 +75,8 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
                  HVector *JVector, HMatrix *DMatrix,
                  HMatrix *PFTMatrix);
 
-// PFT by J \dot E method
-HMatrix *GetJDEPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
+// PFT by energy/momentum transfer method
+HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
                    HMatrix *DMatrix, HMatrix *PFTMatrix);
 
@@ -159,13 +159,13 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   /* hand off to the individual PFT algorithms to do the         */
   /* computation                                                 */
   /***************************************************************/
-  if ( PFTMethod==BUFF_PFT_OVERLAP )
+  if ( PFTMethod==SCUFF_PFT_OVERLAP )
    GetOPFT(this, Omega, JVector, DMatrix, PFTMatrix);
-  else if ( PFTMethod==BUFF_PFT_JDE )
-   GetJDEPFT(this, Omega, IF, JVector, RHSVector, DMatrix, PFTMatrix);
-  else if ( PFTMethod==BUFF_PFT_MOMENTS )
+  else if ( PFTMethod==SCUFF_PFT_EMT )
+   GetEMTPFT(this, Omega, IF, JVector, RHSVector, DMatrix, PFTMatrix);
+  else if ( PFTMethod==SCUFF_PFT_MOMENTS )
    GetMomentPFT(this, Omega, IF, JVector, DMatrix, PFTMatrix);
-  else // ( PFTMethod==BUFF_PFT_DSI )
+  else // ( PFTMethod==SCUFF_PFT_DSI )
    for(int no=0; no<NumObjects; no++)
     { 
       GTransformation *GT1=Objects[no]->OTGT;
@@ -197,7 +197,7 @@ PFTOptions *BUFF_InitPFTOptions(PFTOptions *Options)
   scuff::InitPFTOptions(Options);
 
   // modify as appropriate for BUFF-EM defaults
-  Options->PFTMethod = BUFF_PFT_JDE;
+  Options->PFTMethod = SCUFF_PFT_EMT;
 
   // options affecting DSI PFT computation
   Options->DSIMesh=0;

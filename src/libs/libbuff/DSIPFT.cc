@@ -273,7 +273,6 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
 #ifdef USE_OPENMP
       nt=omp_get_thread_num();
 #endif
-
       for(int nbfb=nbfa; nbfb<NBF; nbfb++)
        {
          cdouble *EB = ehMatrix->ZM + 6*(nx*NBF + nbfb);

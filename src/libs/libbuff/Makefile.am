@@ -16,7 +16,7 @@ libbuff_la_SOURCES = 	\
  Visualize.cc		\
  OverlapIntegrals.cc	\
  OPFT.cc         	\
- JDEPFT.cc         	\
+ EMTPFT.cc         	\
  DSIPFT.cc       	\
  MomentPFT.cc     	\
  GetPFT.cc          	\
