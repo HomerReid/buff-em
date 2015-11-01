@@ -353,6 +353,15 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
                };
             };
            fclose(f);
+
+           if (1)//VSWPFT)
+            { double PF[2];
+              GetVSWFlux(BNEQD, Omega, PF);
+              f=vfopen("%s.VSWPFT","a",BNEQD->FileBase);
+              fprintf(f,"%e %e %e \n",real(Omega),PF[0],PF[1]);
+              fclose(f);
+            };
+
          };
       }; 
 

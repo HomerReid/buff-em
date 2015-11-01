@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
   if (nTempArgs>0 || nTempFileArgs>0)
    for(int no=0; no<G->NumObjects; no++)
     if (BNEQD->TemperatureSVTs[no]==0)
-     BNEQD->TemperatureSVTs[no]==new SVTensor("CONST_EPS_0.0",true);
+     BNEQD->TemperatureSVTs[no]=new SVTensor("CONST_EPS_0.0",true);
 
   /*******************************************************************/
   /* now switch off based on the requested frequency behavior to     */

@@ -5,6 +5,7 @@ buff_neq_SOURCES =	\
  Quadrature.cc		\
  CreateBNEQData.cc	\
  GetFlux.cc		\
+ VSWPFT.cc 		\
  buff-neq.h
 
 buff_neq_LDADD = $(top_builddir)/src/libs/libbuff/libbuff.la

@@ -148,6 +148,11 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux);
 void GetNEQIntegrand(BNEQData *BNEQD, cdouble Omega, double *NEQIntegrand);
 
 /***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetVSWFlux(BNEQData *BNEQD, cdouble Omega, double PF[2]);
+
+/***************************************************************/
 /* routines in Quadrature.cc                                   */
 /***************************************************************/
 void EvaluateFrequencyIntegral_Adaptive(BNEQData *BNEQD,
