@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
   /*--------------------------------------------------------------*/
   bool DoOPFT      = false;
-  bool DoJDEPFT    = false;
+  bool DoEMTPFT    = false;
   bool DoMomentPFT = false;
   int DSIPoints    = 0;
   char *DSIMesh    = 0;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
      {"Intervals",      PA_INT,     1, 1,       (void *)&Intervals,  0,             "number of intervals for frequency quadrature"},
 /**/     
      {"OPFT",           PA_BOOL,    0, 1,       (void *)&DoOPFT,      0,            "do overlap PFT computation"},
-     {"JDEPFT",         PA_BOOL,    0, 1,       (void *)&DoJDEPFT,    0,            "do J dot E PFT computation"},
+     {"EMTPFT",         PA_BOOL,    0, 1,       (void *)&DoEMTPFT,    0,            "do J dot E PFT computation"},
      {"MomentPFT",      PA_BOOL,    0, 1,       (void *)&DoMomentPFT, 0,            "do J dot E PFT computation"},
      {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,   0,            "number of quadrature points for DSIPFT"},
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,     0,            "bounding surface .msh file for DSIPFT"},
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
   /* to evaluate the neq transfer at a single frequency              */
   /*******************************************************************/
   BNEQData *BNEQD=CreateBNEQData(GeoFile, TransFile, QuantityFlags, FileBase,
-                                 DoOPFT, DoJDEPFT, DoMomentPFT,
+                                 DoOPFT, DoEMTPFT, DoMomentPFT,
                                  DSIPoints, DSIRadius, DSIMesh,
                                  DSIPoints2);
 

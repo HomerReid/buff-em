@@ -135,7 +135,7 @@ typedef struct BNEQData
 /****************************************************************/
 BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
                          char *FileBase,
-                         bool DoOPFT, bool DoJDEPFT, bool DoMomentPFT,
+                         bool DoOPFT, bool DoEMTPFT, bool DoMomentPFT,
                          int DSIPoints, double DSIRadius, char *DSIMesh,
                          int DSIPoints2);
 

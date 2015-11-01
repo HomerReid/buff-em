@@ -302,25 +302,25 @@ int main(int argc, char *argv[])
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
      if (PFTFile)
-      WritePFTFile(BSD, PFTFile, pftOptions, BUFF_PFT_EMT);
+      WritePFTFile(BSD, PFTFile, pftOptions, SCUFF_PFT_EMT);
 
      if (EMTPFTFile)
-      WritePFTFile(BSD, EMTPFTFile, pftOptions, BUFF_PFT_EMT);
+      WritePFTFile(BSD, EMTPFTFile, pftOptions, SCUFF_PFT_EMT);
 
      if (OPFTFile)
-      WritePFTFile(BSD, OPFTFile, pftOptions, BUFF_PFT_OVERLAP);
+      WritePFTFile(BSD, OPFTFile, pftOptions, SCUFF_PFT_OVERLAP);
 
      if (MomentPFTFile)
-      WritePFTFile(BSD, MomentPFTFile, pftOptions, BUFF_PFT_MOMENTS);
+      WritePFTFile(BSD, MomentPFTFile, pftOptions, SCUFF_PFT_MOMENTS);
 
      if (DSIPFTFile)
       { 
         pftOptions->DSIPoints = DSIPoints;
-        WritePFTFile(BSD, DSIPFTFile, pftOptions, BUFF_PFT_DSI);
+        WritePFTFile(BSD, DSIPFTFile, pftOptions, SCUFF_PFT_DSI);
 
         if (DSIPoints2)
          { pftOptions->DSIPoints = DSIPoints2;
-           WritePFTFile(BSD, DSIPFTFile2, pftOptions, BUFF_PFT_DSI);
+           WritePFTFile(BSD, DSIPFTFile2, pftOptions, SCUFF_PFT_DSI);
          };
 
       };
