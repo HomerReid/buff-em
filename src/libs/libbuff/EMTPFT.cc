@@ -54,7 +54,7 @@ using namespace scuff;
 namespace buff {
 
 SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf);
-cdouble GetJJ(HVector *JVector, HMatrix *DMatrix, int nbfa, int nbfb);
+cdouble GetJJ(HVector *JVector, HMatrix *DRMatrix, int nbfa, int nbfb);
 
 /***************************************************************/
 /***************************************************************/
@@ -273,7 +273,7 @@ void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
 /***************************************************************/
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HVector *RHSVector,
-                   HMatrix *DMatrix, HMatrix *PFTMatrix)
+                   HMatrix *DRMatrix, HMatrix *PFTMatrix)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -328,7 +328,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       int nob, nfb;
       SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
    
-      cdouble JJ = GetJJ(JVector, DMatrix, nbfa, nbfb);
+      cdouble JJ = GetJJ(JVector, DRMatrix, nbfa, nbfb);
       if (JJ==0.0) continue;
 
       double IBFBF[NUMPFT];

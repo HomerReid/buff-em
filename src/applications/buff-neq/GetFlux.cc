@@ -32,7 +32,7 @@
 
 namespace buff {
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  HVector *JVector, HMatrix *DMatrix,
+                  HVector *JVector, HMatrix *DRMatrix,
                   HMatrix *PFTMatrix,
                   double QPF[3], char *FileBase);
 
@@ -328,7 +328,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      for(int nos=0; nos<NO; nos++)
       { 
         // get the DressedRytov matrix for source object #nos
-        pftOptions->RytovMatrix=ComputeDressedRytovMatrix(BNEQD, nos);
+        pftOptions->DRMatrix=ComputeDressedRytovMatrix(BNEQD, nos);
 
         // get the PFT for all destination objects using all
         // requested methods

@@ -147,13 +147,13 @@ void GetMoments(SWGGeometry *G, int no, cdouble Omega,
 
 /***************************************************************/
 /* get the moment matrices MMuNu and MMuNuRho for a fluctuation-*/
-/* induced current distribution described by a dressed DMatrix   */
-/* matrix DMatrix.                                             */
+/* induced current distribution described by a dressed DRMatrix   */
+/* matrix DRMatrix.                                             */
 /* if Workspace is non-null it must point to a buffer with     */
 /* space for at least 12*N cdoubles, where N is the number of  */
 /* basis functions on object #no.                              */
 /***************************************************************/
-void GetNEQMoments(SWGGeometry *G, int no, HMatrix *DMatrix,
+void GetNEQMoments(SWGGeometry *G, int no, HMatrix *DRMatrix,
                    cdouble MMuNu[3][3], cdouble MMuNuRho[3][3][3],
                    cdouble *Workspace=0)
 {
@@ -219,12 +219,12 @@ void GetNEQMoments(SWGGeometry *G, int no, HMatrix *DMatrix,
 
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
-    MMuNu[Mu][Nu]=DMatrix->BilinearProduct(vMu[Mu], vMu[Nu]);
+    MMuNu[Mu][Nu]=DRMatrix->BilinearProduct(vMu[Mu], vMu[Nu]);
 
   for(int Mu=0; Mu<3; Mu++)
    for(int Nu=0; Nu<3; Nu++)
     for(int Rho=0; Rho<3; Rho++)
-     MMuNuRho[Mu][Nu][Rho]=DMatrix->BilinearProduct(vMuNu[Mu][Rho], vMu[Nu]);
+     MMuNuRho[Mu][Nu][Rho]=DRMatrix->BilinearProduct(vMuNu[Mu][Rho], vMu[Nu]);
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
@@ -305,7 +305,7 @@ void DoPrincipalAxisDecomposition(cdouble MMuNu[3][3],
 /* if FileBase=0 then no .moments or .pp files are written     */
 /***************************************************************/
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
-                  IncField *IF, HVector *JVector, HMatrix *DMatrix,
+                  IncField *IF, HVector *JVector, HMatrix *DRMatrix,
                   HMatrix *PFTMatrix, bool KeepQpTerm, 
                   char *FileBase)
 {
@@ -330,7 +330,7 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
      NumMoments=3;
      Log("GMP getting NEQ moments...");
      cdouble MMuNu[3][3], MMuNuRho[3][3][3];
-     GetNEQMoments(G, no, DMatrix, MMuNu, MMuNuRho);
+     GetNEQMoments(G, no, DRMatrix, MMuNu, MMuNuRho);
      DoPrincipalAxisDecomposition(MMuNu, MMuNuRho, Omega, p, m);
    };
 
@@ -478,12 +478,12 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
 }
 
 void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
-                  HVector *JVector, HMatrix *DMatrix,
+                  HVector *JVector, HMatrix *DRMatrix,
                   HMatrix *PFTMatrix, bool KeepQpTerm, 
                   char *FileBase)
 {
   for(int no=0; no<G->NumObjects; no++)
-   GetMomentPFT(G, no, Omega, IF, JVector, DMatrix, PFTMatrix,
+   GetMomentPFT(G, no, Omega, IF, JVector, DRMatrix, PFTMatrix,
                 KeepQpTerm, FileBase);
 }
 

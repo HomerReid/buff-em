@@ -181,7 +181,7 @@ void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
+void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DRMatrix,
                     double PFT[NUMPFT],
                     GTransformation *GT1, GTransformation *GT2,
                     PFTOptions *Options)
@@ -278,7 +278,7 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DMatrix,
          cdouble *EB = ehMatrix->ZM + 6*(nx*NBF + nbfb);
          cdouble *HB = EB+3;
 
-         cdouble JJ = DMatrix->GetEntry(nbfb, nbfa);
+         cdouble JJ = DRMatrix->GetEntry(nbfb, nbfa);
 
          // absorbed/radiated power 
          DeltaPFT[nt*NUMPFT + PFT_PABS]
