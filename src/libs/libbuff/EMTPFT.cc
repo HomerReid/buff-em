@@ -46,6 +46,16 @@
 
 #define II cdouble(0,1)
 
+#define PFT_XTORQUE1 5
+#define PFT_YTORQUE1 6
+#define PFT_ZTORQUE1 7
+#define PFT_XTORQUE2 8
+#define PFT_YTORQUE2 9 
+#define PFT_ZTORQUE2 10
+
+#define NUMPFTT 11
+#define NUMFTT  9
+
 using namespace scuff;
 
 /***************************************************************/
@@ -80,55 +90,56 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
   PFTIntegrandData *PFTIData=(PFTIntegrandData *)UserData;
   double k       = real(PFTIData->k);
 
-  double XmXT[3]; 
-  VecSub(xA, PFTIData->XTorque, XmXT);
-
-  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
-  double ScalarProduct = DivbA*DivbB;
-  double PEFIE         = DotProduct - ScalarProduct/(k*k);
+  double XT[3]; 
+  VecSub(xA, PFTIData->XTorque, XT);
 
   double R[3];
   VecSub(xA, xB, R);
-  double r=VecNorm(R);
-  if (r==0.0) 
-   { 
-     memset(I, 0, NUMPFT*sizeof(double));
-     I[PFT_PABS] = PEFIE * k/(4.0*M_PI);
-     return;
-   };
+  double r2=R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
+  double r=sqrt(r2), kr=k*r, kr2 = kr*kr, k2=k*k;
 
-  double kr  = k*r, coskr=cos(kr), sinkr=sin(kr);
-  double ImG = sinkr/(4.0*M_PI*r);
-  double f1  = (kr*coskr - sinkr) / (4.0*M_PI*r*r*r);
-
-  I[PFT_PABS]    = PEFIE * ImG;
-  I[PFT_XFORCE]  = PEFIE * R[0] * f1;
-  I[PFT_YFORCE]  = PEFIE * R[1] * f1;
-  I[PFT_ZFORCE]  = PEFIE * R[2] * f1;
-  I[PFT_XTORQUE] = PEFIE * (XmXT[1]*R[2]-XmXT[2]*R[1]) * f1;
-  I[PFT_YTORQUE] = PEFIE * (XmXT[2]*R[0]-XmXT[0]*R[2]) * f1;
-  I[PFT_ZTORQUE] = PEFIE * (XmXT[0]*R[1]-XmXT[1]*R[0]) * f1;
-
-  double k2  = k*k;
-  double kr2 = kr*kr;
-  double f2  = (kr*coskr + (kr2-1.0)*sinkr) / (4.0*M_PI*kr2*r);
-  double f3  = (-3.0*kr*coskr + (3.0-kr2)*sinkr) / (4.0*M_PI*kr2*r*r*r);
-
-  double bAxbB[3], bAxR[3], bBdotR=0.0;
+  /***************************************************************/
+  /* polynomial factors ******************************************/
+  /***************************************************************/
+  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+  double ScalarProduct = DivbA*DivbB;
+  double PEFIE         = DotProduct - ScalarProduct/(k*k);
+  double bAxbB[3], bAxR[3], XTxR[3], bBdR=0.0;
   for(int Mu=0; Mu<3; Mu++)
    { int MP1 = (Mu+1)%3, MP2=(Mu+2)%3;
      bAxbB[Mu] = bA[MP1]*bB[MP2] - bA[MP2]*bB[MP1];
      bAxR[Mu]  = bA[MP1]*R[MP2]  - bA[MP2]*R[MP1];
-     bBdotR   += bB[Mu]*R[Mu];
+     XTxR[Mu]  = XT[MP1]*R[MP2]  - XT[MP2]*R[MP1];
+     bBdR     += bB[Mu]*R[Mu];
    };
- 
-  I[PFT_XTORQUE] -=  DivbB*(bA[1]*R[2]-bA[2]*R[1])*f1/k2;
-  I[PFT_YTORQUE] -=  DivbB*(bA[2]*R[0]-bA[0]*R[2])*f1/k2;
-  I[PFT_ZTORQUE] -=  DivbB*(bA[0]*R[1]-bA[1]*R[0])*f1/k2;
 
-  I[PFT_XTORQUE] += f2*bAxbB[0] + f3*bBdotR*bAxR[0];
-  I[PFT_YTORQUE] += f2*bAxbB[1] + f3*bBdotR*bAxR[1];
-  I[PFT_ZTORQUE] += f2*bAxbB[2] + f3*bBdotR*bAxR[2];
+  /***************************************************************/
+  /* kernel factors **********************************************/
+  /***************************************************************/
+  double ImPhi, ImPsi, ImZeta;
+  if ( fabs(kr) < 1.0e-3 )
+   { double k3=k2*k, k5=k3*k2;
+     ImPhi  =  (1.0 - kr2/6.0)  * k/(4.0*M_PI);
+     ImPsi  = -(1.0 - kr2/10.0) * k3/(12.0*M_PI);
+     ImZeta =  (1.0 - kr2/14.0) * k5/(60.0*M_PI);
+   }
+  else
+   { double CosKR = cos(kr), SinKR=sin(kr), r3=r*r2, r5=r3*r2;
+     ImPhi  = SinKR/(4.0*M_PI*r);
+     ImPsi  = (kr*CosKR - SinKR)/(4.0*M_PI*r3);
+     ImZeta = (-3.0*kr*CosKR + (3.0-kr2)*SinKR)/(4.0*M_PI*r5);
+   };
+  double PPPoK2 = ImPhi + ImPsi/k2;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  I[PFT_PABS] += PEFIE * ImPhi;
+  for(int Mu=0; Mu<3; Mu++)
+   { I[PFT_XFORCE   + Mu] += PEFIE * R[Mu] * ImPsi;
+     I[PFT_XTORQUE1 + Mu] += bAxbB[Mu]*PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
+     I[PFT_XTORQUE2 + Mu] += PEFIE * XTxR[Mu] * ImPsi;
+   };
 
 }
 
@@ -136,17 +147,16 @@ void PFTIntegrand_BFBF(double *xA, double *bA, double DivbA,
 /***************************************************************/
 /***************************************************************/
 void PFTIntegrand_BFInc(double *x, double *b, double Divb,
-                        void *UserData, double I[NUMPFT])
+                        void *UserData, double I[NUMPFTT])
 {
   (void) Divb; // unused
 
   PFTIntegrandData *PFTIData=(PFTIntegrandData *)UserData;
 
-  cdouble k    = PFTIData->k;
-  IncField *IF = PFTIData->IF; 
+  IncField *IF = PFTIData->IF;
 
-  double XmXT[3];
-  VecSub(x, PFTIData->XTorque, XmXT);
+  double XT[3];
+  VecSub(x, PFTIData->XTorque, XT);
 
   // get fields and derivatives at eval point
   cdouble EH[6], dEH[3][6];
@@ -156,18 +166,18 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
   cdouble *zI = (cdouble *)I;
   memset(zI, 0, NUMPFT*sizeof(cdouble));
   for(int Mu=0; Mu<3; Mu++)
-   { zI[PFT_PABS]    += b[Mu]*EH[Mu];
-     zI[PFT_XFORCE]  += b[Mu]*dEH[0][Mu];
-     zI[PFT_YFORCE]  += b[Mu]*dEH[1][Mu];
-     zI[PFT_ZFORCE]  += b[Mu]*dEH[2][Mu];
-     zI[PFT_XTORQUE] += b[Mu]*(XmXT[1]*dEH[2][Mu]-XmXT[2]*dEH[1][Mu]);
-     zI[PFT_YTORQUE] += b[Mu]*(XmXT[2]*dEH[0][Mu]-XmXT[0]*dEH[2][Mu]);
-     zI[PFT_ZTORQUE] += b[Mu]*(XmXT[0]*dEH[1][Mu]-XmXT[1]*dEH[0][Mu]);
+   { zI[PFT_PABS]     += b[Mu]*EH[Mu];
+     zI[PFT_XFORCE]   += b[Mu]*dEH[0][Mu];
+     zI[PFT_YFORCE]   += b[Mu]*dEH[1][Mu];
+     zI[PFT_ZFORCE]   += b[Mu]*dEH[2][Mu];
+     zI[PFT_XTORQUE2] += b[Mu]*(XT[1]*dEH[2][Mu]-XT[2]*dEH[1][Mu]);
+     zI[PFT_YTORQUE2] += b[Mu]*(XT[2]*dEH[0][Mu]-XT[0]*dEH[2][Mu]);
+     zI[PFT_ZTORQUE2] += b[Mu]*(XT[0]*dEH[1][Mu]-XT[1]*dEH[0][Mu]);
    };
 
-  zI[PFT_XTORQUE] += b[1]*EH[2] - b[2]*EH[1];
-  zI[PFT_YTORQUE] += b[2]*EH[0] - b[0]*EH[2];
-  zI[PFT_ZTORQUE] += b[0]*EH[1] - b[1]*EH[0];
+  zI[PFT_XTORQUE1] = b[1]*EH[2] - b[2]*EH[1];
+  zI[PFT_YTORQUE1] = b[2]*EH[0] - b[0]*EH[2];
+  zI[PFT_ZTORQUE1] = b[0]*EH[1] - b[1]*EH[0];
 
 }
 
@@ -176,7 +186,7 @@ void PFTIntegrand_BFInc(double *x, double *b, double Divb,
 /* external field                                              */
 /***************************************************************/
 void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
-                           cdouble Omega, cdouble IBFInc[NUMPFT])
+                           cdouble Omega, cdouble IBFInc[NUMPFTT])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
@@ -185,10 +195,11 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
   if (O->OTGT) O->OTGT->Apply(PFTIData->XTorque);
   if (O->GT) O->GT->Apply(PFTIData->XTorque);
 
-  cdouble Error[NUMPFT];
-  int fdim=2*NUMPFT;
+  cdouble Error[NUMPFTT];
+  int IDim=2*NUMPFTT;
+  int NumPts=33;
   BFInt(O, nbf, PFTIntegrand_BFInc, (void *)PFTIData,
-        fdim, (double *)IBFInc, (double *)Error, 33, 0, 0);
+        IDim, (double *)IBFInc, (double *)Error, NumPts, 0, 0);
 }
 
 /***************************************************************/
@@ -196,27 +207,27 @@ void GetPFTIntegrals_BFInc(SWGVolume *O, int nbf, IncField *IF,
 /***************************************************************/
 void GetPFTIntegrals_BFBF(SWGVolume *Oa, int nbfa,
                           SWGVolume *Ob, int nbfb,
-                          cdouble Omega, double IBFBF[NUMPFT])
+                          cdouble Omega, double IBFBF[NUMPFTT])
 {
   PFTIntegrandData MyPFTIData, *PFTIData=&MyPFTIData;
   PFTIData->k  = Omega;
 
-  double Error[NUMPFT];
+  double Error[NUMPFTT];
   int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
   int NumPts = (ncv > 0) ? 33 : 16;
-  int fdim = NUMPFT;
+  int IDim = NUMPFTT;
   BFBFInt(Oa, nbfa, Ob, nbfb, PFTIntegrand_BFBF, (void *)PFTIData,
-          fdim, IBFBF, Error, NumPts, 0, 0);
+          IDim, IBFBF, Error, NumPts, 0, 0);
 }
 
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
-                                IncField *IF, cdouble Omega,
-                                HMatrix *PFTMatrix)
+void AddIFContributionsToEMTPFTT(SWGGeometry *G, HVector *JVector,
+                                 IncField *IF, cdouble Omega,
+                                 HMatrix *PFTTMatrix)
 {
-  if ( PFTMatrix->NR!=G->NumObjects || PFTMatrix->NC != NUMPFT )
+  if ( PFTTMatrix->NR!=G->NumObjects || PFTTMatrix->NC != NUMPFT )
    ErrExit("%s:%i: internal error", __FILE__, __LINE__);
 
   int NT=1;
@@ -224,9 +235,9 @@ void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
   NT = GetNumThreads();
 #endif
   int NO=G->NumObjects;
-  int NQ=NUMPFT;
-  double *PartialPFT=new double[NT*NO*NQ];
-  memset(PartialPFT, 0, NT*NO*NQ*sizeof(double));
+  int NQ=NUMPFTT;
+  double *PartialPFTT=new double[NT*NO*NQ];
+  memset(PartialPFTT, 0, NT*NO*NQ*sizeof(double));
 
 #ifdef USE_OPENMP
 #pragma omp parallel for schedule(dynamic,1), num_threads(NT)
@@ -238,17 +249,17 @@ void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
      int no, nf;
      SWGVolume *O = ResolveNBF(G, nbf, &no, &nf);
 
-     cdouble IBFInc[NUMPFT];
+     cdouble IBFInc[NUMPFTT];
      GetPFTIntegrals_BFInc(O, nf, IF, Omega, IBFInc);
 
      int nt=0;
 #ifdef USE_OPENMP
      nt = omp_get_thread_num();
 #endif
-     double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-     dPFT[PFT_PABS] += real(JStar*IBFInc[PFT_PABS]);
-     for(int Mu=0; Mu<6; Mu++)
-      dPFT[PFT_XFORCE+Mu] += imag(JStar*IBFInc[PFT_XFORCE+Mu]);
+     double *dPFTT = PartialPFTT + (nt*NO + no)*NUMPFTT;
+     dPFTT[PFT_PABS] += real(JStar*IBFInc[PFT_PABS]);
+     for(int Mu=0; Mu<NUMFTT; Mu++)
+      dPFTT[PFT_XFORCE+Mu] += imag(JStar*IBFInc[PFT_XFORCE+Mu]);
    };
 
    /*--------------------------------------------------------------*/
@@ -259,13 +270,38 @@ void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
    for(int nt=0; nt<NT; nt++)
     for(int no=0; no<NO; no++)
      { 
-       double *dPFT = PartialPFT + (nt*NO + no)*NUMPFT;
-       PFTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFT[PFT_PABS]);
-       for(int nq=2; nq<NUMPFT; nq++)
-        PFTMatrix->AddEntry(no, nq, FTFactor*dPFT[nq]);
+       double *dPFTT = PartialPFTT + (nt*NO + no)*NUMPFTT;
+       PFTTMatrix->AddEntry(no, PFT_PABS, PFactor*dPFTT[PFT_PABS]);
+       for(int nq=2; nq<NUMPFTT; nq++)
+        PFTTMatrix->AddEntry(no, nq, FTFactor*dPFTT[nq]);
      };
 
-  delete[] PartialPFT;
+  delete[] PartialPFTT;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
+                                IncField *IF, cdouble Omega,
+                                HMatrix *PFTMatrix)
+{
+  int NO = PFTMatrix->NR;
+
+  static HMatrix *PFTTMatrix=0;
+  if (PFTTMatrix==0 || PFTTMatrix->NR != NO )
+   { if (PFTTMatrix) delete PFTTMatrix;
+     PFTTMatrix=new HMatrix(NO, NUMPFTT);
+   };
+
+  AddIFContributionsToEMTPFTT(G, JVector, IF, Omega, PFTTMatrix);
+  for(int no=0; no<NO; no++)
+   for(int nq=0; nq<NUMPFT; nq++)
+    { PFTMatrix->SetEntry(no, nq, PFTTMatrix->GetEntry(no, nq));
+      if (PFT_XTORQUE<=nq && nq<=PFT_ZTORQUE)
+       PFTMatrix->AddEntry(no, nq, PFTTMatrix->GetEntry(no, nq+3));
+    };
+
 }
 
 /***************************************************************/
@@ -286,24 +322,47 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
      )
    ErrExit("invalid PFTMatrix in GetEMTPFT");
 
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  /*--------------------------------------------------------------*/
-  int NumThreads=1;
-#ifdef USE_OPENMP 
-  NumThreads = GetNumThreads();
-#endif
-  int NQ = NUMPFT;
-  int NONQ = NO*NQ;
-  static int DeltaPFTSize=0;
-  static double *DeltaPFT=0;
-  if ( DeltaPFTSize < (NumThreads*NONQ) )
-   { Log("(re)allocating DeltaPFT (%i,%i)",DeltaPFTSize,NumThreads*NONQ);
-     DeltaPFTSize=NumThreads*NONQ;
-     if (DeltaPFT) free(DeltaPFT);
-     DeltaPFT = (double *)mallocEC(DeltaPFTSize*sizeof(double));
+  /***************************************************************/
+  /* PFTTByObject[no] = contributions of object #no to PFTT      */
+  /***************************************************************/
+  static int NOSave=0;
+  static HMatrix **PFTTByObject=0, *IncidentPFTT=0;
+  if (NOSave!=NO)
+   { if (PFTTByObject)
+      { for(int no=0; no<NOSave; no++)
+         if (PFTTByObject[no]) 
+          delete PFTTByObject[no];
+        free(PFTTByObject);
+       if (IncidentPFTT)
+        delete IncidentPFTT;
+      };
+     NOSave=NO;
+     PFTTByObject=(HMatrix **)mallocEC(NO*sizeof(HMatrix));
+     for(int no=0; no<NO; no++)
+      PFTTByObject[no]=new HMatrix(NO, NUMPFTT);
+     IncidentPFTT=new HMatrix(NO, NUMPFTT);
    };
-  memset(DeltaPFT, 0, DeltaPFTSize*sizeof(double));
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  int NT=1;
+#ifdef USE_OPENMP 
+  NT= GetNumThreads();
+#endif
+  int NQ      = NUMPFTT;
+  int NONQ    = NO*NQ;
+  int NO2NQ   = NO*NONQ;
+  int NTNO2NQ = NT*NO2NQ;
+  static int DeltaPFTTSize=0;
+  static double *DeltaPFTT=0;
+  if ( DeltaPFTTSize < NTNO2NQ )
+   { Log("(re)allocating DeltaPFTT (%i,%i)",DeltaPFTTSize,NTNO2NQ);
+     DeltaPFTTSize=NTNO2NQ;
+     if (DeltaPFTT) free(DeltaPFTT);
+     DeltaPFTT = (double *)mallocEC(DeltaPFTTSize*sizeof(double));
+   };
+  memset(DeltaPFTT, 0, DeltaPFTTSize*sizeof(double));
 
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
@@ -311,16 +370,22 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   int TotalBFs    = G->TotalBFs;
   double PPreFac  = real(Omega)*ZVAC;
   double FTPreFac = TENTHIRDS*ZVAC;
+  bool UseSymmetry=true;
+  char *s=getenv("BUFF_EMTPFT_SYMMETRY");
+  if (s && s[0]=='0')
+   { UseSymmetry=false;
+     Log("Not using symmetry in EMTPFT calculation.");
+   };
 #ifdef USE_OPENMP
-  Log("EMT OpenMP multithreading (%i threads)",NumThreads);
+  Log("EMT OpenMP multithreading (%i threads)",NT);
 #pragma omp parallel for schedule(dynamic,1),      	\
-                         num_threads(NumThreads)
+                         num_threads(NT)
 #endif
   for(int nbfa=0; nbfa<TotalBFs; nbfa++)
-   for(int nbfb=nbfa; nbfb<TotalBFs; nbfb++)
+   for(int nbfb=(UseSymmetry ? nbfa : 0); nbfb<TotalBFs; nbfb++)
     { 
-      //if (nbfb==nbfa) LogPercent(nbfa*(nbfa+1)/2,NumPairs,100);
-      if (nbfb==nbfa) LogPercent(nbfa, TotalBFs, 10);
+      if (nbfb==(UseSymmetry ? nbfa : 0)) 
+       LogPercent(nbfa, TotalBFs, 10);
 
       int noa, nfa;
       SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa);
@@ -331,52 +396,80 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       cdouble JJ = GetJJ(JVector, DRMatrix, nbfa, nbfb);
       if (JJ==0.0) continue;
 
-      double IBFBF[NUMPFT];
+      double IBFBF[NUMPFTT];
       GetPFTIntegrals_BFBF(OA, nfa, OB, nfb, Omega, IBFBF);
-      double ImG=IBFBF[0];
-      double *ImdG=IBFBF+PFT_XFORCE;
+      double QPAbs=IBFBF[PFT_PABS];
+      double *QFTT=IBFBF+PFT_XFORCE;
+
+      double dPFTT[NUMPFTT];
+      dPFTT[PFT_PABS] = -0.5*PPreFac*real(JJ)*QPAbs;
+      for(int Mu=0; Mu<NUMFTT; Mu++)
+       dPFTT[PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*QFTT[Mu];
 
       int nt=0;
 #ifdef USE_OPENMP
       nt=omp_get_thread_num();
 #endif
-      int OffsetA = nt*NONQ + noa*NQ;
-      int OffsetB = nt*NONQ + nob*NQ;
+      int OffsetA = nt*NO2NQ + noa*NONQ + nob*NQ;
+      int OffsetB = nt*NO2NQ + nob*NONQ + noa*NQ; 
 
-       if (nbfa==nbfb)
-        DeltaPFT[ OffsetA + PFT_PABS ] -= 0.5*PPreFac*real(JJ)*ImG;
-       else if (noa==nob) // nbfb > nbfa but both on same object
-        { 
-          DeltaPFT[ OffsetA + PFT_PABS] -= PPreFac*real(JJ)*ImG;
-          for(int Mu=0; Mu<6; Mu++)
-           DeltaPFT[ OffsetA + PFT_XFORCE + Mu ] -= FTPreFac*imag(JJ)*ImdG[Mu];
-        }
-       else // nbfb > nbfa and on different objects
-        { 
-          DeltaPFT[ OffsetA + PFT_PABS] -= 0.5*PPreFac*real(JJ)*ImG;
-          DeltaPFT[ OffsetB + PFT_PABS] -= 0.5*PPreFac*real(JJ)*ImG;
-          for(int Mu=0; Mu<6; Mu++)
-           { DeltaPFT[ OffsetA + PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
-             DeltaPFT[ OffsetB + PFT_XFORCE + Mu ] -= 0.5*FTPreFac*imag(JJ)*ImdG[Mu];
-           };
-        };
+      if (!UseSymmetry)
+       VecPlusEquals(DeltaPFTT + OffsetA, 1.0, dPFTT, NUMPFTT);
+      else
+       { if (nbfa==nbfb)
+          DeltaPFTT[ OffsetA + PFT_PABS ] += dPFTT[PFT_PABS];
+         else if (noa==nob) // nbfb > nbfa but both on same object
+          VecPlusEquals(DeltaPFTT+OffsetA, 2.0, dPFTT, NUMPFTT);
+         else // nbfb > nbfa and on different objects
+          { 
+            DeltaPFTT[OffsetA + PFT_PABS] += dPFTT[PFT_PABS];
+            DeltaPFTT[OffsetB + PFT_PABS] += dPFTT[PFT_PABS];
+            for(int Mu=0; Mu<NUMFTT; Mu++)
+             { DeltaPFTT[ OffsetA + PFT_XFORCE + Mu ] += dPFTT[PFT_XFORCE + Mu];
+               DeltaPFTT[ OffsetB + PFT_XFORCE + Mu ] -= dPFTT[PFT_XFORCE + Mu];
+             };
+          };
+       };
 
     }; // end of multithreaded loop
+
   
   /*--------------------------------------------------------------*/
   /*- accumulate contributions of all threads                     */
   /*--------------------------------------------------------------*/
-  PFTMatrix->Zero();
   for(int no=0; no<NO; no++)
-   for(int nq=0; nq<NQ; nq++)
-    for(int nt=0; nt<NumThreads; nt++)
-     PFTMatrix->AddEntry(no, nq, DeltaPFT[ nt*NONQ + no*NQ + nq ]);
+   PFTTByObject[no]->Zero();
+  for(int noa=0; noa<NO; noa++)
+   for(int nob=0; nob<NO; nob++)
+    for(int nq=0; nq<NQ; nq++)
+     for(int nt=0; nt<NT; nt++)
+      PFTTByObject[nob]->AddEntry(noa, nq, DeltaPFTT[ nt*NO2NQ + noa*NONQ + nob*NQ + nq ]);
 
   /***************************************************************/
-  /* add incident-field contributions ****************************/
+  /* get incident-field contributions ****************************/
   /***************************************************************/
+  IncidentPFTT->Zero();
   if (IF)
-   AddIFContributionsToEMTPFT(G, JVector, IF, Omega, PFTMatrix);
+   AddIFContributionsToEMTPFTT(G, JVector, IF, Omega, IncidentPFTT);
+   
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  PFTMatrix->Zero();
+  for(int noa=0; noa<NO; noa++)
+   for(int nq=0; nq<NUMPFT; nq++)
+    { 
+      for(int nob=0; nob<NO; nob++)
+       PFTMatrix->AddEntry(noa,nq,PFTTByObject[nob]->GetEntry(noa,nq));
+
+      PFTMatrix->AddEntry(noa,nq,IncidentPFTT->GetEntry(noa,nq));
+
+      if (PFT_XTORQUE<=nq && nq<=PFT_ZTORQUE)
+       { for(int nob=0; nob<NO; nob++)
+          PFTMatrix->AddEntry(noa, nq, PFTTByObject[nob]->GetEntry(noa,nq+3));
+         PFTMatrix->AddEntry(noa,nq,IncidentPFTT->GetEntry(noa,nq+3));
+       };
+    };
 
   /***************************************************************/
   /* compute scattered power only if RHSVector is present        */
@@ -396,6 +489,46 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       };
    };
 
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  char *ss=getenv("BUFF_ITEMIZE_PFT");
+  if (ss && ss[0]=='1')
+   { 
+     static bool WrotePreamble=false;
+     for(int noa=0; noa<NO; noa++)
+      { FILE *f=vfopen("%s.%s.EMTPFT","a",
+                        GetFileBase(G->GeoFileName),
+                        G->Objects[noa]->Label);
+        if (!f) continue;
+        if (!WrotePreamble)
+         { fprintf(f,"# EMTPFT contributions to object %s\n",G->Objects[noa]->Label);
+           fprintf(f,"# columns: \n");
+           fprintf(f,"# 1 frequency \n");
+           fprintf(f,"# 2 destination object label \n");
+           fprintf(f,"# 03-10 PAbs, PScat, Fxyz, Txyz (total)\n");
+           fprintf(f,"# 11-21 PAbs, PScat, Fxyz, T1xyz, T2xyz (extinction)\n");
+           int nc=22;
+           for(int nob=0; nob<NO; nob++, nc+=NUMPFTT)
+            fprintf(f,"# %i-%i PAbs, PScat, Fxyz, Txyz (object %s)\n",nc,nc+NUMPFTT-1,G->Objects[nob]->Label);
+         };
+        fprintf(f,"%e %s ",real(Omega),G->Objects[noa]->Label);
+        for(int nq=0; nq<NUMPFT; nq++)
+         fprintf(f,"%e ",PFTMatrix->GetEntryD(noa,nq));
+        for(int nq=0; nq<NUMPFTT; nq++)
+         fprintf(f,"%e ",IncidentPFTT->GetEntryD(noa,nq));
+        for(int nob=0; nob<NO; nob++)
+         for(int nq=0; nq<NUMPFTT; nq++)
+          fprintf(f,"%e ",PFTTByObject[nob]->GetEntryD(noa,nq));
+        fprintf(f,"\n");
+        fclose(f);
+      };
+     WrotePreamble=true;
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
   return PFTMatrix;
 
 }

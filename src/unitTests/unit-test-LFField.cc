@@ -36,43 +36,6 @@ using namespace buff;
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void DofprintVec(FILE *f, void *v, bool Complex, int Length,
-                 const char *fmt, bool CR)
-{
-  char format[100];
-  if (fmt)
-   snprintf(format,100,"%s ",fmt);
-
-  if (Complex)
-   { cdouble *cv=(cdouble *)v;
-     for(int n=0; n<Length; n++)
-      fprintf(f,format,real(cv[n]),imag(cv[n]));
-   }
-  else
-   { double *rv=(double *)v;
-     for(int n=0; n<Length; n++)
-      fprintf(f,format,rv[n]);
-   };
-
-  if (CR) 
-   fprintf(f,"\n");
-}
-
-void fprintVec(FILE *f, double *v, int Length=3, const char *format="%+.8e")
-{  DofprintVec(f, (void *)v, false, Length, format, false); }
-
-void fprintVecCR(FILE *f, double *v, int Length=3, const char *format="%+.8e")
-{  DofprintVec(f, (void *)v, false, Length, format, true); }
-
-void fprintVec(FILE *f, cdouble *v, int Length=3, const char *format="%+.8e %+.8e")
-{  DofprintVec(f, (void *)v, true, Length, format, false); }
-
-void fprintVecCR(FILE *f, cdouble *v, int Length=3, const char *format="%+.8e %+.8e")
-{  DofprintVec(f, (void *)v, true, Length, format, true); }
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 int main(int argc, char *argv[])
 {
   /***************************************************************/
