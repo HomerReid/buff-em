@@ -119,6 +119,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   else
    Label=strdup(pLabel);
   Index=0;
+  Origin[0]=Origin[1]=Origin[2]=0.0;
 
   if (pMatFileName==0)
    { MatFileName=0;
@@ -151,6 +152,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   /*------------------------------------------------------------*/
   GT=0;
   OTGT=pOTGT;
+  if (OTGT) OTGT->Apply(Origin);
 
   /*------------------------------------------------------------*/
   /*- Switch off based on the file type to read the mesh file:  */
@@ -215,11 +217,14 @@ void SWGVolume::Transform(const GTransformation *DeltaGT)
 
   /* face centroids */
   for(int nf=0; nf<NumTotalFaces; nf++)
-   DeltaGT->Apply(Faces[nf]->Centroid, 1);
+   DeltaGT->Apply(Faces[nf]->Centroid);
 
   /* tet centroids */
   for(int nt=0; nt<NumTets; nt++)
-   DeltaGT->Apply(Tets[nt]->Centroid, 1);
+   DeltaGT->Apply(Tets[nt]->Centroid);
+
+  /* origin of coordinates */
+  DeltaGT->Apply(Origin);
 
   /***************************************************************/
   /* update the internally stored GTransformation ****************/
@@ -255,17 +260,24 @@ void SWGVolume::UnTransform()
    return;
  
   /***************************************************************/
-  /* untransform vertices                                        */
+  /*- unapply the transformation to all points whose             */
+  /*- coordinates we store inside the SWGVolume structure:       */
+  /*- vertices, face centroids, tet centroids, and origin.       */
   /***************************************************************/
+
+  /* vertices */
   GT->UnApply(Vertices, NumVertices);
 
-  /***************************************************************/
-  /* untransform face / tet centroids                            */
-  /***************************************************************/
+  /* face centroids */
   for(int nf=0; nf<NumTotalFaces; nf++)
    GT->UnApply(Faces[nf]->Centroid, 1);
+
+  /* tet centroids */
   for(int nt=0; nt<NumTets; nt++)
    GT->UnApply(Tets[nt]->Centroid, 1);
+
+  /* origin of coordinates */
+  GT->UnApply(Origin);
 
   /***************************************************************/
   /***************************************************************/

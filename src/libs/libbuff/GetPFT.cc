@@ -77,8 +77,8 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
 
 // PFT by energy/momentum transfer method
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
-                   HVector *JVector, HVector *RHSVector,
-                   HMatrix *DRMatrix, HMatrix *PFTMatrix);
+                   HVector *JVector, HMatrix *DRMatrix,
+                   HMatrix *PFTMatrix, bool Itemize=false);
 
 // PFT from multipole moments
 void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
@@ -162,7 +162,7 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   if ( PFTMethod==SCUFF_PFT_OVERLAP )
    GetOPFT(this, Omega, JVector, DRMatrix, PFTMatrix);
   else if ( PFTMethod==SCUFF_PFT_EMT )
-   GetEMTPFT(this, Omega, IF, JVector, RHSVector, DRMatrix, PFTMatrix);
+   GetEMTPFT(this, Omega, IF, JVector, DRMatrix, PFTMatrix);
   else if ( PFTMethod==SCUFF_PFT_MOMENTS )
    GetMomentPFT(this, Omega, IF, JVector, DRMatrix, PFTMatrix);
   else // ( PFTMethod==SCUFF_PFT_DSI )

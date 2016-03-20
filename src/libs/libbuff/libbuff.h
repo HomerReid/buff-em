@@ -169,8 +169,11 @@ class SWGVolume
    /* the object was read from its mesh file (not including a       */
    /* possible one-time GTransformation that may have been specified*/
    /* in the .scuffgeo file when the surface was first created.)    */
+   /* Origin is the origin of coordinates of the original mesh file,*/
+   /* transformed along with any transformations applied to the object.*/
    GTransformation *GT;
    GTransformation *OTGT;
+   double Origin[3];
 
    // the following fields are used to pass some data items up to the
    // higher-level routine that calls the SWGVolume constructor

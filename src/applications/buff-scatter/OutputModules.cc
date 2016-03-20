@@ -46,10 +46,6 @@ void AddIFContributionsToEMTPFT(SWGGeometry *G, HVector *JVector,
                                 IncField *IF, cdouble Omega,
                                 HMatrix *PFTMatrix);
 
-HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
-                   HVector *JVector, HVector *RHSVector,
-                   HMatrix *DMatrix, HMatrix *PFTMatrix);
-
 void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
                   IncField *IF, HVector *JVector, HMatrix *DMatrix,
                   HMatrix *PFTMatrix, bool KeepQpTerm, 
@@ -189,6 +185,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+#if 0
 void WriteEMTMomentPFTFile(BSData *BSD, char *PFTFile)
 { 
   /***************************************************************/
@@ -298,6 +295,7 @@ void WriteEMTMomentPFTFile(BSData *BSD, char *PFTFile)
   delete PFTMatrix4;
   delete PFTMatrix5;
 }
+#endif
 
 /***************************************************************/
 /***************************************************************/

@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
   char *OPFTFile         = 0;
   char *EMTPFTFile       = 0;
   char *MomentPFTFile    = 0;
-  char *EMTMomentPFTFile = 0;
   char *DSIPFTFile       = 0;
   double DSIRadius       = 10.0;
   int DSIPoints          = 302;
@@ -113,7 +112,6 @@ int main(int argc, char *argv[])
      {"EMTPFTFile",     PA_STRING,  1, 1,       (void *)&EMTPFTFile, 0,            "name of J \\dot E PFT output file"},
      {"OPFTFile",       PA_STRING,  1, 1,       (void *)&OPFTFile,   0,            "name of overlap PFT output file"},
      {"MomentPFTFile",  PA_STRING,  1, 1,       (void *)&MomentPFTFile,0,          "name of moment PFT output file"},
-     {"EMTMomentPFTFile", PA_STRING,  1, 1,     (void *)&EMTMomentPFTFile,0,       "name of EMT/moment PFT output file"},
      {"DSIPFTFile",     PA_STRING,  1, 1,       (void *)&DSIPFTFile, 0,            "name of DSIPFT output file"},
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,    0,            "mesh file for surface-integral PFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,  0,            "radius of bounding sphere for surface-integral PFT"},
@@ -324,9 +322,6 @@ int main(int argc, char *argv[])
          };
 
       };
-
-     if (EMTMomentPFTFile)
-      WriteEMTMomentPFTFile(BSD, EMTMomentPFTFile);
 
      /*--------------------------------------------------------------*/
      /*--------------------------------------------------------------*/
