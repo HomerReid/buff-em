@@ -86,6 +86,10 @@ void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                   HMatrix *PFTMatrix, bool KeepQpTerm=false,
                   char *FileBase=0);
 
+HMatrix *GetMomentPFTMatrix(SWGGeometry *G, cdouble Omega, IncField *IF,
+                            HVector *JVector, HMatrix *DRMatrix=0,
+                            HMatrix *PFTMatrix=0, bool Itemize=false);
+
 // PFT by displaced-surface-integral method
 void GetDSIPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                HVector *JVector, double PFT[NUMPFT],
@@ -164,7 +168,7 @@ HMatrix *SWGGeometry::GetPFT(HVector *JVector,
   else if ( PFTMethod==SCUFF_PFT_EMT )
    GetEMTPFT(this, Omega, IF, JVector, DRMatrix, PFTMatrix);
   else if ( PFTMethod==SCUFF_PFT_MOMENTS )
-   GetMomentPFT(this, Omega, IF, JVector, DRMatrix, PFTMatrix);
+   GetMomentPFTMatrix(this, Omega, IF, JVector, DRMatrix, PFTMatrix);
   else // ( PFTMethod==SCUFF_PFT_DSI )
    for(int no=0; no<NumObjects; no++)
     { 

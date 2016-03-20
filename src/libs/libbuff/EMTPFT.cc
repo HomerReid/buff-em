@@ -81,105 +81,6 @@ typedef struct PFTIData
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
-                           double *xB, double *bB, double DivbB,
-                           void *UserData, double *I)
-{
-  (void) DivbA; // unused
-  (void) DivbB; // unused
-
-  PFTIData *Data       = (PFTIData*)UserData;
-  double Omega         = Data->Omega;
-  double k             = Data->Omega;
-  bool SameObject      = Data->SameObject;
-  double *TorqueCenter = Data->TorqueCenter;
-
-  double XT[3]; 
-  VecSub(xA, TorqueCenter, XT);
-
-  double R[3];
-  VecSub(xA, xB, R);
-  double r2=R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
-  double r=sqrt(r2), kr=k*r, kr2 = kr*kr, k2=k*k;
-
-  /***************************************************************/
-  /* polynomial factors ******************************************/
-  /***************************************************************/
-  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
-  double ScalarProduct = DivbA*DivbB;
-  double PEFIE         = DotProduct - ScalarProduct/k2;
-  double bAxbB[3], bAxR[3], XTxR[3], bBdR=0.0;
-  for(int Mu=0; Mu<3; Mu++)
-   { int MP1 = (Mu+1)%3, MP2=(Mu+2)%3;
-     bAxbB[Mu] = bA[MP1]*bB[MP2] - bA[MP2]*bB[MP1];
-     bAxR[Mu]  = bA[MP1]*R[MP2]  - bA[MP2]*R[MP1];
-     XTxR[Mu]  = XT[MP1]*R[MP2]  - XT[MP2]*R[MP1];
-     bBdR     += bB[Mu]*R[Mu];
-   };
-
-  /***************************************************************/
-  /* kernel factors **********************************************/
-  /***************************************************************/
-  cdouble Phi, Psi;
-  if (SameObject)
-   { double ImPhi, ImPsi;
-     if ( fabs(kr) < 1.0e-3 )
-      { double k3=k2*k;
-        ImPhi  =  (1.0 - kr2/6.0)  * k/(4.0*M_PI);
-        ImPsi  = -(1.0 - kr2/10.0) * k3/(12.0*M_PI);
-      }
-     else
-      { double CosKR = cos(kr), SinKR=sin(kr), r3=r*r2;
-        ImPhi  = SinKR/(4.0*M_PI*r);
-        ImPsi  = (kr*CosKR - SinKR)/(4.0*M_PI*r3);
-      };
-     Phi=II*ImPhi;
-     Psi=II*ImPsi;
-   }
-  else
-   { cdouble ikr=II*kr, ikr2=ikr*ikr;
-     Phi  = exp(ikr)/(4.0*M_PI*r);
-     Psi  = Phi*(ikr-1.0)/r2;
-   };
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  cdouble *Q=(cdouble *)I;
-  Q[PFT_PABS ] = 0.0;
-  Q[PFT_PSCAT] = Omega * PEFIE * Phi;
-  for(int Mu=0; Mu<3; Mu++)
-   { Q[PFT_XFORCE   + Mu] = PEFIE * R[Mu] * Psi;
-     Q[PFT_XTORQUE1 + Mu] = bAxbB[Mu]*Phi; //PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
-     Q[PFT_XTORQUE2 + Mu] = PEFIE * XTxR[Mu] * Psi;
-   };
-
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void GetScatteredPFTIntegrals(SWGVolume *Oa, int nbfa,
-                              SWGVolume *Ob, int nbfb,
-                              cdouble Omega, cdouble Q[NUMPFTT])
-{
-  PFTIData MyData, *Data = &MyData;
-  Data->Omega            = real(Omega);
-  Data->SameObject       = (Oa==Ob);
-  Data->TorqueCenter     = Oa->Origin;
-
-  double Error[2*NUMPFTT];
-  int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
-  int NumPts = (ncv > 0) ? 33 : 16;
-  int IDim = 2*NUMPFTT;
-  BFBFInt(Oa, nbfa, Ob, nbfb,
-          ScatteredPFTIntegrand, (void *)Data, IDim, 
-          (double *)Q, Error, NumPts, 0, 0);
-}
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
 void ExtinctionPFTIntegrand(double *x, double *b, double Divb,
                             void *UserData, double I[NUMPFTT])
 {
@@ -301,6 +202,103 @@ void GetExtinctionPFTT(SWGGeometry *G, HVector *JVector,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
+                           double *xB, double *bB, double DivbB,
+                           void *UserData, double *I)
+{
+  (void) DivbA; // unused
+  (void) DivbB; // unused
+
+  PFTIData *Data       = (PFTIData*)UserData;
+  double Omega         = Data->Omega;
+  double k             = Data->Omega;
+  bool SameObject      = Data->SameObject;
+  double *TorqueCenter = Data->TorqueCenter;
+
+  double XT[3]; 
+  VecSub(xA, TorqueCenter, XT);
+
+  double R[3];
+  VecSub(xA, xB, R);
+  double r2=R[0]*R[0] + R[1]*R[1] + R[2]*R[2];
+  double r=sqrt(r2), kr=k*r, kr2 = kr*kr, k2=k*k;
+
+  /***************************************************************/
+  /* polynomial factors ******************************************/
+  /***************************************************************/
+  double DotProduct    = bA[0]*bB[0] + bA[1]*bB[1] + bA[2]*bB[2];
+  double ScalarProduct = DivbA*DivbB;
+  double PEFIE         = DotProduct - ScalarProduct/k2;
+  double bAxbB[3], XTxR[3];
+  for(int Mu=0; Mu<3; Mu++)
+   { int MP1 = (Mu+1)%3, MP2=(Mu+2)%3;
+     bAxbB[Mu] = bA[MP1]*bB[MP2] - bA[MP2]*bB[MP1];
+     XTxR[Mu]  = XT[MP1]*R[MP2]  - XT[MP2]*R[MP1];
+   };
+
+  /***************************************************************/
+  /* kernel factors **********************************************/
+  /***************************************************************/
+  cdouble Phi, Psi;
+  if (SameObject)
+   { double ImPhi, ImPsi;
+     if ( fabs(kr) < 1.0e-3 )
+      { double k3=k2*k;
+        ImPhi  =  (1.0 - kr2/6.0)  * k/(4.0*M_PI);
+        ImPsi  = -(1.0 - kr2/10.0) * k3/(12.0*M_PI);
+      }
+     else
+      { double CosKR = cos(kr), SinKR=sin(kr), r3=r*r2;
+        ImPhi  = SinKR/(4.0*M_PI*r);
+        ImPsi  = (kr*CosKR - SinKR)/(4.0*M_PI*r3);
+      };
+     Phi=II*ImPhi;
+     Psi=II*ImPsi;
+   }
+  else
+   { cdouble ikr=II*kr;
+     Phi  = exp(ikr)/(4.0*M_PI*r);
+     Psi  = Phi*(ikr-1.0)/r2;
+   };
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  cdouble *Q=(cdouble *)I;
+  Q[PFT_PABS ] = 0.0;
+  Q[PFT_PSCAT] = Omega * PEFIE * Phi;
+  for(int Mu=0; Mu<3; Mu++)
+   { Q[PFT_XFORCE   + Mu] = TENTHIRDS*PEFIE * R[Mu] * Psi;
+     Q[PFT_XTORQUE1 + Mu] = TENTHIRDS*bAxbB[Mu]*Phi; //PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
+     Q[PFT_XTORQUE2 + Mu] = TENTHIRDS*PEFIE * XTxR[Mu] * Psi;
+   };
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetScatteredPFTIntegrals(SWGVolume *Oa, int nbfa,
+                              SWGVolume *Ob, int nbfb,
+                              cdouble Omega, cdouble Q[NUMPFTT])
+{
+  PFTIData MyData, *Data = &MyData;
+  Data->Omega            = real(Omega);
+  Data->SameObject       = (Oa==Ob);
+  Data->TorqueCenter     = Oa->Origin;
+
+  double Error[2*NUMPFTT];
+  int ncv = CompareBFs(Oa, nbfa, Ob, nbfb);
+  int NumPts = (ncv > 0) ? 33 : 16;
+  int IDim = 2*NUMPFTT;
+  BFBFInt(Oa, nbfa, Ob, nbfb,
+          ScatteredPFTIntegrand, (void *)Data, IDim, 
+          (double *)Q, Error, NumPts, 0, 0);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HMatrix *DRMatrix,
                    HMatrix *PFTMatrix, bool Itemize)
@@ -319,21 +317,21 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /* ScatteredPFTT[no] = contributions of object #no to PFTT      */
   /***************************************************************/
   static int NOSave=0;
-  static HMatrix **ScatteredPFTT=0, *IncidentPFTT=0;
+  static HMatrix **ScatteredPFTT=0, *ExtinctionPFTT=0;
   if (NOSave!=NO)
    { if (ScatteredPFTT)
       { for(int no=0; no<NOSave; no++)
          if (ScatteredPFTT[no]) 
           delete ScatteredPFTT[no];
         free(ScatteredPFTT);
-       if (IncidentPFTT)
-        delete IncidentPFTT;
+       if (ExtinctionPFTT)
+        delete ExtinctionPFTT;
       };
      NOSave=NO;
      ScatteredPFTT=(HMatrix **)mallocEC(NO*sizeof(HMatrix));
      for(int no=0; no<NO; no++)
       ScatteredPFTT[no]=new HMatrix(NO, NUMPFTT);
-     IncidentPFTT=new HMatrix(NO, NUMPFTT);
+     ExtinctionPFTT=new HMatrix(NO, NUMPFTT);
    };
 
   /*--------------------------------------------------------------*/
@@ -399,9 +397,10 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
        }
       else
        {
-         dPFTT[PFT_PSCAT] = real(u0JJ * II*Q[PFT_PSCAT]);
+         dPFTT[PFT_PSCAT] = -1.0*real(u0JJ * II*Q[PFT_PSCAT]);
+
          for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
-          dPFTT[nq] = imag(u0JJ * II * Q[nq]);
+          dPFTT[nq] = -1.0*imag(u0JJ * II * Q[nq]);
        };
 
       int nt=0;
@@ -431,9 +430,9 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /* get incident-field contributions ****************************/
   /***************************************************************/
   if (IF)
-   GetExtinctionPFTT(G, JVector, IF, Omega, IncidentPFTT);
+   GetExtinctionPFTT(G, JVector, IF, Omega, ExtinctionPFTT);
   else 
-   IncidentPFTT->Zero();
+   ExtinctionPFTT->Zero();
    
   /***************************************************************/
   /* sum scattered contributions from all objects plus           */
@@ -447,7 +446,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   for(int noa=0; noa<NO; noa++)
    for(int nq=0; nq<NUMPFT; nq++)
     { 
-      PFTMatrix->AddEntry(noa,nq,IncidentPFTT->GetEntry(noa,nq));
+      PFTMatrix->AddEntry(noa,nq,ExtinctionPFTT->GetEntry(noa,nq));
 
       for(int nob=0; nob<NO; nob++)
        { 
@@ -460,7 +459,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
        };
 
       if (PFT_XTORQUE<=nq && nq<=PFT_ZTORQUE)
-       { PFTMatrix->AddEntry(noa,nq,IncidentPFTT->GetEntry(noa,nq+3));
+       { PFTMatrix->AddEntry(noa,nq,ExtinctionPFTT->GetEntry(noa,nq+3));
          for(int nob=0; nob<NO; nob++)
           PFTMatrix->AddEntry(noa, nq, -1.0*ScatteredPFTT[nob]->GetEntry(noa,nq+3));
        };
@@ -495,7 +494,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
         for(int nq=0; nq<NUMPFT; nq++)
          fprintf(f,"%e ",PFTMatrix->GetEntryD(noa,nq));
         for(int nq=0; nq<NUMPFTT; nq++)
-         fprintf(f,"%e ",IncidentPFTT->GetEntryD(noa,nq));
+         fprintf(f,"%e ",ExtinctionPFTT->GetEntryD(noa,nq));
         for(int nob=0; nob<NO; nob++)
          for(int nq=0; nq<NUMPFTT; nq++)
           fprintf(f,"%e ",ScatteredPFTT[nob]->GetEntryD(noa,nq));

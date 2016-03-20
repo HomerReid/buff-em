@@ -30,7 +30,18 @@
 
 #define II cdouble(0.0,1.0)
 
+namespace scuff { 
+
+void CalcGC(double R[3], cdouble Omega,
+            cdouble EpsR, cdouble MuR,
+            cdouble GMuNu[3][3], cdouble CMuNu[3][3],
+            cdouble GMuNuRho[3][3][3], cdouble CMuNuRho[3][3][3]);
+}
+
 namespace buff {
+
+inline cdouble VecHDot(cdouble *V1, cdouble *V2)
+{ return conj(V1[0])*V2[0]+conj(V1[1])*V2[1]+conj(V1[2])*V2[2]; }
 
 /***************************************************************/
 /* compute the moments of a single unit-strength SWG basis     */
@@ -486,5 +497,296 @@ void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
    GetMomentPFT(G, no, Omega, IF, JVector, DRMatrix, PFTMatrix,
                 KeepQpTerm, FileBase);
 }
+
+/***************************************************************/
+/* contribution of surface #no to its own PFT                  */
+/***************************************************************/
+void GetMomentPFTSelfTerm(int no, cdouble Omega, HMatrix *PM,
+                          double PFT[NUMPFT])
+{
+  double k3   = real(Omega)*real(Omega)*real(Omega);
+  double k4   = real(Omega)*k3;
+  //double k5   = real(Omega)*k4;
+  double PPF  = k4*ZVAC/(12.0*M_PI);
+  double FPF  = -TENTHIRDS*k4*ZVAC/(12.0*M_PI);
+  // double FPF2 = -TENTHIRDS*k5/(120.0*M_PI);
+  double TPF  = -TENTHIRDS*k3*ZVAC/(6.0*M_PI);
+
+  cdouble P[3], M[3];
+  PM->GetEntries(no, "0:2",  P);
+  PM->GetEntries(no, "3:5",  M);
+
+  PFT[PFT_PABS]=0.0;
+
+  PFT[PFT_PSCAT]=PPF*real( VecHDot(P,P) );
+
+  for(int Mu=0; Mu<3; Mu++)
+   { 
+     int MP1=(Mu+1)%3, MP2=(Mu+2)%3;
+
+     PFT[PFT_XFORCE + Mu]=
+      FPF*real( conj(M[MP1])*P[MP2] - conj(M[MP2])*P[MP1] );
+
+     PFT[PFT_XTORQUE+Mu]=
+      TPF*( real(P[MP1])*imag(P[MP2]) - real(P[MP2])*imag(P[MP1]) );
+   };
+}
+
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetMomentPFTContribution(SWGGeometry *G, int noa, int nob,
+                              cdouble Omega, HMatrix *PM,
+                              double PFT[NUMPFT])
+{
+   cdouble Pa[3], Ma[3];
+   PM->GetEntries(noa, "0:2",  Pa);
+   PM->GetEntries(noa, "3:5",  Ma);
+
+   cdouble Pb[3], Mb[3];
+   PM->GetEntries(nob, "0:2",  Pb);
+   PM->GetEntries(nob, "3:5",  Mb);
+
+   cdouble Gij[3][3], C[3][3], dG[3][3][3], dC[3][3][3];
+   double R[3];
+   VecSub(G->Objects[noa]->Origin, G->Objects[nob]->Origin, R);
+   cdouble EpsR=1.0, MuR=1.0;
+   CalcGC(R, Omega, EpsR, MuR, Gij, C, dG, dC);
+
+   double k=real(Omega), k2=k*k;
+   memset(PFT, 0, NUMPFT*sizeof(double));
+   for(int i=0; i<3; i++)
+    for(int j=0; j<3; j++)
+     { 
+       cdouble PP = conj(Pa[i])*Pb[j]*ZVAC;
+ 
+       PFT[PFT_PSCAT] -= 0.5*k2*real( PP*II*Omega*Gij[i][j] );
+
+       for(int Mu=0; Mu<3; Mu++)
+        PFT[PFT_XFORCE + Mu]
+         -= 0.5*k*imag( PP*II*Omega*dG[Mu][i][j] );
+     };
+
+   for(int Mu=0; Mu<3; Mu++)
+    for(int Sigma=0; Sigma<3; Sigma++)
+     { int Nu=(Mu+1)%3, Rho=(Mu+2)%3;
+       cdouble PP = conj(Pa[Nu])*Pb[Sigma]*ZVAC;
+       PFT[PFT_XTORQUE + Mu] 
+        -= 0.5*k*imag( PP*II*Omega*Gij[Rho][Sigma] );
+     };
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void GetExtinctionMomentPFT(SWGGeometry *G, int no,
+                            IncField *IF, cdouble Omega,
+                            HMatrix *PM, double PFT[NUMPFT])
+                            
+{
+  cdouble P[3], M[3];
+  for(int Mu=0; Mu<3; Mu++)
+   { P[Mu] = conj(PM->GetEntry(no,Mu + 0*3));
+     M[Mu] = conj(PM->GetEntry(no,Mu + 1*3));
+   };
+
+  cdouble EH[6], dEH[3][6];
+  IF->GetFields(G->Objects[no]->Origin, EH);
+  IF->GetFieldGradients(G->Objects[no]->Origin, dEH);
+  cdouble *E, *dE[3];
+   E    =  EH    + 0*3;
+  dE[0] = dEH[0] + 0*3;
+  dE[1] = dEH[1] + 0*3;
+  dE[2] = dEH[2] + 0*3;
+     
+  memset(PFT, 0, NUMPFT*sizeof(double));
+  for(int i=0; i<3; i++)
+   { PFT[PFT_PABS]    -= 0.5*real(II*Omega*P[i]*E[i]);
+     PFT[PFT_XFORCE]  -= 0.5*imag(II*P[i]*dE[0][i]);
+     PFT[PFT_YFORCE]  -= 0.5*imag(II*P[i]*dE[1][i]);
+     PFT[PFT_ZFORCE]  -= 0.5*imag(II*P[i]*dE[2][i]);
+
+     PFT[PFT_XTORQUE] -= 0.5*imag(II*(P[1]*E[2] - P[2]*E[1]));
+     PFT[PFT_YTORQUE] -= 0.5*imag(II*(P[2]*E[0] - P[0]*E[2]));
+     PFT[PFT_ZTORQUE] -= 0.5*imag(II*(P[0]*E[1] - P[1]*E[0]));
+   };
+
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+HMatrix *GetMomentPFTMatrix(SWGGeometry *G, cdouble Omega, IncField *IF,
+                            HVector *JVector, HMatrix *DRMatrix,
+                            HMatrix *PFTMatrix, bool Itemize)
+{ 
+  (void) DRMatrix;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  int NO = G->NumObjects;
+  if (    (PFTMatrix==0)
+       || (PFTMatrix->NR != NO)
+       || (PFTMatrix->NC != NUMPFT)
+     )
+   ErrExit("invalid PFTMatrix in MomentPFT");
+
+  /***************************************************************/
+  /* ScatteredPFT[no] = contribution of surface #no to           */
+  /*                    scattered PFT                            */
+  /***************************************************************/
+  static int NOSave=0;
+  static HMatrix **ScatteredPFT=0, *ExtinctionPFT=0;
+  static HMatrix *PM;
+  if (NOSave!=NO)
+   { if (ScatteredPFT)
+      { for(int no=0; no<NOSave; no++)
+         if (ScatteredPFT[no]) 
+          delete ScatteredPFT[no];
+        free(ScatteredPFT);
+       if (ExtinctionPFT)
+        delete ExtinctionPFT;
+       if (PM)
+        delete PM;
+      };
+     NOSave=NO;
+     ScatteredPFT=(HMatrix **)mallocEC(NO*sizeof(HMatrix));
+     for(int no=0; no<NO; no++)
+      ScatteredPFT[no]=new HMatrix(NO, NUMPFT);
+     ExtinctionPFT=new HMatrix(NO, NUMPFT);
+     PM=new HMatrix(NO, 6, LHM_COMPLEX);
+   };
+
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  /*--------------------------------------------------------------*/
+  for(int no=0; no<NO; no++)
+   { cdouble p[3], m[3], Qp[3];
+     GetMoments(G, no, Omega, JVector, p, m, Qp);
+     PM->SetEntries(no, "0:2", p);
+     PM->SetEntries(no, "3:5", m);
+   };
+
+  /*--------------------------------------------------------------*/
+  /*- loop over all object to get moment PFT on that object       */
+  /*--------------------------------------------------------------*/
+  for(int no=0; no<NO; no++)
+   ScatteredPFT[no]->Zero();
+
+  bool UseSymmetry=true;
+  char *s=getenv("BUFF_MOMENTPFT_SYMMETRY");
+  if (s && s[0]=='0')
+   { UseSymmetry=false;
+     Log("Not using symmetry in Moment PFT calculation.");
+   };
+
+  for(int noa=0; noa<NO; noa++)
+   for(int nob=(UseSymmetry ? noa : 0); nob<NO; nob++)
+    { 
+      double PFT[NUMPFT];
+
+      if (noa==nob)
+       { 
+         GetMomentPFTSelfTerm(noa, Omega, PM, PFT);
+         ScatteredPFT[noa]->SetEntriesD(noa, ":", PFT);
+       }
+      else
+       {
+         GetMomentPFTContribution(G, noa, nob, Omega, PM, PFT);
+         for(int nq=0; nq<NUMPFT; nq++)
+          ScatteredPFT[nob]->AddEntry(noa, nq, PFT[nq]);
+
+         if (UseSymmetry)
+          { 
+            ScatteredPFT[noa]->AddEntry(nob, PFT_PSCAT, PFT[PFT_PSCAT]);
+            for(int nq=PFT_XFORCE; nq<NUMPFT; nq++)
+             ScatteredPFT[noa]->AddEntry(nob, nq, -1.0*PFT[nq]);
+          };
+       };
+    };
+
+  /***************************************************************/
+  /* get incident-field contributiono ****************************/
+  /***************************************************************/
+  ExtinctionPFT->Zero();
+  if (IF)
+   { IF->SetFrequency(Omega, true);
+     for(int no=0; no<NO; no++)
+      { double PFT[NUMPFT];
+        GetExtinctionMomentPFT(G, no, IF, Omega, PM, PFT);
+        ExtinctionPFT->SetEntriesD(no,":",PFT);
+      };
+   };
+   
+  /***************************************************************/
+  /* sum scattered contributions from all surfaces plus          */
+  /* extinction contributions to get total PFT.                  */
+  /* note that the formula for total PFT is                      */
+  /* Q^{full} = Q^{extinction} - Q^{scattering}                  */
+  /* so the scattering contributions enter with a minus sign     */
+  /* (except for the scattered power).                           */
+  /***************************************************************/
+  PFTMatrix->Zero();
+  for(int noa=0; noa<NO; noa++)
+   for(int nq=0; nq<NUMPFT; nq++)
+    { 
+      PFTMatrix->AddEntry(noa,nq,ExtinctionPFT->GetEntry(noa,nq));
+
+      for(int nob=0; nob<NO; nob++)
+       { 
+         if (nq==PFT_PABS)
+          PFTMatrix->AddEntry(noa,nq,-1.0*ScatteredPFT[nob]->GetEntry(noa,PFT_PSCAT));
+         else if (nq==PFT_PSCAT)
+          PFTMatrix->AddEntry(noa,nq,+1.0*ScatteredPFT[nob]->GetEntry(noa,PFT_PSCAT));
+         else // force or torque 
+          PFTMatrix->AddEntry(noa,nq,-1.0*ScatteredPFT[nob]->GetEntry(noa,nq));
+       };
+    };
+  
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  char *ss=getenv("BUFF_ITEMIZE_PFT");
+  if (ss && ss[0]=='1')
+   Itemize=true;
+  if (Itemize)
+   { 
+     static bool WrotePreamble=false;
+     for(int noa=0; noa<NO; noa++)
+      { char *Label=G->Objects[noa]->Label;
+        FILE *f=vfopen("%s.%s.MomentPFT","a",
+                        GetFileBase(G->GeoFileName),
+                        Label);
+        if (!f) continue;
+        if (!WrotePreamble)
+         { fprintf(f,"# Moment contribution to object %s\n",Label);
+           fprintf(f,"# column: \n");
+           fprintf(f,"# 1 frequency \n");
+           fprintf(f,"# 2 destination object label \n");
+           fprintf(f,"# 03-10 PAbs, PScat, Fxyz, Txyz (total)\n");
+           fprintf(f,"# 11-21 PAbs, PScat, Fxyz, Txyz, 0 0 0 (extinction)\n");
+           int nc=22;
+           for(int nob=0; nob<NO; nob++, nc+=NUMPFT)
+            fprintf(f,"# %i-%i PAbs, PScat, Fxyz, Txyz, 0 0 0 (object %s)\n",nc,nc+NUMPFT-1,G->Objects[nob]->Label);
+         };
+        fprintf(f,"%e %s ",real(Omega),Label);
+        for(int nq=0; nq<NUMPFT; nq++)
+         fprintf(f,"%e ",PFTMatrix->GetEntryD(noa,nq));
+        for(int nq=0; nq<NUMPFT; nq++)
+         fprintf(f,"%e ",ExtinctionPFT->GetEntryD(noa,nq));
+        for(int nob=0; nob<NO; nob++)
+         for(int nq=0; nq<NUMPFT; nq++)
+          fprintf(f,"%e ",ScatteredPFT[nob]->GetEntryD(noa,nq));
+        fprintf(f,"\n");
+        fclose(f);
+      };
+     WrotePreamble=true;
+   };
+
+  return PFTMatrix;
+}
+  
 
 } // namespace buff
