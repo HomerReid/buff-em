@@ -303,7 +303,7 @@ void GetExtinctionPFTT(SWGGeometry *G, HVector *JVector,
 /***************************************************************/
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HMatrix *DRMatrix,
-                   HMatrix *PFTMatrix)
+                   HMatrix *PFTMatrix, bool Itemize)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -471,6 +471,8 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /***************************************************************/
   char *ss=getenv("BUFF_ITEMIZE_PFT");
   if (ss && ss[0]=='1')
+   Itemize=true;
+  if (Itemize)
    { 
      static bool WrotePreamble=false;
      for(int noa=0; noa<NO; noa++)
