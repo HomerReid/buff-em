@@ -602,14 +602,14 @@ void GetExtinctionMomentPFT(SWGGeometry *G, int no,
      
   memset(PFT, 0, NUMPFT*sizeof(double));
   for(int i=0; i<3; i++)
-   { PFT[PFT_PABS]    -= 0.5*real(II*Omega*PDagger[i]*E[i]);
-     PFT[PFT_XFORCE]  -= 0.5*imag(II*PDagger[i]*dE[0][i]);
-     PFT[PFT_YFORCE]  -= 0.5*imag(II*PDagger[i]*dE[1][i]);
-     PFT[PFT_ZFORCE]  -= 0.5*imag(II*PDagger[i]*dE[2][i]);
+   { PFT[PFT_PABS]    += 0.5*real(II*Omega*PDagger[i]*E[i]);
+     PFT[PFT_XFORCE]  += 0.5*imag(II*PDagger[i]*dE[0][i]);
+     PFT[PFT_YFORCE]  += 0.5*imag(II*PDagger[i]*dE[1][i]);
+     PFT[PFT_ZFORCE]  += 0.5*imag(II*PDagger[i]*dE[2][i]);
 
-     PFT[PFT_XTORQUE] -= 0.5*imag(II*(PDagger[1]*E[2] - PDagger[2]*E[1]));
-     PFT[PFT_YTORQUE] -= 0.5*imag(II*(PDagger[2]*E[0] - PDagger[0]*E[2]));
-     PFT[PFT_ZTORQUE] -= 0.5*imag(II*(PDagger[0]*E[1] - PDagger[1]*E[0]));
+     PFT[PFT_XTORQUE] += 0.5*imag(II*(PDagger[1]*E[2] - PDagger[2]*E[1]));
+     PFT[PFT_YTORQUE] += 0.5*imag(II*(PDagger[2]*E[0] - PDagger[0]*E[2]));
+     PFT[PFT_ZTORQUE] += 0.5*imag(II*(PDagger[0]*E[1] - PDagger[1]*E[0]));
    };
 
 }
