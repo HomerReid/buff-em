@@ -82,7 +82,7 @@ typedef struct PFTIData
 /***************************************************************/
 /***************************************************************/
 void ExtinctionPFTIntegrand(double *x, double *b, double Divb,
-                            void *UserData, double I[NUMPFTT])
+                            void *UserData, double *I)
 {
   (void) Divb; // unused
 
@@ -189,6 +189,7 @@ void GetExtinctionPFTT(SWGGeometry *G, HVector *JVector,
    /*--------------------------------------------------------------*/
    double PFactor = 0.5;
    double FTFactor = 0.5*TENTHIRDS/real(Omega);
+   PFTTMatrix->Zero();
    for(int nt=0; nt<NT; nt++)
     for(int no=0; no<NO; no++)
      { 

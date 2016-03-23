@@ -585,10 +585,10 @@ void GetExtinctionMomentPFT(SWGGeometry *G, int no,
                             HMatrix *PM, double PFT[NUMPFT])
                             
 {
-  cdouble P[3], M[3];
+  cdouble PDagger[3], MDagger[3];
   for(int Mu=0; Mu<3; Mu++)
-   { P[Mu] = conj(PM->GetEntry(no,Mu + 0*3));
-     M[Mu] = conj(PM->GetEntry(no,Mu + 1*3));
+   { PDagger[Mu] = conj(PM->GetEntry(no,Mu + 0*3));
+     MDagger[Mu] = conj(PM->GetEntry(no,Mu + 1*3));
    };
 
   cdouble EH[6], dEH[3][6];
@@ -602,14 +602,14 @@ void GetExtinctionMomentPFT(SWGGeometry *G, int no,
      
   memset(PFT, 0, NUMPFT*sizeof(double));
   for(int i=0; i<3; i++)
-   { PFT[PFT_PABS]    -= 0.5*real(II*Omega*P[i]*E[i]);
-     PFT[PFT_XFORCE]  -= 0.5*imag(II*P[i]*dE[0][i]);
-     PFT[PFT_YFORCE]  -= 0.5*imag(II*P[i]*dE[1][i]);
-     PFT[PFT_ZFORCE]  -= 0.5*imag(II*P[i]*dE[2][i]);
+   { PFT[PFT_PABS]    -= 0.5*real(II*Omega*PDagger[i]*E[i]);
+     PFT[PFT_XFORCE]  -= 0.5*imag(II*PDagger[i]*dE[0][i]);
+     PFT[PFT_YFORCE]  -= 0.5*imag(II*PDagger[i]*dE[1][i]);
+     PFT[PFT_ZFORCE]  -= 0.5*imag(II*PDagger[i]*dE[2][i]);
 
-     PFT[PFT_XTORQUE] -= 0.5*imag(II*(P[1]*E[2] - P[2]*E[1]));
-     PFT[PFT_YTORQUE] -= 0.5*imag(II*(P[2]*E[0] - P[0]*E[2]));
-     PFT[PFT_ZTORQUE] -= 0.5*imag(II*(P[0]*E[1] - P[1]*E[0]));
+     PFT[PFT_XTORQUE] -= 0.5*imag(II*(PDagger[1]*E[2] - PDagger[2]*E[1]));
+     PFT[PFT_YTORQUE] -= 0.5*imag(II*(PDagger[2]*E[0] - PDagger[0]*E[2]));
+     PFT[PFT_ZTORQUE] -= 0.5*imag(II*(PDagger[0]*E[1] - PDagger[1]*E[0]));
    };
 
 }
@@ -682,28 +682,26 @@ HMatrix *GetMomentPFTMatrix(SWGGeometry *G, cdouble Omega, IncField *IF,
      Log("Not using symmetry in Moment PFT calculation.");
    };
 
+  for(int no=0; no<NO; no++)
+   ScatteredPFT[no]->Zero();
+
   for(int noa=0; noa<NO; noa++)
    for(int nob=(UseSymmetry ? noa : 0); nob<NO; nob++)
     { 
       double PFT[NUMPFT];
 
       if (noa==nob)
-       { 
-         GetMomentPFTSelfTerm(noa, Omega, PM, PFT);
-         ScatteredPFT[noa]->SetEntriesD(noa, ":", PFT);
-       }
+       GetMomentPFTSelfTerm(noa, Omega, PM, PFT);
       else
-       {
-         GetMomentPFTContribution(G, noa, nob, Omega, PM, PFT);
-         for(int nq=0; nq<NUMPFT; nq++)
-          ScatteredPFT[nob]->AddEntry(noa, nq, PFT[nq]);
+       GetMomentPFTContribution(G, noa, nob, Omega, PM, PFT);
 
-         if (UseSymmetry)
-          { 
-            ScatteredPFT[noa]->AddEntry(nob, PFT_PSCAT, PFT[PFT_PSCAT]);
-            for(int nq=PFT_XFORCE; nq<NUMPFT; nq++)
-             ScatteredPFT[noa]->AddEntry(nob, nq, -1.0*PFT[nq]);
-          };
+      for(int nq=0; nq<NUMPFT; nq++)
+       ScatteredPFT[nob]->AddEntry(noa, nq, PFT[nq]);
+
+      if (UseSymmetry && noa!=nob)
+       { ScatteredPFT[noa]->AddEntry(nob, PFT_PSCAT, PFT[PFT_PSCAT]);
+         for(int nq=PFT_XFORCE; nq<NUMPFT; nq++)
+          ScatteredPFT[noa]->AddEntry(nob, nq, -1.0*PFT[nq]);
        };
     };
 
