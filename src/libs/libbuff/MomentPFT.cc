@@ -565,7 +565,7 @@ void GetMomentPFTContribution(SWGGeometry *G, int noa, int nob,
 
        for(int Mu=0; Mu<3; Mu++)
         PFT[PFT_XFORCE + Mu]
-         -= 0.5*k*imag( PP*II*Omega*dG[Mu][i][j] );
+         -= 0.5*TENTHIRDS*k*imag( PP*II*Omega*dG[Mu][i][j] );
      };
 
    for(int Mu=0; Mu<3; Mu++)
@@ -573,7 +573,7 @@ void GetMomentPFTContribution(SWGGeometry *G, int noa, int nob,
      { int Nu=(Mu+1)%3, Rho=(Mu+2)%3;
        cdouble PP = conj(Pa[Nu])*Pb[Sigma]*ZVAC;
        PFT[PFT_XTORQUE + Mu] 
-        -= 0.5*k*imag( PP*II*Omega*Gij[Rho][Sigma] );
+        -= 0.5*TENTHIRDS*k*imag( PP*II*Omega*Gij[Rho][Sigma] );
      };
 }
 
@@ -603,13 +603,13 @@ void GetExtinctionMomentPFT(SWGGeometry *G, int no,
   memset(PFT, 0, NUMPFT*sizeof(double));
   for(int i=0; i<3; i++)
    { PFT[PFT_PABS]    += 0.5*real(II*Omega*PDagger[i]*E[i]);
-     PFT[PFT_XFORCE]  += 0.5*imag(II*PDagger[i]*dE[0][i]);
-     PFT[PFT_YFORCE]  += 0.5*imag(II*PDagger[i]*dE[1][i]);
-     PFT[PFT_ZFORCE]  += 0.5*imag(II*PDagger[i]*dE[2][i]);
+     PFT[PFT_XFORCE]  += 0.5*TENTHIRDS*imag(II*PDagger[i]*dE[0][i]);
+     PFT[PFT_YFORCE]  += 0.5*TENTHIRDS*imag(II*PDagger[i]*dE[1][i]);
+     PFT[PFT_ZFORCE]  += 0.5*TENTHIRDS*imag(II*PDagger[i]*dE[2][i]);
 
-     PFT[PFT_XTORQUE] += 0.5*imag(II*(PDagger[1]*E[2] - PDagger[2]*E[1]));
-     PFT[PFT_YTORQUE] += 0.5*imag(II*(PDagger[2]*E[0] - PDagger[0]*E[2]));
-     PFT[PFT_ZTORQUE] += 0.5*imag(II*(PDagger[0]*E[1] - PDagger[1]*E[0]));
+     PFT[PFT_XTORQUE] += 0.5*TENTHIRDS*imag(II*(PDagger[1]*E[2] - PDagger[2]*E[1]));
+     PFT[PFT_YTORQUE] += 0.5*TENTHIRDS*imag(II*(PDagger[2]*E[0] - PDagger[0]*E[2]));
+     PFT[PFT_ZTORQUE] += 0.5*TENTHIRDS*imag(II*(PDagger[0]*E[1] - PDagger[1]*E[0]));
    };
 
 }
@@ -764,10 +764,10 @@ HMatrix *GetMomentPFTMatrix(SWGGeometry *G, cdouble Omega, IncField *IF,
            fprintf(f,"# 1 frequency \n");
            fprintf(f,"# 2 destination object label \n");
            fprintf(f,"# 03-10 PAbs, PScat, Fxyz, Txyz (total)\n");
-           fprintf(f,"# 11-21 PAbs, PScat, Fxyz, Txyz, 0 0 0 (extinction)\n");
-           int nc=22;
+           fprintf(f,"# 11-18 PAbs, PScat, Fxyz, Txyz (extinction)\n");
+           int nc=19;
            for(int nob=0; nob<NO; nob++, nc+=NUMPFT)
-            fprintf(f,"# %i-%i PAbs, PScat, Fxyz, Txyz, 0 0 0 (object %s)\n",nc,nc+NUMPFT-1,G->Objects[nob]->Label);
+            fprintf(f,"# %i-%i PAbs, PScat, Fxyz, Txyz (object %s)\n",nc,nc+NUMPFT-1,G->Objects[nob]->Label);
          };
         fprintf(f,"%e %s ",real(Omega),Label);
         for(int nq=0; nq<NUMPFT; nq++)
