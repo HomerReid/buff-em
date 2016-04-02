@@ -125,8 +125,8 @@ FIBBICache::FIBBICache(char *MeshFileName)
      char CacheFileName[MAXSTR];
      int Status=1;
 
-     // first look for ${BUFF_CACHE_DIR}/MeshFile.cache 
-     char *CacheDir=getenv("BUFF_CACHE_DIR");
+     // first look for ${BUFF_CACHE_PATH}/MeshFile.cache 
+     char *CacheDir=getenv("BUFF_CACHE_PATH");
      if (CacheDir)
       { snprintf(CacheFileName, MAXSTR, "%s/%s.cache",
                  CacheDir,GetFileBase(MeshFileName));
@@ -252,7 +252,7 @@ void FIBBICache::GetFIBBIData(SWGVolume *OA, int nfA,
 /*                                                             */
 /* cache files have the canonical file name MeshFile.cache     */
 /* where MeshFile.vmsh is the tetrahedral mesh file.           */
-/* cache files are written to the directory ${BUFF_MESH_DIR}   */
+/* cache files are written to the directory ${BUFF_CACHE_PATH} */
 /* if that environment variable is defined, and otherwise to   */
 /* the current working directory.                              */
 /*                                                             */
@@ -281,7 +281,7 @@ void FIBBICache::Store(const char *MeshFileName)
 
   char FileName[MAXSTR];
   
-  char *s=getenv("BUFF_CACHE_DIR");
+  char *s=getenv("BUFF_CACHE_PATH");
   if (!s)
    snprintf(FileName,MAXSTR,"%s.cache",GetFileBase(MFNCopy));
   else
