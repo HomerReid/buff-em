@@ -69,11 +69,12 @@ void Integrand(double *x, double *b, double Divb,
   (void )Divb;
   (void )b;
 
-  IntegrandData *Data = (IntegrandData*)UserData;
-  double Omega        = Data->Omega;
-  int lMax            = Data->lMax;
-  int NAlpha          = (lMax+1)*(lMax+1);
-  int NBF             = 2*(NAlpha-1);
+  IntegrandData *Data      = (IntegrandData*)UserData;
+  double Omega             = Data->Omega;
+  SVTensor *TemperatureSVT = Data->TemperatureSVT;
+  int lMax                 = Data->lMax;
+  int NAlpha               = (lMax+1)*(lMax+1);
+  int NBF                  = 2*(NAlpha-1);
 
   /***************************************************************/
   /***************************************************************/
@@ -84,10 +85,9 @@ void Integrand(double *x, double *b, double Divb,
   EpsM1[1][1]-=1.0;
   EpsM1[2][2]-=1.0;
 
-  double T = Data->TemperatureSVT->EvaluateD(0,x);
+  double T = TemperatureSVT ? TemperatureSVT->EvaluateD(0,x) : 0.0;
   double ThetaEnvironment = Data->ThetaEnvironment;
-  double DeltaTheta = GetThetaFactor(Omega, T ) 
-                         - ThetaEnvironment;
+  double DeltaTheta = GetThetaFactor(Omega, T ) - ThetaEnvironment;
 
   /***************************************************************/
   /***************************************************************/
