@@ -177,6 +177,8 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
    };
   BNEQD->NumPFTMethods=nPFT;
 
+  BNEQD->DSIOmegaPoints=0;
+
   BNEQD->pftOptions = (PFTOptions *)malloc(sizeof(PFTOptions));
   InitPFTOptions(BNEQD->pftOptions);
   BNEQD->pftOptions->DSIMesh=DSIMesh;

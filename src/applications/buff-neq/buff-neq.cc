@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
   int DSIPoints    = 0;
   char *DSIMesh    = 0;
   double DSIRadius = 10.0;
+  char *DSIOmegaFile=0;
   int DSIPoints2   = 0;
 
   /*--------------------------------------------------------------*/
@@ -134,6 +135,7 @@ int main(int argc, char *argv[])
      {"DSIMesh",        PA_STRING,  1, 1,       (void *)&DSIMesh,     0,            "bounding surface .msh file for DSIPFT"},
      {"DSIRadius",      PA_DOUBLE,  1, 1,       (void *)&DSIRadius,   0,            "bounding-sphere radius for DSIPFT"},
      {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints2,  0,            "number of quadrature points for DSIPFT 2"},
+     {"DSIOmegaFile",   PA_STRING,  1, 1,       (void *)&DSIOmegaFile,0,            "list of frequencies at which to do DSI calculation"},
 /**/     
      {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,             "base filename for output files"},
 /**/
@@ -234,6 +236,9 @@ int main(int argc, char *argv[])
 
   SWGGeometry *G=BNEQD->G;
   BNEQD->UseExistingData = UseExistingData;
+
+  if (DSIOmegaFile)
+   BNEQD->DSIOmegaPoints = new HVector(DSIOmegaFile);
 
   /*******************************************************************/
   /*******************************************************************/

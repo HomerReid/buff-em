@@ -240,6 +240,20 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
+bool DoDSIAtThisFrequency(BNEQData *BNEQD, cdouble Omega)
+{
+  HVector *OmegaPoints=BNEQD->DSIOmegaPoints;
+  if (OmegaPoints==0)
+   return true;
+  for(int n=0; n<OmegaPoints->N; n++)
+   if (EqualFloat(Omega, OmegaPoints->GetEntry(n)))
+    return true;
+  return false;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
 void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
 {
   if ( CacheRead(BNEQD, Omega, Flux) )
@@ -336,6 +350,10 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
         // results of whichever PFT computation comes last   
         for(int nPFT=0; nPFT<NumPFTMethods; nPFT++)
          {
+           if (     PFTMethods[nPFT]==SCUFF_PFT_DSI 
+                && !DoDSIAtThisFrequency(BNEQD, Omega)
+              ) continue;
+
            pftOptions->PFTMethod  = PFTMethods[nPFT];
            pftOptions->DSIPoints  = DSIPoints[nPFT];
            G->GetPFT(0, Omega, PFTMatrix, pftOptions);

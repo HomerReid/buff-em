@@ -123,6 +123,7 @@ typedef struct BNEQData
    int PFTMethods[MAXPFT];
    char *PFTFileNames[MAXPFT];
    int DSIPoints[MAXPFT];
+   HVector *DSIOmegaPoints;
    PFTOptions *pftOptions;
    bool DoMomentPFT;
 
