@@ -220,7 +220,7 @@ void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
 
   double XTA[3], XTB[3];
   VecSub(xA, TorqueCenterA, XTA);
-  VecSub(xA, TorqueCenterB, XTB);
+  VecSub(xB, TorqueCenterB, XTB);
 
   double R[3];
   VecSub(xA, xB, R);
