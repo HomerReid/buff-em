@@ -150,10 +150,7 @@ int main(int argc, char *argv[])
 
   if (FileBase)
    SetLogFileName("%s.log",FileBase);
-  else
-   SetLogFileName("buff-neq.log");
-
-  Log("buff-neq running on %s",GetHostName());
+  InitializeLog(argv[0]);
 
   /*******************************************************************/
   /* process frequency-related options to construct a list of        */

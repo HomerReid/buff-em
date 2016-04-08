@@ -50,6 +50,9 @@ using namespace buff;
 /***************************************************************/
 int main(int argc, char *argv[])
 {
+  InstallHRSignalHandler();
+  InitializeLog(argv[0]);
+
   /***************************************************************/
   /* process options *********************************************/
   /***************************************************************/
@@ -207,12 +210,6 @@ int main(int argc, char *argv[])
   bool NeedIncidentField = (ExportMatrix==false);
   if ( NeedIncidentField && IFList==0 )
    ErrExit("you must specify at least one incident field source");
-
-  /*******************************************************************/
-  /*******************************************************************/
-  /*******************************************************************/
-  SetLogFileName("buff-scatter.log");
-  Log("buff-scatter running on %s",GetHostName());
 
   /*******************************************************************/
   /* create the BSData structure containing everything we need to    */
