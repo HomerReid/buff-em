@@ -164,7 +164,7 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
   Options->RHSVector = BSD->RHS;
   Options->PFTMethod = PFTMethod;
 
-  HMatrix *PFTMatrix =G->GetPFT(J, Omega, 0, Options);
+  HMatrix *PFTMatrix =G->GetPFTMatrix(J, Omega, Options);
 
   /***************************************************************/
   /* write results to output file ********************************/

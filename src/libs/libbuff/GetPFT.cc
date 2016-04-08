@@ -129,10 +129,10 @@ SWGVolume *ResolveNBF(SWGGeometry *G, int nbf, int *pno, int *pnf)
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-HMatrix *SWGGeometry::GetPFT(HVector *JVector,
-                             cdouble Omega,
-                             HMatrix *PFTMatrix,
-                             PFTOptions *Options)
+HMatrix *SWGGeometry::GetPFTMatrix(HVector *JVector,
+                                   cdouble Omega,
+                                   PFTOptions *Options,
+                                   HMatrix *PFTMatrix)
 {
   /***************************************************************/
   /***************************************************************/

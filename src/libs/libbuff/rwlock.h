@@ -32,7 +32,7 @@
 #  include <pthread.h>
 #endif
 
-namespace scuff {
+namespace buff {
 
 class rwlock {
 public:

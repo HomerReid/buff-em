@@ -224,8 +224,8 @@ class SWGGeometry
    void GetFields(IncField *IF, HVector *J, cdouble Omega, double *X, cdouble *EH);
    HMatrix *GetFields(IncField *IF, HVector *J, cdouble Omega,
                       HMatrix *XMatrix, HMatrix *FMatrix=NULL);
-   HMatrix *GetPFT(HVector *JVector, cdouble Omega,
-                   HMatrix *PFTMatrix, PFTOptions *Options=0);
+   HMatrix *GetPFTMatrix(HVector *JVector, cdouble Omega,
+                         PFTOptions *Options=0, HMatrix *PFTMatrix=0);
 
    void AssembleOverlapBlocks(int no, cdouble Omega,
                               SVTensor *TemperatureSVT,

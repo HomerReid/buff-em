@@ -32,7 +32,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <libhrutil.h>
-#include "rwlock.h"
+//#include "rwlock.h"
 
 #ifdef HAVE_CONFIG_H
 #  include "config.h"

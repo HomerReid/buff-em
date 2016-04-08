@@ -356,7 +356,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
 
            pftOptions->PFTMethod  = PFTMethods[nPFT];
            pftOptions->DSIPoints  = DSIPoints[nPFT];
-           G->GetPFT(0, Omega, PFTMatrix, pftOptions);
+           G->GetPFTMatrix(0, Omega, pftOptions, PFTMatrix);
 
            FILE *f=fopen(PFTFileNames[nPFT],"a");
            for(int nod=0; nod<NO; nod++)
