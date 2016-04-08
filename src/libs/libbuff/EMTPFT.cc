@@ -276,7 +276,7 @@ void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
    { Q[PFT_XFORCE   + Mu] = TENTHIRDS*PEFIE * R[Mu] * Psi;
      Q[PFT_XTORQUE1 + Mu] = TENTHIRDS*bAxbB[Mu]*Phi; //PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
      Q[PFT_XTORQUE2 + Mu] = TENTHIRDS*PEFIE * XTAxR[Mu] * Psi;
-     Q[PFT_XTORQUE2 + 3 * Mu] = TENTHIRDS*PEFIE * XTBxR[Mu] * Psi;
+     Q[PFT_XTORQUE2 + 3 + Mu] = TENTHIRDS*PEFIE * XTBxR[Mu] * Psi;
    };
 
 }
@@ -286,7 +286,7 @@ void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
 /***************************************************************/
 void GetScatteredPFTIntegrals(SWGVolume *Oa, int nbfa,
                               SWGVolume *Ob, int nbfb,
-                              cdouble Omega, cdouble Q[NUMPFTT])
+                              cdouble Omega, cdouble Q[NUMPFTT+3])
 {
   PFTIData MyData, *Data = &MyData;
   Data->Omega            = real(Omega);
