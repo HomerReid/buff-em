@@ -236,7 +236,8 @@ void SWGGeometry::WritePPMesh(const char *FileName,
 /***************************************************************/
 /***************************************************************/
 void SWGGeometry::PlotPermittivity(const char *FileName,
-                                   const char *Tag)
+                                   const char *Tag,
+                                   bool RealPart)
 {
   FILE *f=fopen(FileName,"a");
   if (!f) return;
@@ -268,7 +269,10 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
          cdouble Eps[3][3];
          O->SVT->Evaluate(1.0, x0, Eps);
 
-         EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
+         if (RealPart)
+          EpsAvg[n]=real(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
+         else
+          EpsAvg[n]=imag(Eps[0][0] + Eps[1][1] + Eps[2][2])/3.0;
        };
    
      fprintf(f,"SS(%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e,%e) {%e,%e,%e,%e};\n",
@@ -281,6 +285,13 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
   fprintf(f,"};\n");
   fclose(f);
 
+}
+
+void SWGGeometry::PlotPermittivity(const char *FileName,
+                                   const char *Tag)
+{ 
+  PlotPermittivity(FileName,"Re(Eps)",true);
+  PlotPermittivity(FileName,"Im(Eps)",false);
 }
 
 /***************************************************************/

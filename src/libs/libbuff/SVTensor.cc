@@ -337,7 +337,7 @@ void SVTensor::Evaluate(cdouble Omega, double x[3], cdouble Q[3][3])
   VValues[3] = x[2];
   VValues[4] = sqrt( x[0]*x[0] + x[1]*x[1] + x[2]*x[2] );
   VValues[5] = atan2( sqrt(x[0]*x[0] + x[1]*x[1]), x[2] );
-  VValues[6] = atan2( x[0], x[1] );
+  VValues[6] = atan2( x[1], x[0] );
   for(int nmp=0; nmp<NumMPs; nmp++)
    VValues[7 + nmp] = MPs[nmp]->GetEps(Omega);
   

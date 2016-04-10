@@ -213,6 +213,7 @@ class SWGGeometry
    // visualization
    void WritePPMesh(const char *FileName, const char *Tag);
    void PlotPermittivity(const char *FileName, const char *Tag);
+   void PlotPermittivity(const char *FileName, const char *Tag, bool RealPart);
    void PlotCurrentDistribution(const char *FileName, HVector *J,
                                 const char *Tag, ...);
 

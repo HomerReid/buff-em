@@ -125,7 +125,9 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
    { 
      SWGVolume *O = G->Objects[no];
      int Offset   = G->BFIndexOffset[no];
-     for(int nfa=0; nfa<O->NumInteriorFaces; nfa++)
+     int NF       = O->NumInteriorFaces;
+     Log("Computing %ix%i overlap matrix for volume %i (%s)",NF,NF,no,O->Label);
+     for(int nfa=0; nfa<NF; nfa++)
       { 
         int nfbList[MAXOVERLAP];
         double Entries[MAXOVERLAP];
@@ -134,8 +136,10 @@ BNEQData *CreateBNEQData(char *GeoFile, char *TransFile, int QuantityFlags,
          SInverse->SetEntry(Offset+nfa, Offset+nfbList[nnz], Entries[nnz]);
       };
    };
+  Log("LU factorizing/solving...");
   SInverse->LUFactorize();
   SInverse->LUInvert();
+  Log("Done with overlap matrix");
 
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
