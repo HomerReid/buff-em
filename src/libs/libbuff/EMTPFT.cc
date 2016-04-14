@@ -273,10 +273,10 @@ void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
   Q[PFT_PABS ] = 0.0;
   Q[PFT_PSCAT] = Omega * PEFIE * Phi;
   for(int Mu=0; Mu<3; Mu++)
-   { Q[PFT_XFORCE   + Mu] = TENTHIRDS*PEFIE * R[Mu] * Psi;
-     Q[PFT_XTORQUE1 + Mu] = TENTHIRDS*bAxbB[Mu]*Phi; //PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
-     Q[PFT_XTORQUE2 + Mu] = TENTHIRDS*PEFIE * XTAxR[Mu] * Psi;
-     Q[PFT_XTORQUE2 + 3 + Mu] = TENTHIRDS*PEFIE * XTBxR[Mu] * Psi;
+   { Q[PFT_XFORCE   + Mu]     =  TENTHIRDS*PEFIE * R[Mu] * Psi;
+     Q[PFT_XTORQUE1 + Mu]     =  TENTHIRDS*bAxbB[Mu]*Phi; //PPPoK2 + bAxR[Mu]*bBdR*ImZeta/k2;
+     Q[PFT_XTORQUE2 + Mu]     =  TENTHIRDS*PEFIE * XTAxR[Mu] * Psi;
+     Q[PFT_XTORQUE2 + 3 + Mu] = -TENTHIRDS*PEFIE * XTBxR[Mu] * Psi;
    };
 
 }
