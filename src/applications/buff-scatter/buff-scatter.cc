@@ -229,12 +229,13 @@ int main(int argc, char *argv[])
   /*******************************************************************/
   BSData MyBSData, *BSD=&MyBSData;
 
-  SWGGeometry *G   = BSD->G   = new SWGGeometry(GeoFile);
-  HMatrix *M       = BSD->M   = G->AllocateVIEMatrix();
-                     BSD->RHS = G->AllocateRHSVector();
-  HVector *J       = BSD->J   = G->AllocateRHSVector();
-  BSD->IF          = 0;
-  BSD->IFLabel     = 0;
+  SWGGeometry *G      = BSD->G   = new SWGGeometry(GeoFile);
+  HMatrix *M          = BSD->M   = G->AllocateVIEMatrix();
+                        BSD->RHS = G->AllocateRHSVector();
+  HVector *J          = BSD->J   = G->AllocateRHSVector();
+  BSD->IF             = 0;
+  BSD->IFLabel        = 0;
+  BSD->TransformLabel = 0;
 
   char GeoFileBase[MAXSTR];
   strncpy(GeoFileBase, GetFileBase(GeoFile), MAXSTR);
