@@ -58,25 +58,27 @@ int main(int argc, char *argv[])
   /***************************************************************/
   InstallHRSignalHandler();
   char *GeoFile=0;
-
+//
   double pwDir[3*MAXPW];             int npwDir;
   cdouble pwPol[3*MAXPW];            int npwPol;
-
+//
   double gbDir[3*MAXGB];             int ngbDir;
   cdouble gbPol[3*MAXGB];            int ngbPol;
   double gbCenter[3*MAXGB];          int ngbCenter;
   double gbWaist[MAXGB];             int ngbWaist;
-
+//
   double psLoc[3*MAXPS];             int npsLoc;
   cdouble psStrength[3*MAXPS];       int npsStrength;
-
+//
+  char *IFFile=0;
+//
   cdouble OmegaVals[MAXFREQ];        int nOmegaVals;
   char *OmegaFile;                   int nOmegaFiles;
-
+//
   char *EPFiles[MAXEPF];             int nEPFiles;
-
+//
   char *JPlotFile=0;
-
+//
   char *PFTFile          = 0;
   char *OPFTFile         = 0;
   char *EMTPFTFile       = 0;
@@ -86,7 +88,7 @@ int main(int argc, char *argv[])
   int DSIPoints          = 302;
   int DSIPoints2         = 0;
   char *DSIMesh          = 0;
-
+//
   char *MomentFile=0;
 
   int ExportMatrix=0;
@@ -108,6 +110,8 @@ int main(int argc, char *argv[])
 /**/
      {"psLocation",     PA_DOUBLE,  3, MAXPS,   (void *)psLoc,       &npsLoc,      "point source location"},
      {"psStrength",     PA_CDOUBLE, 3, MAXPS,   (void *)psStrength,  &npsStrength, "point source strength"},
+/**/
+     {"IFFile",         PA_STRING,  1, 1,       (void *)&IFFile,     0,             "list of incident fields"},
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,    "list of evaluation points"},
 /**/
@@ -132,43 +136,31 @@ int main(int argc, char *argv[])
   if (GeoFile==0)
    OSUsage(argv[0], OSArray, "--geometry option is mandatory");
 
-  PFTOptions MyPFTOptions, *pftOptions = &MyPFTOptions;
-  BUFF_InitPFTOptions(pftOptions);
-  pftOptions->DSIMesh   = DSIMesh;
-  pftOptions->DSIRadius = DSIRadius;
-
-  char *DSIPFTFile2=0;
-  if (DSIPFTFile && DSIPoints2!=0)
-   DSIPFTFile2=vstrdup("%s.DSI%i",GetFileBase(DSIPFTFile),DSIPoints2);
-
   /*******************************************************************/
   /* process frequency-related options to construct a list of        */
   /* frequencies at which to run calculations                        */
   /*******************************************************************/
-  HVector *OmegaList=0, *OmegaList0;
-  int nFreq, nOV, NumFreqs=0;
+  HVector *OmegaList=0;
   if (nOmegaFiles==1) // first process --OmegaFile option if present
    { 
      OmegaList=new HVector(OmegaFile,LHM_TEXT);
      if (OmegaList->ErrMsg)
       ErrExit(OmegaList->ErrMsg);
-     NumFreqs=OmegaList->N;
    };
 
   // now add any individually specified --Omega options
   if (nOmegaVals>0)
    { 
-     NumFreqs += nOmegaVals;
-     OmegaList0=OmegaList;
-     OmegaList=new HVector(NumFreqs, LHM_COMPLEX);
-     nFreq=0;
-     if (OmegaList0)
-      { for(nFreq=0; nFreq<OmegaList0->N; nFreq++)
-         OmegaList->SetEntry(nFreq, OmegaList0->GetEntry(nFreq));
-        delete OmegaList0;
+     int N1 = (OmegaList ? OmegaList->N : 0);
+     int N2 = nOmegaVals;
+     HVector *NewOmegaList=new HVector(N1+N2, LHM_COMPLEX); 
+     if (OmegaList)
+      { memcpy(NewOmegaList->ZV, OmegaList->ZV, N1*sizeof(cdouble));
+        delete OmegaList;
       };
-     for(nOV=0; nOV<nOmegaVals; nOV++)
-      OmegaList->SetEntry(nFreq+nOV, OmegaVals[nOV]);
+     OmegaList=NewOmegaList;
+     for(int n2=0; n2<N2; n2++)
+      OmegaList->SetEntry(N1+n2, OmegaVals[n2]);
    };
 
   if ( !OmegaList || OmegaList->N==0)
@@ -185,23 +177,30 @@ int main(int argc, char *argv[])
   if ( npsLoc!=npsStrength )
    ErrExit("numbers of --psLocation and --psStrength options must agree");
 
-  IncField *IFList=0, *IF;
-  int npw, ngb, nps;
-  for(npw=0; npw<npwPol; npw++)
-   { IF=new PlaneWave(pwPol + 3*npw, pwDir + 3*npw);
-     IF->Next=IFList;
-     IFList=IF;
+  IncField *IF=0;
+  for(int npw=0; npw<npwPol; npw++)
+   { PlaneWave *PW=new PlaneWave(pwPol + 3*npw, pwDir + 3*npw);
+     PW->Next=IF;
+     IF=PW;
    };
-  for(ngb=0; ngb<ngbCenter; ngb++)
-   { IF=new GaussianBeam(gbCenter + 3*ngb, gbDir + 3*ngb, gbPol + 3*ngb, gbWaist[ngb]);
-     IF->Next=IFList;
-     IFList=IF;
+  for(int ngb=0; ngb<ngbCenter; ngb++)
+   { GaussianBeam *GB=new GaussianBeam(gbCenter + 3*ngb, gbDir + 3*ngb, gbPol + 3*ngb, gbWaist[ngb]);
+     GB->Next=IF;
+     IF=GB;
    };
-  for(nps=0; nps<npsLoc; nps++)
-   { IF=new PointSource(psLoc + 3*nps, psStrength + 3*nps);
-     IF->Next=IFList;
-     IFList=IF;
+  for(int nps=0; nps<npsLoc; nps++)
+   { PointSource *PS=new PointSource(psLoc + 3*nps, psStrength + 3*nps);
+     PS->Next=IF;
+     IF=PS;
    };
+
+  IncFieldList *IFList=0;
+  if (IFList!=0 && IF!=0)
+   ErrExit("--IFFile is incompatible with other incident-field specifications");
+  else if (IFFile!=0 && IF==0)
+   IFList = ReadIncFieldList(IFFile);
+  else if (IFFile==0 && IF!=0)
+   IFList = AddIncFieldToList(IF,const_cast<char *>("Default"));
 
   /*******************************************************************/
   /* sanity check to make sure the user specified an incident field  */
@@ -212,16 +211,30 @@ int main(int argc, char *argv[])
    ErrExit("you must specify at least one incident field source");
 
   /*******************************************************************/
+  /* PFT options *****************************************************/
+  /*******************************************************************/
+  PFTOptions MyPFTOptions, *pftOptions = &MyPFTOptions;
+  BUFF_InitPFTOptions(pftOptions);
+  pftOptions->DSIMesh       = DSIMesh;
+  pftOptions->DSIRadius     = DSIRadius;
+  pftOptions->DSIPoints     = DSIPoints;
+
+  char *DSIPFTFile2=0;
+  if (DSIPFTFile && DSIPoints2!=0)
+   DSIPFTFile2=vstrdup("%s.DSI%i",GetFileBase(DSIPFTFile),DSIPoints2);
+
+  /*******************************************************************/
   /* create the BSData structure containing everything we need to    */
   /* execute scattering calculations                                 */
   /*******************************************************************/
   BSData MyBSData, *BSD=&MyBSData;
 
-  SWGGeometry *G = BSD->G = new SWGGeometry(GeoFile);
-  HMatrix *M     = BSD->M =G->AllocateVIEMatrix();
-  BSD->RHS       = G->AllocateRHSVector();
-  HVector *J     = BSD->J =G->AllocateRHSVector();
-  BSD->IF        = IFList;
+  SWGGeometry *G   = BSD->G   = new SWGGeometry(GeoFile);
+  HMatrix *M       = BSD->M   = G->AllocateVIEMatrix();
+                     BSD->RHS = G->AllocateRHSVector();
+  HVector *J       = BSD->J   = G->AllocateRHSVector();
+  BSD->IF          = 0;
+  BSD->IFLabel     = 0;
 
   char GeoFileBase[MAXSTR];
   strncpy(GeoFileBase, GetFileBase(GeoFile), MAXSTR);
@@ -232,14 +245,15 @@ int main(int argc, char *argv[])
   char OmegaStr[MAXSTR];
   cdouble Omega;
   cdouble Eps, Mu;
-  for(nFreq=0; nFreq<NumFreqs; nFreq++)
+  for(int nFreq=0; nFreq<OmegaList->N; nFreq++)
    { 
      Omega = OmegaList->GetEntry(nFreq);
+     BSD->Omega = Omega;
      z2s(Omega, OmegaStr);
      Log("Working at frequency %s...",OmegaStr);
 
      /*******************************************************************/
-     /* assemble the VIE matrix at this frequency                       */
+     /* assemble VIE matrix at this frequency                           */
      /*******************************************************************/
      G->AssembleVIEMatrix(Omega, M);
 
@@ -268,71 +282,82 @@ int main(int argc, char *argv[])
      M->LUFactorize();
 
      /***************************************************************/
-     /* set up the incident field profile and assemble the RHS vector */
+     /* loop over incident fields                                   */
      /***************************************************************/
-     Log("  Assembling the RHS vector..."); 
-     G->AssembleRHSVector(Omega, IFList, J);
-     if (JPlotFile)
-      G->PlotCurrentDistribution(JPlotFile, J, "RHS_%s",CD2S(Omega));
-     BSD->RHS->Copy(J); // save a copy of the RHS vector for later
-
-     /***************************************************************/
-     /* solve the VIE system ****************************************/
-     /***************************************************************/
-     Log("  Solving the VIE system...");
-     M->LUSolve(J);
-
-     /***************************************************************/
-     /* now process all requested outputs                           */
-     /***************************************************************/
-     BSD->Omega=Omega;
-
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     if (JPlotFile)
-      G->PlotCurrentDistribution(JPlotFile, J, "J_%s",CD2S(Omega));
-
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     if (PFTFile)
-      WritePFTFile(BSD, PFTFile, pftOptions, SCUFF_PFT_EMT);
-
-     if (EMTPFTFile)
-      WritePFTFile(BSD, EMTPFTFile, pftOptions, SCUFF_PFT_EMT);
-
-     if (OPFTFile)
-      WritePFTFile(BSD, OPFTFile, pftOptions, SCUFF_PFT_OVERLAP);
-
-     if (MomentPFTFile)
-      WritePFTFile(BSD, MomentPFTFile, pftOptions, SCUFF_PFT_MOMENTS);
-
-     if (DSIPFTFile)
+     for(int nIF=0; nIF<IFList->NumIFs; nIF++)
       { 
-        pftOptions->DSIPoints = DSIPoints;
-        WritePFTFile(BSD, DSIPFTFile, pftOptions, SCUFF_PFT_DSI);
+        IF = BSD->IF = IFList->IFs[nIF];
+        BSD->IFLabel = IFFile ? IFList->Labels[nIF] : 0;
+        if (BSD->IFLabel)
+         Log("  Processing incident field %s...",BSD->IFLabel);
 
-        if (DSIPoints2)
-         { pftOptions->DSIPoints = DSIPoints2;
-           WritePFTFile(BSD, DSIPFTFile2, pftOptions, SCUFF_PFT_DSI);
+        char IFStr[100]="";
+        if (BSD->IFLabel)
+         snprintf(IFStr,100,"_%s",BSD->IFLabel);
+
+        /***************************************************************/
+        /* set up the incident field profile and assemble the RHS vector */
+        /***************************************************************/
+        Log("  Assembling the RHS vector..."); 
+        G->AssembleRHSVector(Omega, IF, J);
+        if (JPlotFile)
+         G->PlotCurrentDistribution(JPlotFile, J, "RHS_%s%s",CD2S(Omega),IFStr);
+        BSD->RHS->Copy(J); // save a copy of the RHS vector for later
+
+        /***************************************************************/
+        /* solve the VIE system ****************************************/
+        /***************************************************************/
+        Log("  Solving the VIE system...");
+        M->LUSolve(J);
+
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        if (JPlotFile)
+         G->PlotCurrentDistribution(JPlotFile, J, "J_%s",CD2S(Omega),IFStr);
+
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        if (PFTFile)
+         WritePFTFile(BSD, PFTFile, pftOptions, SCUFF_PFT_EMT);
+   
+        if (EMTPFTFile)
+         WritePFTFile(BSD, EMTPFTFile, pftOptions, SCUFF_PFT_EMT);
+   
+        if (OPFTFile)
+         WritePFTFile(BSD, OPFTFile, pftOptions, SCUFF_PFT_OVERLAP);
+   
+        if (MomentPFTFile)
+         WritePFTFile(BSD, MomentPFTFile, pftOptions, SCUFF_PFT_MOMENTS);
+   
+        if (DSIPFTFile)
+         { 
+           pftOptions->DSIPoints = DSIPoints;
+           WritePFTFile(BSD, DSIPFTFile, pftOptions, SCUFF_PFT_DSI);
+   
+           if (DSIPoints2)
+            { pftOptions->DSIPoints = DSIPoints2;
+              WritePFTFile(BSD, DSIPFTFile2, pftOptions, SCUFF_PFT_DSI);
+            };
+   
          };
+   
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        /*--------------------------------------------------------------*/
+        if (MomentFile)
+         WriteMomentFile(BSD, MomentFile);
+   
+        /*--------------------------------------------------------------*/
+        /*- scattered fields at user-specified points ------------------*/
+        /*--------------------------------------------------------------*/
+        for(int nepf=0; nepf<nEPFiles; nepf++)
+         ProcessEPFile(BSD, EPFiles[nepf]);
 
-      };
-
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     /*--------------------------------------------------------------*/
-     if (MomentFile)
-      WriteMomentFile(BSD, MomentFile);
-
-     /*--------------------------------------------------------------*/
-     /*- scattered fields at user-specified points ------------------*/
-     /*--------------------------------------------------------------*/
-     for(int nepf=0; nepf<nEPFiles; nepf++)
-      ProcessEPFile(BSD, EPFiles[nepf]);
-
-   }; //  for(nFreq=0; nFreq<NumFreqs; nFreqs++)
+      }; // for(int nIF=0; nIF<IFList->NumIFs; nIF++)
+   
+   }; //  for(nFreq=0; nFreq<OmegaList->N; nFreqs++)
 
   /***************************************************************/
   /***************************************************************/

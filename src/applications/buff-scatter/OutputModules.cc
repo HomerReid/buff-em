@@ -86,47 +86,59 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
   /*--------------------------------------------------------------*/
   Log("Evaluating fields at points in file %s...",EPFileName);
 
-  HMatrix *FMatrix1 = G->GetFields( 0, J, Omega, XMatrix); // scattered
-  HMatrix *FMatrix2 = G->GetFields(IF, 0, Omega, XMatrix); // incident
+  HMatrix *SFMatrix = G->GetFields( 0, J, Omega, XMatrix); // scattered
+  HMatrix *IFMatrix = G->GetFields(IF, 0, Omega, XMatrix); // incident
 
   /*--------------------------------------------------------------*/
   /*- create .scattered and .total output files and write fields -*/
   /*--------------------------------------------------------------*/
-  char buffer[MAXSTR];
-  snprintf(buffer,MAXSTR,"%s.scattered",GetFileBase(EPFileName));
-  FILE *f1=CreateUniqueFile(buffer,1);
-  snprintf(buffer,MAXSTR,"%s.total",GetFileBase(EPFileName));
-  FILE *f2=CreateUniqueFile(buffer,1);
-
-  int nr, nc; 
-  SetDefaultCD2SFormat("%.8e %.8e ");
-  for(nr=0; nr<FMatrix1->NR; nr++)
-   { fprintf(f1,"%.8e %.8e %.8e ",XMatrix->GetEntryD(nr, 0),
-                                  XMatrix->GetEntryD(nr, 1),
-                                  XMatrix->GetEntryD(nr, 2));
-
-     fprintf(f2,"%.8e %.8e %.8e ",XMatrix->GetEntryD(nr, 0),
-                                  XMatrix->GetEntryD(nr, 1),
-                                  XMatrix->GetEntryD(nr, 2));
-
-     for(nc=0; nc<FMatrix1->NC; nc++)
-      { 
-        fprintf(f1,"%s ",CD2S(  FMatrix1->GetEntry(nr,nc)) );
-
-        fprintf(f2,"%s ",CD2S(  FMatrix1->GetEntry(nr,nc)  
-                               +FMatrix2->GetEntry(nr,nc)) );
+  SetDefaultCD2SFormat("%+.8e %+.8e ");
+  char OmegaStr[100];
+  snprintf(OmegaStr,100,"%s",z2s(Omega));
+  char *TransformLabel=BSD->TransformLabel;
+  char *IFLabel=BSD->IFLabel;
+  const char *Ext[2]={"scattered","total"};
+  for(int ST=0; ST<2; ST++)
+   { char OutFileName[MAXSTR];
+     snprintf(OutFileName,MAXSTR,"%s.%s",GetFileBase(EPFileName),Ext[ST]);
+     FILE *f=fopen(OutFileName,"a");
+     fprintf(f,"# buff-scatter run on %s (%s)\n",GetHostName(),GetTimeString());
+     fprintf(f,"# columns: \n");
+     fprintf(f,"# 1,2,3   x,y,z (evaluation point coordinates)\n");
+     fprintf(f,"# 4       omega (angular frequency)\n");
+     int nc=5;
+     if (TransformLabel)
+      fprintf(f,"# %i       geometrical transform\n",nc++);
+     if (IFLabel)
+      fprintf(f,"# %i       incident field\n",nc++);
+     fprintf(f,"# %02i,%02i   real, imag Ex\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Ex\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Ey\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Ez\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Hx\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Hy\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i   real, imag Hz\n",nc,nc+1); nc+=2;
+     for(int nr=0; nr<SFMatrix->NR; nr++)
+      { double X[3];
+        cdouble EH[6];
+        XMatrix->GetEntriesD(nr,":",X);
+        SFMatrix->GetEntries(nr,":",EH);
+        if (ST==1) 
+         for(nc=0; nc<6; nc++) 
+          EH[nc]+=IFMatrix->GetEntry(nr,nc);
+        fprintf(f,"%+.8e %+.8e %+.8e ",X[0],X[1],X[2]);
+        fprintf(f,"%s ",OmegaStr);
+        if (TransformLabel) fprintf(f,"%s ",TransformLabel);
+        if (IFLabel) fprintf(f,"%s ",IFLabel);
+        fprintf(f,"%s %s %s   ",CD2S(EH[0]),CD2S(EH[1]),CD2S(EH[2]));
+        fprintf(f,"%s %s %s\n", CD2S(EH[3]),CD2S(EH[4]),CD2S(EH[5]));
       };
-
-     fprintf(f1,"\n");
-     fprintf(f2,"\n");
-
+     fclose(f);
    };
 
-  fclose(f1);
-  fclose(f2);
   delete XMatrix;
-  delete FMatrix1;
-  delete FMatrix2;
+  delete SFMatrix;
+  delete IFMatrix;
 
 }
 
@@ -139,18 +151,28 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
   /***************************************************************/
   /* write file preamble as necessary ****************************/
   /***************************************************************/
+  char *TransformLabel = BSD->TransformLabel;
+  char *IFLabel        = BSD->IFLabel;
   FILE *f=fopen(PFTFile,"r");
   if (!f)
-   { 
-     f=fopen(PFTFile,"w");
-     fprintf(f,"# data columns:    \n");
-     fprintf(f,"# 1 frequency      \n");
-     fprintf(f,"# 2 object label   \n");
-     fprintf(f,"# 3 absorbed power (watts) \n");
-     fprintf(f,"# 4 radiated power (watts) \n");
-     fprintf(f,"# 5,6,7  x, y, z force (nanoNewtons)\n");
-     fprintf(f,"# 8,9,10 x, y, z torque (nanoNewtons microns)\n");
-     fprintf(f,"\n");
+   {  f=fopen(PFTFile,"w");
+      fprintf(f,"# buff-scatter run on %s (%s)\n",GetHostName(),GetTimeString());
+      fprintf(f,"# data file columns: \n");
+      fprintf(f,"# 1   omega           (rad/sec) \n");
+      int nc=2;
+      if (TransformLabel)
+       fprintf(f,"# %i   geometrical transform\n",nc++);
+      if (IFLabel)
+       fprintf(f,"# %i   incident field\n",nc++);
+      fprintf(f,"#%2i   surface label \n",nc++);             
+      fprintf(f,"#%2i   absorbed power  (watts)\n",nc++);
+      fprintf(f,"#%2i   scattered power (watts)\n",nc++);
+      fprintf(f,"#%2i   x-force         (nanonewtons)\n",nc++);
+      fprintf(f,"#%2i   y-force         (nanonewtons)\n",nc++);
+      fprintf(f,"#%2i   z-force         (nanonewtons)\n",nc++);
+      fprintf(f,"#%2i   x-torque        (nanonewtons * microns)\n",nc++);
+      fprintf(f,"#%2i   y-torque        (nanonewtons * microns)\n",nc++);
+      fprintf(f,"#%2i   z-torque        (nanonewtons * microns)\n",nc++);
    };
   fclose(f);
 
@@ -171,7 +193,12 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
   /***************************************************************/
   f=fopen(PFTFile,"a");
   for(int no=0; no<G->NumObjects; no++)
-   { fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
+   { fprintf(f,"%e ",real(BSD->Omega));
+     if (TransformLabel) 
+      fprintf(f,"%s ",TransformLabel);
+     if (IFLabel) 
+      fprintf(f,"%s ",IFLabel);
+     fprintf(f,"%s ",G->Objects[no]->Label);
      for(int nq=0; nq<NUMPFT; nq++)
       fprintf(f,"%e ",PFTMatrix->GetEntryD(no,nq));
      fprintf(f,"\n");
@@ -185,177 +212,52 @@ void WritePFTFile(BSData *BSD, char *PFTFile, PFTOptions *Options,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-#if 0
-void WriteEMTMomentPFTFile(BSData *BSD, char *PFTFile)
-{ 
+void WriteMomentFile(BSData *BSD, char *FileName)
+{
+  char *TransformLabel = BSD->TransformLabel;
+  char *IFLabel        = BSD->IFLabel;
+
   /***************************************************************/
-  /* write file preamble as necessary ****************************/
+  /* write file preamble on initial file creation ****************/
   /***************************************************************/
-  FILE *f=fopen(PFTFile,"r");
+  FILE *f=fopen(FileName,"r");
   if (!f)
-   { 
-     f=fopen(PFTFile,"w");
-     fprintf(f,"# data columns:          \n");
-     fprintf(f,"# 1 frequency            \n");
-     fprintf(f,"# 2 object label         \n");
-     fprintf(f,"# 3-10  J--I PFT (EMT)   \n");
-     fprintf(f,"# 11-18 J--J PFT (EMT)   \n");
-     fprintf(f,"# 19-26 J--I PFT (moments) \n");
-     fprintf(f,"# 27-34 J--J PFT (moments wo) \n");
-     fprintf(f,"# 35-42 J--J PFT (moments w) \n");
-     fprintf(f,"# 43-45 re (Px, Py, Pz)  \n");
-     fprintf(f,"# 46-48 im (Px, Py, Pz)  \n");
-     fprintf(f,"# 49-51 re (Mx, My, Mz)  \n");
-     fprintf(f,"# 52-54 im (Mx, My, Mz)  \n");
-     fprintf(f,"# 55 J--I time (EMT)\n");
-     fprintf(f,"# 56 J--J time (EMT)\n");
-     fprintf(f,"# 57 J--I time (moments)\n");
-     fprintf(f,"# 58 J--J time (moments)\n");
-     fprintf(f,"\n");
+   { f=fopen(FileName,"w");
+     if ( !f ) ErrExit("could not open file %s",FileName);
+     fprintf(f,"# data file columns: \n");
+     fprintf(f,"# 1     angular frequency (3e14 rad/sec)\n");
+     int nc=2;
+     if (TransformLabel)
+      fprintf(f,"# %i     geometrical transform\n",nc++);
+     if (IFLabel)
+      fprintf(f,"# %i     incident field\n",nc++);
+     fprintf(f,"# %i     surface label\n",nc++);
+     fprintf(f,"# %02i,%02i real,imag px (electric dipole moment)\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i real,imag py \n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i real,imag pz \n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i real,imag mx (magnetic dipole moment)\n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i real,imag my \n",nc,nc+1); nc+=2;
+     fprintf(f,"# %02i,%02i real,imag mz \n",nc,nc+1); nc+=2;
+     fprintf(f,"#\n");
    };
   fclose(f);
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  SWGGeometry *G     = BSD->G;
-  HVector *J         = BSD->J;
-  cdouble Omega      = BSD->Omega;
-  IncField *IF       = BSD->IF;
-  HVector *RHSVector = BSD->RHS;
+  SWGGeometry *G       = BSD->G;
+  HVector *JVector     = BSD->J;
+  cdouble Omega        = BSD->Omega;
 
-  /*--------------------------------------------------------------*/
-  /*- get J-I and J-J contributions to EMTPFT --------------------*/
-  /*--------------------------------------------------------------*/
-  int NO=G->NumObjects;
-  HMatrix *PFTMatrix1 = new HMatrix(NO, NUMPFT);
-  HMatrix *PFTMatrix2 = new HMatrix(NO, NUMPFT);
-  HMatrix *PFTMatrix3 = new HMatrix(NO, NUMPFT);
-  HMatrix *PFTMatrix4 = new HMatrix(NO, NUMPFT);
-  HMatrix *PFTMatrix5 = new HMatrix(NO, NUMPFT);
-  PFTMatrix1->Zero();
-  PFTMatrix2->Zero();
-  PFTMatrix3->Zero();
-  PFTMatrix4->Zero();
-  PFTMatrix5->Zero();
-
-  Tic();
-  AddIFContributionsToEMTPFT(G, J, IF, Omega, PFTMatrix1);
-  GetEMTPFT(G, Omega, 0, J, RHSVector, 0, PFTMatrix2);
-  double EMTTime=Toc();
-
-  Tic();
-  GetMomentPFT(G, Omega, IF, J, 0, PFTMatrix3, false, 0);
-  double MomentTime=Toc();
-
-  GetMomentPFT(G, Omega,  0, J, 0, PFTMatrix4, false, 0);
-  GetMomentPFT(G, Omega,  0, J, 0, PFTMatrix5,  true, 0);
-
-  for(int no=0; no<NO; no++)
-   for(int nq=0; nq<NUMPFT; nq++)
-    PFTMatrix3->AddEntry(no,nq,-1.0*PFTMatrix4->GetEntry(no,nq));
-
-  /***************************************************************/
-  /* write results to output file ********************************/
-  /***************************************************************/
-  f=fopen(PFTFile,"a");
-  for(int no=0; no<G->NumObjects; no++)
-   { 
-     fprintf(f,"%e %s ",real(BSD->Omega),G->Objects[no]->Label);
-
-     char *FileBase = GetFileBase(G->GeoFileName);
-     for(int nq=0; nq<NUMPFT; nq++)
-      fprintf(f,"%e ",PFTMatrix1->GetEntryD(no,nq));
-     for(int nq=0; nq<NUMPFT; nq++)
-      fprintf(f,"%e ",PFTMatrix2->GetEntryD(no,nq));
-     for(int nq=0; nq<NUMPFT; nq++)
-      fprintf(f,"%e ",PFTMatrix3->GetEntryD(no,nq));
-     for(int nq=0; nq<NUMPFT; nq++)
-      fprintf(f,"%e ",PFTMatrix4->GetEntryD(no,nq));
-     for(int nq=0; nq<NUMPFT; nq++)
-      fprintf(f,"%e ",PFTMatrix5->GetEntryD(no,nq));
-      
-     cdouble p[3], m[3], Qp[3];
-     GetMoments(G, no, Omega, J, p, m, Qp);
-     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",real(p[Mu]));
-     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",imag(p[Mu]));
-     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",real(m[Mu]));
-     for(int Mu=0; Mu<3; Mu++) fprintf(f,"%e ",imag(m[Mu]));
-
-     fprintf(f,"%e ",EMTTime);
-     fprintf(f,"%e ",MomentTime);
-
-     fprintf(f,"\n");
-   };
-  fclose(f);
-
-  delete PFTMatrix1;
-  delete PFTMatrix2;
-  delete PFTMatrix3;
-  delete PFTMatrix4;
-  delete PFTMatrix5;
-}
-#endif
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-#if 0
-void WriteMomentFile(BSData *BSD, char *FileName)
-{
-  SWGGeometry *G    = BSD->G;
-  HVector *JVector  = BSD->J;
-  cdouble Omega     = BSD->Omega;
-
-  FILE *f=fopen(FileName,"a");
-  for(int no=0; no<G->NumObjects; no++)
-   { 
-     SWGVolume *O = G->Objects[no];
-     fprintf(f,"%s %s ",z2s(Omega),O->Label);
-
-     cdouble M[3]={0.0, 0.0, 0.0};
-     int NBF    = G->Objects[no]->NumInteriorFaces;
-     int Offset = G->BFIndexOffset[no];
-     for(int nbf=0; nbf<NBF; nbf++)
-      { 
-        SWGFace *F = O->Faces[nbf];
-        double *QP = O->Vertices + 3*(F->iQP);
-        double *QM = O->Vertices + 3*(F->iQM);
-        double A   = F->Area;
-
-        cdouble PreFactor = A*(JVector->GetEntry(Offset + nbf)) / (II*Omega*4.0);
-
-        M[0] += PreFactor*(QP[0] - QM[0]);
-        M[1] += PreFactor*(QP[1] - QM[1]);
-        M[2] += PreFactor*(QP[2] - QM[2]);
-      };
-
-     fprintf(f,"%e %e %e %e %e %e \n",
-                real(M[0]),imag(M[0]),
-                real(M[1]),imag(M[1]),
-                real(M[2]),imag(M[2]));
-   };
-  fclose(f);
-  
-}
-#endif
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-void WriteMomentFile(BSData *BSD, char *FileName)
-{
-  SWGGeometry *G    = BSD->G;
-  HVector *JVector  = BSD->J;
-  cdouble Omega     = BSD->Omega;
-
-  FILE *f=fopen(FileName,"a");
+  f=fopen(FileName,"a");
   for(int no=0; no<G->NumObjects; no++)
    { 
      cdouble p[3], m[3], Qp[3];
      GetMoments(G, no, Omega, JVector, p, m, Qp);
 
-     fprintf(f,"%s %s ",z2s(Omega),G->Objects[no]->Label);
+     fprintf(f,"%s ",z2s(Omega));
+     if (TransformLabel)
+      fprintf(f,"%s ",TransformLabel);
+     if (IFLabel)
+      fprintf(f,"%s ",IFLabel);
+     fprintf(f,"%s ",G->Objects[no]->Label);
      fprintf(f,"%e %e ",real(p[0]),imag(p[0]));
      fprintf(f,"%e %e ",real(p[1]),imag(p[1]));
      fprintf(f,"%e %e ",real(p[2]),imag(p[2]));
