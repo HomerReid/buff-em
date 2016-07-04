@@ -65,9 +65,15 @@ void RHSVectorIntegrand(double *x, double *b, double Divb,
   (void )Divb; // unused
 
   RHSVectorIntegrandData *Data = (RHSVectorIntegrandData *)UserData;
+  IncField *IF = Data->IF;
 
   cdouble EH[6];
-  Data->IF->GetFields(x, EH);
+  IF->GetFields(x, EH);
+  for(IncField *IFNode=IF->Next; IFNode!=0; IFNode=IFNode->Next)
+   { cdouble PartialEH[6];
+     IFNode->GetFields(x, PartialEH);
+     VecPlusEquals(EH, 1.0, PartialEH, 6);
+   };
 
   cdouble *zI = (cdouble *)I;
   zI[0] = b[0]*EH[0] + b[1]*EH[1] + b[2]*EH[2];

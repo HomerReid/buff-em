@@ -358,6 +358,15 @@ void GetMomentPFT(SWGGeometry *G, int no, cdouble Omega,
      cdouble EH[6], dEH[3][6];
      IF->GetFields(X0, EH);
      IF->GetFieldGradients(X0, dEH);
+     for(IncField *IFNode=IF->Next; IFNode!=0; IFNode=IFNode->Next)
+      { cdouble PartialEH[6], PartialdEH[3][6];
+        IFNode->GetFields(X0, PartialEH);
+        IFNode->GetFieldGradients(X0, PartialdEH);
+        VecPlusEquals(EH,     1.0, PartialEH    , 6);
+        VecPlusEquals(dEH[0], 1.0, PartialdEH[0], 6);
+        VecPlusEquals(dEH[1], 1.0, PartialdEH[1], 6);
+        VecPlusEquals(dEH[2], 1.0, PartialdEH[2], 6);
+      };
 
      cdouble *p0=p[0];
      for(int Mu=0; Mu<3; Mu++)

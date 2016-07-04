@@ -98,6 +98,15 @@ void ExtinctionPFTIntegrand(double *x, double *b, double Divb,
   cdouble EH[6], dEH[3][6];
   IF->GetFields(x, EH);
   IF->GetFieldGradients(x, dEH);
+  for(IncField *IFNode=IF->Next; IFNode!=0; IFNode=IFNode->Next)
+   { cdouble PartialEH[6], PartialdEH[3][6];
+     IFNode->GetFields(x, PartialEH);
+     IFNode->GetFieldGradients(x, PartialdEH);
+     VecPlusEquals(EH,     1.0, PartialEH    , 6);
+     VecPlusEquals(dEH[0], 1.0, PartialdEH[0], 6);
+     VecPlusEquals(dEH[1], 1.0, PartialdEH[1], 6);
+     VecPlusEquals(dEH[2], 1.0, PartialdEH[2], 6);
+   };
 
   cdouble *Q = (cdouble *)I;
   memset(Q, 0, NUMPFTT*sizeof(cdouble));

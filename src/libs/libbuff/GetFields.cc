@@ -332,7 +332,14 @@ HMatrix *SWGGeometry::GetFields(IncField *IF, HVector *J, cdouble Omega,
      X[2] = XMatrix->GetEntryD(nr, 2);
 
      cdouble EHInc[6]={0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-     if (IF) IF->GetFields(X, EHInc);
+     if (IF) 
+      { IF->GetFields(X, EHInc);
+        for(IncField *IFNode=IF->Next; IFNode!=0; IFNode=IFNode->Next)
+         { cdouble PartialEH[6];
+           IFNode->GetFields(X, PartialEH);
+           VecPlusEquals(EHInc, 1.0, PartialEH, 6);
+         };
+      };
 
      ExReal=ExImag=EyReal=EyImag=EzReal=EzImag=0.0;
      HxReal=HxImag=HyReal=HyImag=HzReal=HzImag=0.0;
