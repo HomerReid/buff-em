@@ -15,59 +15,26 @@ BUFF-EM stands for
 
  **BU**lk **F**ield **F**ormulation of **E**lectro**M**agnetism
 
+BUFF-EM is complementary to
+[SCUFF-EM](http://homerreid.github.io/scuff-em-documentation),
+which implements the
+*surface*-integral-equation method of computational electromagnetism.
+
+Compared to SCUFF-EM, BUFF-EM has the advantage of allowing
+a wider class of electromagnetic materials, including
+
++ anisotropic materials (non-diagonal permittivity or permeability tensors)
+
++ continuously spatially varying materials (permittivity/permeability are continuous functions of **x**)
+
+Disadvantages of BUFF-EM compared to SCUFF-EM include
+
++ BUFF-EM is less computationally efficient for geometries that can be handled by both codes
+
++ BUFF-EM does not support Bloch-periodic boundary conditions
+
++ The BUFF-EM suite of application codes is not as full-featured as
+  the SCUFF-EM suite (although the core library offers equivalent functionality).
+
 For documentation and further information on BUFF-EM visit the 
 [BUFF-EM documentation homepage:](http://homerreid.github.io/buff-em-documentation)
-
-http://homerreid.github.io/buff-em-documentation
-
-## General reference
-
-* [Top-level overview](TopLevel)
-* [Installation](Installing)
-* [Geometry files](Geometries)
-* [SVTensor files](SVTensors)
-* [Key differences between BUFF-EM and SCUFF-EM](BUFFvsSCUFF)
-
-<a name="Examples"></a>
-## Tutorial examples
-
-+ [Mie scattering](MieScattering)
-+ [Power, force, and torque on Janus particles irradiated by plane waves](JanusParticles)
-+ [Thermal radiation, heat transfer, and non-equilibrium Casimir forces between silicon dioxide spheres](SiO2Spheres)
-+ [Thermal radiation and self-propulsion of photon torpedoes](PhotonTorpedoes)
-+ [Thermal self-rotation of QED pinwheels](QEDPinwheels)
-
-## Command-line application reference
-
-#### *Nanophotonics code*
-- [BUFF-SCATTER][buffScatter]    - general-purpose electromagnetic scattering
-      
-#### *Non-equilibrium Casimir/ heat-transfer code*
-- [BUFF-NEQ][buffNeq]            - radiative heat transfer and non-equilibrium Casimir forces/torques
-
-#### *Utility code*
-- [BUFF-ANALYZE][buffAnalyze]    - diagnostic tool to print info on [[buff-em]] geometries
-
-## API reference
-
-* [LIBBUFF][libbuff] - Accessing [[buff-em]] from C++ programs
-
-## Technical memo
-
-* [BUFF-EM technical memo][memo]
-
-[buffScatter]:        http://homerreid.github.io/buff-em-documentation/applications/buff-scatter
-[buffNeq]:            http://homerreid.github.io/buff-em-documentation/applications/buff-neq
-[buffAnalyze]:        http://homerreid.github.io/buff-em-documentation/applications/buff-analyze
-[libbuff]:            http://homerreid.github.io/buff-em-documentation/API/libbuff
-[memo]:               http://homerreid.github.io/buff-em-documentation/tex/buff-em-tex
-[TopLevel]:           http://homerreid.github.io/buff-em-documentation/reference/TopLevel
-[Installing]:         http://homerreid.github.io/buff-em-documentation/reference/Installing
-[Geometries]:         http://homerreid.github.io/buff-em-documentation/reference/Geometries
-[SVTensors]:          http://homerreid.github.io/buff-em-documentation/reference/SVTensors
-[BUFFvsSCUFF]:        http://homerreid.github.io/buff-em-documentation/reference/BUFFvsSCUFF
-[MieScattering]:      http://homerreid.github.io/buff-em-documentation/examples/MieScattering
-[JanusParticles]:     http://homerreid.github.io/buff-em-documentation/examples/JanusParticles
-[SiO2Spheres]:        http://homerreid.github.io/buff-em-documentation/examples/SiO2Spheres
-[PhotonTorpedoes]:    http://homerreid.github.io/buff-em-documentation/examples/PhotonTorpedoes
-[QEDPinwheels]:       http://homerreid.github.io/buff-em-documentation/examples/Pinwheels
