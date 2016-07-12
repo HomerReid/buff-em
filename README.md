@@ -36,6 +36,6 @@ Disadvantages of BUFF-EM compared to SCUFF-EM include
 + The BUFF-EM suite of application codes is not as full-featured as
   the SCUFF-EM suite (although the core library offers equivalent functionality).
 
-For documentation and further information on BUFF-EM visit the 
+For documentation and further information on BUFF-EM visit the [BUFF-EM documentation homepage:](http://homerreid.github.io/buff-em-documentation)
 
-# [BUFF-EM documentation homepage:](http://homerreid.github.io/buff-em-documentation)
+# [BUFF-EM documentation homepage](http://homerreid.github.io/buff-em-documentation)
