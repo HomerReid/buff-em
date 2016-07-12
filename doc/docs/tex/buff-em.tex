@@ -149,9 +149,9 @@ $*$ denotes convolution, and $\mathbb{G}$ is the free-space
 dyadic Green's function:
 %====================================================================%
 \begin{align}
-  \mathbb{G}(\vb x, \vb x^\prime) 
+  \mathbb{G}_{ij}(\vb x, \vb x^\prime) 
 &=
-   \Big(\vb 1 - \frac{1}{k^2} \nabla \times \nabla \Big)
+   \Big(\vb \delta_{ij} - \frac{1}{k^2} \partial_i \partial_j \Big)
    \frac{e^{ikr}}{4\pi r}
    \qquad (r\equiv |\vb r|=|\vb x-\vb x^\prime|)
 \\
@@ -197,7 +197,7 @@ $\vbeps(\vb x)\ne \vb 1$, we can invert this equation to read
         \right]
 &= \vb E\sups{inc}(\vb x).
 \\
-\intertext{In what follows it will be convenient to think of the RHS 
+\intertext{In what follows it will be convenient to think of the LHS
            here as the convolution of just a single operator with $\vb J\supt{I}$:}
  -ikZ_0
   \int \bbTInv(\vb x, \vb x^\prime) \cdot \vb J\supt{I}(\vb x^\prime) \,d\vb x^\prime

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+BASE=buff-em
+
+pdflatex ${BASE}.tex
+if [ $? -ne 0 ]
+then
+  exit
+fi
+bibtex ${BASE}
+pdflatex ${BASE}.tex
+pdflatex ${BASE}.tex
+
