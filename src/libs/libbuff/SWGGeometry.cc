@@ -268,7 +268,17 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
         if ( nTokens!=2 )
          ErrExit("%s:%i: invalid MESHPATH specification",GeoFileName,LineNum);  
         char *OldPath=getenv("BUFF_MESH_PATH");
-        char *NewPath=vstrappend( OldPath, ":%s",Tokens[1] );
+
+        // if MESHPATH starts with a '/' then it is an absolute path; otherwise
+        // it is taken relative to the path in which the .scuffgeo file was found
+        char *NewPath, *p=strrchr(GeoFileName,'/');
+        if (Tokens[1][0]=='/' || !p)
+         NewPath=vstrappend( OldPath, ":%s",Tokens[1] );
+        else
+         { *p=0;
+           NewPath=vstrappend( OldPath, ":%s/%s",GeoFileName,Tokens[1]);
+           *p='/';
+         };
         setenv("BUFF_MESH_PATH", NewPath, 1);
       }
      else if ( !StrCaseCmp(Tokens[0],"OBJECT") )
