@@ -95,9 +95,10 @@ typedef struct TTDArgStruct
     // optional input fields
     double *Q, *QP;
     double XTorque[3];
-    int RegionOnly;
     double AbsTol, RelTol;
     int MaxEval;
+    int CubaturePoints;
+    FILE *IntegrandLogFile;
 
  } TTDArgStruct;
 

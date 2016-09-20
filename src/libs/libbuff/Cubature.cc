@@ -780,6 +780,11 @@ int FFIIntegrand(unsigned ndim, const double *uv, void *params,
 /* nfBFA ([0..3]) indicates which of the four faces of tet #ntA*/
 /* we are using to construct the SWG basis function if it is   */
 /* needed by the user's integrand function.                    */
+/*                                                             */
+/* Order = 0  : h-adaptive cubature for the full 4D integral   */
+/* Order = +N : Nth-order triangular cubature for each triangle*/
+/* Order = -N : Nth-order Clenshaw-Curtis cubature for each    */
+/*              triangle                                       */
 /***************************************************************/
 void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
                  SWGVolume *VB, int ntB, int nfB, int nfBFB, double SignB,
@@ -821,7 +826,7 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
-  if (Order==0)
+  if (Order<=0)
    { 
      FFIData MyFFIData, *Data= &(MyFFIData);
      Data->V1A      = V1A;
@@ -844,8 +849,12 @@ void FaceFaceInt(SWGVolume *VA, int ntA, int nfA, int nfBFA, double SignA,
      Data->Integrand = Integrand;
      double Lower[4]={0.0, 0.0, 0.0, 0.0};
      double Upper[4]={1.0, 1.0, 1.0, 1.0};
-     hcubature(fdim, FFIIntegrand, (void *)Data, 4, Lower, Upper,
-	       MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+     if (Order==0)
+      hcubature(fdim, FFIIntegrand, (void *)Data, 4, Lower, Upper,
+	        MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
+     else
+      CCCubature(-Order, fdim, FFIIntegrand, (void *)Data, 4, Lower, Upper,
+	         MaxEvals, 0.0, RelTol, ERROR_INDIVIDUAL, Result, Error);
    }
   else
    { 

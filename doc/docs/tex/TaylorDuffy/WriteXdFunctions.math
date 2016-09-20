@@ -23,19 +23,19 @@ R1[u1_, u2_, u3_, Xi3_, Xi2_, Xi1_]:=			\
 (*************************************************************)
 (*************************************************************)
 (*************************************************************)
-GetXd[d_,NCV_]:=Module[ {JuXi, u1, u2, u3},
+GetXd[d_,NCV_]:=Module[ {uXi, u1, u2, u3},
 
- JuXi=GetJuXiVector[d, NCV];
+ uXi=GetuXiVector[d, NCV];
 
- u1=JuXi[[2]];
- u2=JuXi[[3]];
- u3=JuXi[[4]];
+ u1=FullSimplify[uXi[[1]]/w];
+ u2=FullSimplify[uXi[[2]]/w];
+ u3=FullSimplify[uXi[[3]]/w];
 
  Switch[NCV,
-  4, R4[u1, u2, u3                                  ]/w,
-  3, R3[u1, u2, u3, JuXi[[5]]                       ]/w,
-  2, R2[u1, u2, u3, JuXi[[5]], JuXi[[6]]            ]/w,
-  1, R1[u1, u2, u3, JuXi[[5]], JuXi[[6]], JuXi[[7]] ]/w
+  4, Sqrt[ R4[u1, u2, u3 ]                              ],
+  3, Sqrt[ R3[u1, u2, u3, uXi[[4]]]                     ],
+  2, Sqrt[ R2[u1, u2, u3, uXi[[4]], uXi[[5]]]           ],
+  1, Sqrt[ R1[u1, u2, u3, uXi[[4]], uXi[[5]], uXi[[6]]] ]
        ]
 
 ]
@@ -44,9 +44,9 @@ GetXd[d_,NCV_]:=Module[ {JuXi, u1, u2, u3},
 (*************************************************************)
 (*************************************************************)
 
-DMax=0; NCV=2;
+DMax=18; NCV=4;
 
-For[ d=0, d<=DMax, d++, 
+For[ d=0, d<DMax, d++, 
      Print[  "X[",d,"]=",
              InputForm[ FullSimplify[ GetXd[d,NCV] ] ],
              ";"

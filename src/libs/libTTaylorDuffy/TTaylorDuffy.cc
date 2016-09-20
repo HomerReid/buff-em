@@ -33,6 +33,7 @@
 
 #include <libhrutil.h>
 #include <libSGJC.h>
+#include <libTriInt.h>
 
 #include "TTaylorDuffy.h"
 
@@ -105,6 +106,8 @@ typedef struct TTDWorkspace
 
    int nCalls;
 
+   FILE *IntegrandLogFile;
+
  } TTDWorkspace;
 
 /***************************************************************/
@@ -145,11 +148,10 @@ void GetUpsilon_CommonEdge_TMuBDotBP_6(TTDWorkspace *TTDW, int Mu, double L1[3],
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
-                 unsigned nfun, double *f)
+int TTDIntegrand(unsigned ydim, const double *yVector, void *parms,
+                 unsigned fdim, double *f)
 {
-  (void) nfun; // unused
- // (void) ndim; // unused
+  (void) fdim; // unused
 
   /*--------------------------------------------------------------*/
   /*- extract parameters from data structure ---------------------*/
@@ -164,7 +166,7 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
-  int nOffset = ndim;
+  int nOffset = ydim;
 
   /*--------------------------------------------------------------*/
   /*- prefetch values of the X_d and J_d^\prime functions for all */
@@ -207,6 +209,12 @@ int TTDIntegrand(unsigned ndim, const double *yVector, void *parms,
 
    };
 
+  if (TTDW->IntegrandLogFile)
+   { for(unsigned ny=0; ny<ydim; ny++)
+      fprintf(TTDW->IntegrandLogFile,"%e ",yVector[ny]);
+     fprintVecCR(TTDW->IntegrandLogFile,Sum,NumPKs);
+   };
+ 
   return 0;
 
 }
@@ -221,6 +229,8 @@ void InitTTDArgs(TTDArgStruct *Args)
   Args->AbsTol=0.0;
   Args->RelTol=1.0e-6;
   Args->MaxEval=10000;
+  Args->CubaturePoints=0;
+  Args->IntegrandLogFile=0;
   Args->XTorque[0]=Args->XTorque[1]=Args->XTorque[2]=0.0;
 }
 
@@ -249,6 +259,9 @@ void *CreateTTDWorkspace(TTDArgStruct *Args)
 
   memset(TTDW->NumCRs,0,NUMPS*sizeof(int));
   memset(TTDW->CRList,0,NUMPS*sizeof(TTDW->CRList[0]));
+
+  TTDW->IntegrandLogFile = Args->IntegrandLogFile;
+
   return (void *)TTDW;
 
 }
@@ -275,14 +288,13 @@ void TTaylorDuffy(TTDArgStruct *Args, void *pTTDW)
   /***************************************************************/
   int WhichCase    = Args->WhichCase;
 
-  int NumPKs       = Args->NumPKs;
-  int *PIndex      = Args->PIndex;
-  int *KIndex      = Args->KIndex;
-  cdouble *KParam  = Args->KParam;
+  int NumPKs         = Args->NumPKs;
+  int *KIndex        = Args->KIndex;
 
-  double AbsTol    = Args->AbsTol;
-  double RelTol    = Args->RelTol;
-  double MaxEval   = Args->MaxEval;
+  double AbsTol      = Args->AbsTol;
+  double RelTol      = Args->RelTol;
+  int MaxEval        = Args->MaxEval;
+  int CubaturePoints = Args->CubaturePoints;
 
   /***************************************************************/
   /* initialize TTDW structure to pass data to integrand routines */
@@ -307,10 +319,11 @@ void TTaylorDuffy(TTDArgStruct *Args, void *pTTDW)
   TTDW->nCalls=0;
   int IntegralDimension = 6 - WhichCase;
 
-  if (IntegralDimension<=2)
-   pcubature(fDim, TTDIntegrand, (void *)TTDW, IntegralDimension,
-             Lower, Upper, MaxEval, AbsTol, RelTol,
-             ERROR_INDIVIDUAL, dResult, dError);
+  if (IntegralDimension<=2 || CubaturePoints!=0)
+   CCCubature(CubaturePoints, fDim, 
+              TTDIntegrand, (void *)TTDW, IntegralDimension,
+              Lower, Upper, MaxEval, AbsTol, RelTol,
+              ERROR_INDIVIDUAL, dResult, dError);
   else
    hcubature(fDim, TTDIntegrand, (void *)TTDW, IntegralDimension,
              Lower, Upper, MaxEval, AbsTol, RelTol,
@@ -322,7 +335,7 @@ void TTaylorDuffy(TTDArgStruct *Args, void *pTTDW)
   /*--------------------------------------------------------------*/
   /*--------------------------------------------------------------*/
   for(int npk=0; npk<NumPKs; npk++)
-   if ( TTDW->KIndex[npk]==TTD_HELMHOLTZ || TTDW->KIndex[npk]==TTD_GRADHELMHOLTZ)
+   if ( KIndex[npk]==TTD_HELMHOLTZ || KIndex[npk]==TTD_GRADHELMHOLTZ)
     Args->Result[npk] /= (4.0*M_PI);
 
   if (OwnsTTDW)
@@ -717,8 +730,8 @@ void ComputeGeometricParameters(TTDArgStruct *Args,
   bool *NeedP   = TTDW->NeedP;
   int WhichCase = TTDW->WhichCase;
   UpsilonVector Upsilon;
-  int MinwPower;
-  int MaxwPower; 
+  int MinwPower=0;
+  int MaxwPower=0;
   int MaxyPower[MAXYDIM];
   if ( TTDW->NeedP[TTD_UNITY] )
    { 

@@ -61,7 +61,6 @@ SVTensor::SVTensor(const char *FileName, bool IsMatProp)
        ErrExit(MPs[0]->ErrMsg);
       
       Log("Created isotropic material with MatProp=%s",Name);
-      MatProp::SetLengthUnit(1.0e-6);
       Homogeneous=Isotropic=true;
       NumMPs=1;
       return;
@@ -147,7 +146,6 @@ void SVTensor::ExtractMPs(char *str, char *FileName, int LineNum)
         if (MPs[NumMPs]->ErrMsg)
          ErrExit("%s:%i: ",FileName,LineNum,MPs[NumMPs]->ErrMsg);
         MPIndex=++NumMPs;
-        MatProp::SetLengthUnit(1.0e-6);
       };
 
      // replace the string e.g. "MP_Gold" with e.g. "Eps1"
@@ -331,7 +329,7 @@ void SVTensor::Evaluate(cdouble Omega, double x[3], cdouble Q[3][3])
                                    "Eps1", "Eps2", "Eps3"};
   cdouble VValues[10];
 
-  VValues[0] = Omega;
+  VValues[0] = Omega * (MatProp::FreqUnit);
   VValues[1] = x[0];
   VValues[2] = x[1];
   VValues[3] = x[2];
