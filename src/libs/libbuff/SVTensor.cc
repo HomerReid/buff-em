@@ -252,7 +252,7 @@ char *SVTensor::Parse(FILE *f)
      /*--------------------------------------------------------------*/
      /*- detect constant specifications of the form NAME = [number] -*/
      /*--------------------------------------------------------------*/
-     else if ( pp )
+     else if ( (pp = strchr(p,'=')) )
       { 
         double CV;
         if ( 1!=sscanf(pp+1,"%le",&CV) )
