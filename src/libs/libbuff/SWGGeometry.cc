@@ -459,3 +459,6 @@ char *SWGGeometry::CheckGTCList(GTComplex **GTCList, int NumGTCs)
 }
 
 } // namespace buff
+
+void HaveBUFFEM(void)
+{}

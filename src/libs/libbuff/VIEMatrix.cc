@@ -169,7 +169,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
     };
   V     *= -1.0*Omega*Omega;
   VInv  *= -1.0/(Omega*Omega);
-  Rytov *= 2.0*Omega*RelDeltaTheta/(M_PI*ZVAC);
+  Rytov *= 4.0*Omega*RelDeltaTheta/(M_PI*ZVAC);
  
   I[0] = real(V);
   I[1] = imag(V);
@@ -188,7 +188,7 @@ void GetOverlapIntegrand(double *x, double *b, double DivB,
 /*                                                             */
 /*        V = k^2 * (1 - Eps)k^2                               */
 /* VInverse = V^{-1}                                           */
-/*    Rytov = (2k / Pi*ZVAC) * (RelDelTheta(T)) * Im Eps       */
+/*    Rytov = (4k / Pi*ZVAC) * (RelDelTheta(T)) * Im Eps       */
 /*                                                             */
 /* where RelDelTheta is defined as follows:                    */
 /*  DelTheta(x)    = Theta( T(x) ) - Theta( TEnvironment )     */

@@ -376,4 +376,12 @@ double *GetTetCR(int NumPts);
 
 } // namespace buff 
 
+/***************************************************************/
+/* this function exists solely for the purposes of writing     */
+/* autoconf macros                                             */
+/***************************************************************/
+extern "C" {
+  void HaveBUFFEM(void);
+}
+
 #endif // #ifndef LIBBUFF_H
