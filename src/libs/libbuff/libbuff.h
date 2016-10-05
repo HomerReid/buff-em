@@ -61,6 +61,11 @@ namespace buff {
 // length of character strings for filenames, etc
 #define MAXSTR 200 
 
+// verbosity of log files
+#define BUFF_NO_LOGGING      0
+#define BUFF_TERSE_LOGGING   1
+#define BUFF_VERBOSE_LOGGING 2
+
 /***************************************************************/
 /* SWGTet is a structure containing data on a single           */
 /* tetrahedron in the meshed geometry.                         */
@@ -244,6 +249,7 @@ class SWGGeometry
    // directories within which to search for mesh files
    static double TaylorDuffyTolerance;
    static int MaxTaylorDuffyEvals;
+   int LogLevel;
 
 //  private:
    /*--------------------------------------------------------------*/

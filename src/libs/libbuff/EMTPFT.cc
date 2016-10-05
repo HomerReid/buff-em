@@ -369,8 +369,10 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   int NTNO2NQ = NT*NO2NQ;
   static int DeltaPFTTSize=0;
   static double *DeltaPFTT=0;
+  int LogLevel = G->LogLevel;
   if ( DeltaPFTTSize < NTNO2NQ )
-   { Log("(re)allocating DeltaPFTT (%i,%i)",DeltaPFTTSize,NTNO2NQ);
+   { if (LogLevel>=BUFF_VERBOSE_LOGGING)
+      Log("(re)allocating DeltaPFTT (%i,%i)",DeltaPFTTSize,NTNO2NQ);
      DeltaPFTTSize=NTNO2NQ;
      if (DeltaPFTT) free(DeltaPFTT);
      DeltaPFTT = (double *)mallocEC(DeltaPFTTSize*sizeof(double));
@@ -380,7 +382,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*--------------------------------------------------------------*/
   /*- multithreaded loop over all basis functions in all volumes -*/
   /*--------------------------------------------------------------*/
-  int TotalBFs    = G->TotalBFs;
+  int TotalBFs = G->TotalBFs;
   bool UseSymmetry=true;
   char *s=getenv("BUFF_EMTPFT_SYMMETRY");
   if (s && s[0]=='0')
@@ -395,8 +397,9 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   for(int nbfa=0; nbfa<TotalBFs; nbfa++)
    for(int nbfb=(UseSymmetry ? nbfa : 0); nbfb<TotalBFs; nbfb++)
     { 
-      if (nbfb==(UseSymmetry ? nbfa : 0)) 
-       LogPercent(nbfa, TotalBFs, 10);
+      if (LogLevel>=BUFF_VERBOSE_LOGGING)
+       if (nbfb==(UseSymmetry ? nbfa : 0)) 
+        LogPercent(nbfa, TotalBFs, 10);
 
       int noa, nfa;
       SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa);

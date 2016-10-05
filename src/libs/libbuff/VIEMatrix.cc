@@ -404,7 +404,7 @@ void SWGGeometry::AssembleGBlock(int noa, int nob, cdouble Omega,
   for(int nfa=0; nfa<NFA; nfa++)
    for(int nfb=SameObject*nfa; nfb<NFB; nfb++)
     { 
-      if (nfb==SameObject*nfa)
+      if (LogLevel>=BUFF_VERBOSE_LOGGING && nfb==SameObject*nfa)
        LogPercent(nfa, NFA);
 
       int Row=RowOffset + nfa;

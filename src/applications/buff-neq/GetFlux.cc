@@ -165,6 +165,9 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
   int *Offset          = G->BFIndexOffset;
   int NBF              = G->TotalBFs;
 
+  Log("Computing dressed Rytov matrix (RTM)...");
+  bool Verbose = G->LogLevel>=BUFF_VERBOSE_LOGGING;
+
   // compute DressedRytov = W* (S^{-1}*Rytov*S^{-1}) * W^\dagger
   //                   -(S^{-1}*Rytov*S^{-1})
   //  (where W = inv( 1 + S^{-1} V S^-1 G ) )
@@ -187,6 +190,7 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
   HMatrix *M3=WorkMatrix[2];
 
   // step (a)
+  if (Verbose) Log(" RTM a");
   for(int no=0; no<NO; no++)
    for(int nop=no; nop<NO; nop++)
     {
@@ -196,43 +200,56 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
     };
 
   // step (b)
+  if (Verbose) Log(" RTM b");
   SInverse->Multiply(M1, M2);
 
   // step (c)
+  if (Verbose) Log(" RTM c");
   M3->Zero();
   for(int no=0; no<NO; no++)
    M3->AddBlock(VBlocks[no], Offset[no], Offset[no]);
 
   // step (d)
+  if (Verbose) Log(" RTM d");
   M3->Multiply(M2, M1);
 
   // step (e)
+  if (Verbose) Log(" RTM e");
   SInverse->Multiply(M1, M3);
 
   // step (f) 
+  if (Verbose) Log(" RTM f");
   for(int nbf=0; nbf<NBF; nbf++)
    M3->AddEntry(nbf, nbf, 1.0);
 
   // step (g) 
+  if (Verbose) Log(" RTM g1");
   M3->LUFactorize();
+  if (Verbose) Log(" RTM g2");
   M3->LUInvert();
 
   // step (h)
+  if (Verbose) Log(" RTM h");
   M1->Zero();
   M1->AddBlock(RBlocks[SourceObject], Offset[SourceObject], Offset[SourceObject]);
 
   // step (i)
+  if (Verbose) Log(" RTM i");
   SInverse->Multiply(M1, M2);
 
   // step (j)
+  if (Verbose) Log(" RTM j");
   M2->Multiply(SInverse, M1);
 
   // step (k)
+  if (Verbose) Log(" RTM k");
   M3->Multiply(M1, M2);
 
   // step (l)
+  if (Verbose) Log(" RTM l");
   M2->Multiply(M3, M1, "--transB C");
 
+  if (Verbose) Log(" RTM done ");
   return M1;
 
 }
@@ -277,6 +294,8 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
   int *DSIPoints             = BNEQD->DSIPoints;
   PFTOptions *pftOptions     = BNEQD->pftOptions;
 
+  bool Verbose = G->LogLevel >= BUFF_VERBOSE_LOGGING;
+
   /***************************************************************/
   /* compute transformation-independent matrix blocks            */
   /***************************************************************/
@@ -286,18 +305,22 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
    { 
      TAvg[no]=GetAverageTemperature(G->Objects[no], 
                                     TemperatureSVTs[no]);
-     Log("Object %i: TAvg=%e",no, TAvg[no]);
+     if (Verbose)
+      Log(" GF Object %i: TAvg=%e",no, TAvg[no]);
 
-     Log(" Assembling V_{%i} and Rytov_{%i} ...",no,no);
+     if (Verbose)
+      Log(" GF Assembling V_{%i} and Rytov_{%i} ...",no,no);
      G->AssembleOverlapBlocks(no, Omega, TemperatureSVTs[no],
                               TAvg[no], ThetaEnvironment,
                               VBlocks[no], 0, RBlocks[no]);
 
      if (G->Mate[no]!=-1)
-      { Log(" Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
+      { 
+        if (Verbose) 
+         Log(" GF Block %i is identical to %i (reusing GSelf)",no,G->Mate[no]);
         continue;
       };
-     Log(" Assembling G_{%i,%i}...",no,no);
+     Log(" GF Assembling G_{%i,%i}...",no,no);
      G->AssembleGBlock(no, no, Omega, GBlocks[no][no]);
    };
 
@@ -321,7 +344,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      /*--------------------------------------------------------------*/
      char *Tag=BNEQD->GTCList[nt]->Tag;
      G->Transform(BNEQD->GTCList[nt]);
-     Log(" Computing quantities at geometrical transform %s",Tag);
+     Log(" GF Computing quantities at geometrical transform %s",Tag);
 
      /*--------------------------------------------------------------*/
      /* assemble off-diagonal G-matrix blocks.                       */
@@ -389,7 +412,7 @@ void GetFlux(BNEQData *BNEQD, cdouble Omega, double *Flux)
      /* untransform the geometry                                     */
      /*--------------------------------------------------------------*/
      G->UnTransform();
-     Log(" ...done!");
+     Log(" GF done with transform %s!",Tag);
 
    }; // for (nt=0; nt<BNEQD->NumTransformations... )
 

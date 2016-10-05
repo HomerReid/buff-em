@@ -219,18 +219,28 @@ SWGGeometry::SWGGeometry(const char *pGeoFileName)
   GeoFileName=strdup(pGeoFileName);
   NumObjects=0;
   Objects=0;
+  LogLevel=BUFF_TERSE_LOGGING;
 
   /***************************************************************/
   /***************************************************************/
   /***************************************************************/
   char *s;
+  if ( (s=getenv("BUFF_LOGLEVEL")) )
+   { switch(s[0])
+      { case '0': LogLevel=BUFF_NO_LOGGING;      break;
+        case '1': LogLevel=BUFF_TERSE_LOGGING;   break;
+        case '2': LogLevel=BUFF_VERBOSE_LOGGING; break;
+      };
+   };
   if ( (s=getenv("BUFF_TAYLORDUFFY_EVALS")) )
    { sscanf(s,"%i",&MaxTaylorDuffyEvals);
-     Log("Setting max TaylorDuffy evals=%i.",MaxTaylorDuffyEvals);
+     if (LogLevel>0)
+      Log("Setting max TaylorDuffy evals=%i.",MaxTaylorDuffyEvals);
    };
   if ( (s=getenv("BUFF_TAYLORDUFFY_TOLERANCE")) )
    { sscanf(s,"%le",&TaylorDuffyTolerance);
-     Log("Setting TaylorDuffy tolerance=%e.",TaylorDuffyTolerance);
+     if (LogLevel>0)
+      Log("Setting TaylorDuffy tolerance=%e.",TaylorDuffyTolerance);
    };
 
   /***************************************************************/

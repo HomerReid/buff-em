@@ -221,7 +221,8 @@ void GetDSIPFTTrace(SWGGeometry *G, cdouble Omega, HMatrix *DRMatrix,
   for(int nx=0; nx<NX; nx++)
    for(int nbf=0; nbf<NBF; nbf++)
     { 
-      if (nbf==0) LogPercent(nx,NX,10);
+      if (nbf==0 && G->LogLevel>=BUFF_VERBOSE_LOGGING) 
+       LogPercent(nx,NX,10);
 
       double X[3];
       X[0] = SCRMatrix->GetEntryD(nx, 0);
