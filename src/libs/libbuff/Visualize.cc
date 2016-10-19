@@ -36,6 +36,7 @@ namespace buff {
 
 #define II cdouble(0,1)
 
+void Invert3x3Matrix(cdouble M[3][3], cdouble W[3][3]);
 
 /************************************************************/
 /* subroutines for emitting GMSH postprocessing code        */
@@ -290,6 +291,7 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
 void SWGGeometry::PlotPermittivity(const char *FileName,
                                    const char *Tag)
 { 
+  (void)Tag;
   PlotPermittivity(FileName,"Re(Eps)",true);
   PlotPermittivity(FileName,"Im(Eps)",false);
 }
@@ -297,108 +299,260 @@ void SWGGeometry::PlotPermittivity(const char *FileName,
 /***************************************************************/
 /***************************************************************/
 /***************************************************************/
-void SWGGeometry::PlotCurrentDistribution(const char *FileName,
-                                          HVector *J, 
-                                          const char *Tag, ...)
+bool SWGGeometry::GetJE(int no, int nt, double *X0,
+                        HVector *JVector, cdouble Omega,
+                        cdouble JE[6])
+{
+  SWGVolume *O = Objects[no];
+  int Offset   = BFIndexOffset[no];
+  SWGTet *T    = O->Tets[nt];
+
+  // sum contributions of up to 4 basis functions to get
+  // current density at X0
+  JE[0]=JE[1]=JE[2]=JE[3]=JE[4]=JE[5]=0.0;
+  for(int iF=0; iF<4; iF++)
+   { 
+     int nf = T->FI[iF];
+     if (nf >= O->NumInteriorFaces) continue;
+
+     SWGFace *F = O->Faces[nf];
+     cdouble JAlpha = JVector->GetEntry(Offset + nf);
+     double PreFac = F->Area / (3.0*T->Volume);
+     double Sign = (nt == F->iPTet) ? 1.0 : -1.0;
+     int iQ      = (nt == F->iPTet) ? F->iQP : F->iQM;
+     double *Q   = O->Vertices + 3*iQ;
+     JE[0] += Sign*PreFac*JAlpha*(X0[0] - Q[0]);
+     JE[1] += Sign*PreFac*JAlpha*(X0[1] - Q[1]);
+     JE[2] += Sign*PreFac*JAlpha*(X0[2] - Q[2]);
+   };
+
+  // get total E-field from J
+  // E=(iZ_0/k) * Chi^{-1} * J
+  cdouble Chi[3][3], InvChi[3][3];
+  O->SVT->Evaluate(Omega, X0, Chi);
+  Chi[0][0] -= 1.0;
+  Chi[1][1] -= 1.0;
+  Chi[2][2] -= 1.0;
+  Invert3x3Matrix(Chi, InvChi);
+
+  cdouble PreFactor = II*ZVAC / Omega;
+  for(int Mu=0; Mu<3; Mu++)
+   for(int Nu=0; Nu<3; Nu++)
+    JE[3+Mu] += PreFactor*InvChi[Mu][Nu]*JE[Nu];
+
+  return true;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+double GetTetVolume(double *V1, double *V2, double *V3, double *V4)
+{
+  // volume = (1/6) A \cdot (B x C)
+  double A[3], B[3], C[3];
+  for(int i=0; i<3; i++)
+   { A[i] = V2[i] - V1[i];
+     B[i] = V3[i] - V1[i];
+     C[i] = V4[i] - V1[i];
+   };
+  return (  A[0] * (B[1]*C[2] - B[2]*C[1])
+           +A[1] * (B[2]*C[0] - B[0]*C[2])
+           +A[2] * (B[0]*C[1] - B[1]*C[0])
+         ) / 6.0;
+}
+
+bool PointInTet(double *X0, SWGTet *T, double *Vertices)
+{
+  double *V[4];
+  V[0] = Vertices + 3*T->VI[0];
+  V[1] = Vertices + 3*T->VI[1];
+  V[2] = Vertices + 3*T->VI[2];
+  V[3] = Vertices + 3*T->VI[3];
+
+  double VolumeSum=0.0;
+  VolumeSum= fabs(GetTetVolume(X0,V[0],V[1],V[2]))
+            +fabs(GetTetVolume(X0,V[0],V[2],V[3]))
+            +fabs(GetTetVolume(X0,V[1],V[2],V[3]))
+            +fabs(GetTetVolume(X0,V[0],V[1],V[3]));
+
+  return ( (VolumeSum-T->Volume) < 1.0e-4 * T->Volume);
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+bool SWGGeometry::GetJE(double *X0, HVector *JVector, cdouble Omega,
+                        cdouble JE[6])
+{
+  for(int no=0; no<NumObjects; no++)
+   for(int nf=0; nf<Objects[no]->NumInteriorFaces; nf++)
+    { SWGVolume *O = Objects[no];
+      SWGFace   *F = O->Faces[nf];
+      double    R2 = F->Radius * F->Radius;
+      if ( VecDistance2(X0, F->Centroid) > R2 )
+       continue;
+
+      if ( PointInTet(X0, O->Tets[F->iPTet], O->Vertices) )
+       return GetJE(no, F->iPTet, X0, JVector, Omega, JE);
+      if ( PointInTet(X0, O->Tets[F->iMTet], O->Vertices) )
+       return GetJE(no, F->iMTet, X0, JVector, Omega, JE); 
+    };
+  memset(JE,0,6*sizeof(cdouble));
+  return false;
+}
+
+/***************************************************************/
+/* XJEMatrix[nt, 0,1,2] = coordinates of tet #n centroid       */
+/* XJEMatrix[nt, 3,4,5] = {Jx,Jy,Jz} at tet #n centroid        */
+/* XJEMatrix[nt, 6,7,8] = {Ex,Ey,Ez} at tet #n centroid        */
+/***************************************************************/
+HMatrix *SWGGeometry::GetXJEMatrix(HVector *JVector, cdouble Omega, HMatrix *XJEMatrix)
+{
+  int TotalTets=0;
+  for(int no=0; no<NumObjects; no++)
+   TotalTets+=Objects[no]->NumTets;
+
+  /***************************************************************/
+  /* (re)allocate matrix as necessary ****************************/
+  /***************************************************************/
+  if ( XJEMatrix &&
+        (   XJEMatrix->NR!=TotalTets
+         || XJEMatrix->NC!=9
+         || XJEMatrix->RealComplex!=LHM_COMPLEX
+        )
+     )
+   { Warn("wrong-size matrix in GetXJEMatrix (reallocating)");
+     delete XJEMatrix;
+     XJEMatrix=0;
+   };
+  if (XJEMatrix==0)
+   XJEMatrix=new HMatrix(TotalTets, 9, LHM_COMPLEX);
+
+  /***************************************************************/
+  /* get current density and E-field at tetrahedron centroids    */
+  /***************************************************************/
+  for(int no=0, ntt=0; no<NumObjects; no++)
+   for(int nt=0; nt<Objects[no]->NumTets; nt++, ntt++)
+    { 
+      double *X0 = Objects[no]->Tets[nt]->Centroid;
+      cdouble JE[6];
+      GetJE(no, nt, X0, JVector, Omega, JE);
+      XJEMatrix->SetEntriesD(ntt, "0:2", X0);
+      XJEMatrix->SetEntries(ntt,  "3:8", JE);
+    };
+
+  return XJEMatrix;
+}
+
+/***************************************************************/
+/***************************************************************/
+/***************************************************************/
+void SWGGeometry::PlotCurrentDistribution(HVector *JVector, cdouble Omega,
+                                          const char *format, ...)
 {
   /***************************************************************/
   /***************************************************************/ 
   /***************************************************************/ 
-  FILE *f=fopen(FileName,"a");
+  va_list ap;
+  char FileBase[MAXSTR];
+  va_start(ap,format);
+  vsnprintfEC(FileBase,MAXSTR,format,ap);
+  va_end(ap);
+  char *p=strrchr(FileBase,'.');
+  if (p && !strcasecmp(p,".pp"))
+   *p=0;
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  static HMatrix *XJEMatrix=0;
+  XJEMatrix=GetXJEMatrix(JVector, Omega, XJEMatrix);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  FILE *f=vfopen("%s.XJE.dat","r",FileBase);
+  if (!f)
+   { f=vfopen("%s.XJE","w",FileBase);
+     fprintf(f,"# 1,2,3,4  x,y,z,Omega\n");
+     fprintf(f,"#  5,6     real,imag Jx\n");
+     fprintf(f,"#  7,8     real,imag Jy\n");
+     fprintf(f,"#  9,10    real,imag Jz\n");
+     fprintf(f,"# 11,12    real,imag Ex\n");
+     fprintf(f,"# 13,14    real,imag Ey\n");
+     fprintf(f,"# 15,16    real,imag Ez\n");
+     fprintf(f,"\n");
+   };
+  fclose(f);
+
+  f=vfopen("%s.XJE.dat","a",FileBase);
+  for(int nr=0; nr<XJEMatrix->NR; nr++)
+   { double X0[3];
+     cdouble JE[6]; 
+     XJEMatrix->GetEntriesD(nr,"0:2",X0);
+     XJEMatrix->GetEntries(nr,"3:8",JE);
+     fprintVec(f,X0,3);
+     fprintf(f,"%s ",z2s(Omega));
+     fprintVecCR(f,JE,6);
+   };
+  fclose(f);
+
+  /***************************************************************/
+  /***************************************************************/
+  /***************************************************************/
+  f=vfopen("%s.XJE.pp","a",FileBase);
   if (!f) return;
 
-  va_list ap;
-  char buffer[MAXSTR];
-  va_start(ap,Tag);
-  vsnprintfEC(buffer,MAXSTR,Tag,ap);
-  va_end(ap);
-
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  fprintf(f,"View \"Real(%s)\" {\n",buffer);
-  for(int no=0; no<NumObjects; no++)
-   for(int nt=0; nt<Objects[no]->NumTets; nt++)
-    { 
-      SWGVolume *O = Objects[no];
-      int Offset   = BFIndexOffset[no];
-      SWGTet *T    = O->Tets[nt];
-
-      /*--------------------------------------------------------------*/
-      /*--------------------------------------------------------------*/
-      /*--------------------------------------------------------------*/
-      double JCentroid[3]={0.0, 0.0, 0.0};
-      for(int iF=0; iF<4; iF++)
-       { 
-         int nf = T->FI[iF];
-         if (nf >= O->NumInteriorFaces) continue;
-
-         SWGFace *F = O->Faces[nf];
-         double JAlpha = real(J->GetEntry(Offset + nf));
-         double PreFac = F->Area / (3.0*T->Volume);
-         double Sign=1.0; 
-         double *Q=0;
-         if ( F->iPTet == nt)
-          { Sign = +1.0;
-            Q    = O->Vertices + 3*F->iQP;
-          }
-         else if ( F->iMTet == nt)
-          { Sign = -1.0;
-            Q    = O->Vertices + 3*F->iQM;
-          }
-         else 
-          ErrExit("%s:%i: internal error",__FILE__,__LINE__);
-   
-         JCentroid[0] += Sign*PreFac*JAlpha*(T->Centroid[0] - Q[0]);
-         JCentroid[1] += Sign*PreFac*JAlpha*(T->Centroid[1] - Q[1]);
-         JCentroid[2] += Sign*PreFac*JAlpha*(T->Centroid[2] - Q[2]);
-       };
-      WriteVP(T->Centroid, JCentroid, f);
-    };
+  fprintf(f,"View \"Real J (Omega=%s)\" {\n",z2s(Omega));
+  for(int nr=0; nr<XJEMatrix->NR; nr++)
+   { 
+     double X0[3];
+     double J[3];
+     XJEMatrix->GetEntriesD(nr,"0:2",X0);
+     J[0] = real(XJEMatrix->GetEntry(nr,3));
+     J[1] = real(XJEMatrix->GetEntry(nr,4));
+     J[2] = real(XJEMatrix->GetEntry(nr,5));
+     WriteVP(X0, J, f);
+   };
   fprintf(f,"};\n");
 
-  /***************************************************************/
-  /***************************************************************/
-  /***************************************************************/
-  fprintf(f,"View \"Imag(%s)\" {\n",buffer);
-  for(int no=0; no<NumObjects; no++)
-   for(int nt=0; nt<Objects[no]->NumTets; nt++)
-    { 
-      SWGVolume *O = Objects[no];
-      int Offset   = BFIndexOffset[no];
-      SWGTet *T    = O->Tets[nt];
+  fprintf(f,"View \"Imag J (Omega=%s)\" {\n",z2s(Omega));
+  for(int nr=0; nr<XJEMatrix->NR; nr++)
+   { 
+     double X0[3];
+     double J[3];
+     XJEMatrix->GetEntriesD(nr,"0:2",X0);
+     J[0] = imag(XJEMatrix->GetEntry(nr,3));
+     J[1] = imag(XJEMatrix->GetEntry(nr,4));
+     J[2] = imag(XJEMatrix->GetEntry(nr,5));
+     WriteVP(X0, J, f);
+   };
+  fprintf(f,"};\n");
 
-      /*--------------------------------------------------------------*/
-      /*--------------------------------------------------------------*/
-      /*--------------------------------------------------------------*/
-      double JCentroid[3]={0.0, 0.0, 0.0};
-      for(int iF=0; iF<4; iF++)
-       { 
-         int nf = T->FI[iF];
-         if (nf >= O->NumInteriorFaces) continue;
+  fprintf(f,"View \"Real E (Omega=%s)\" {\n",z2s(Omega));
+  for(int nr=0; nr<XJEMatrix->NR; nr++)
+   { 
+     double X0[3];
+     double E[3];
+     XJEMatrix->GetEntriesD(nr,"0:2",X0);
+     E[0] = real(XJEMatrix->GetEntry(nr,6));
+     E[1] = real(XJEMatrix->GetEntry(nr,7));
+     E[2] = real(XJEMatrix->GetEntry(nr,8));
+     WriteVP(X0, E, f);
+   };
+  fprintf(f,"};\n");
 
-         SWGFace *F = O->Faces[nf];
-         double JAlpha = imag(J->GetEntry(Offset + nf));
-         double PreFac = F->Area / (3.0*T->Volume);
-         double Sign=1.0;
-         double *Q=0;
-         if ( F->iPTet == nt)
-          { Sign = +1.0;
-            Q    = O->Vertices + 3*F->iQP;
-          }
-         else if ( F->iMTet == nt)
-          { Sign = -1.0;
-            Q    = O->Vertices + 3*F->iQM;
-          }
-         else 
-          ErrExit("%s:%i: internal error",__FILE__,__LINE__);
-   
-         JCentroid[0] += Sign*PreFac*JAlpha*(T->Centroid[0] - Q[0]);
-         JCentroid[1] += Sign*PreFac*JAlpha*(T->Centroid[1] - Q[1]);
-         JCentroid[2] += Sign*PreFac*JAlpha*(T->Centroid[2] - Q[2]);
-       };
-      WriteVP(T->Centroid, JCentroid, f);
-    };
+  fprintf(f,"View \"Imag E (Omega=%s)\" {\n",z2s(Omega));
+  for(int nr=0; nr<XJEMatrix->NR; nr++)
+   { 
+     double X0[3];
+     double E[3];
+     XJEMatrix->GetEntriesD(nr,"0:2",X0);
+     E[0] = imag(XJEMatrix->GetEntry(nr,6));
+     E[1] = imag(XJEMatrix->GetEntry(nr,7));
+     E[2] = imag(XJEMatrix->GetEntry(nr,8));
+     WriteVP(X0, E, f);
+   };
   fprintf(f,"};\n");
 
   fclose(f);

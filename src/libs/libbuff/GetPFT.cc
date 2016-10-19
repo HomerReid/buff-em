@@ -78,7 +78,8 @@ HMatrix *GetOPFT(SWGGeometry *G, cdouble Omega,
 // PFT by energy/momentum transfer method
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HMatrix *DRMatrix,
-                   HMatrix *PFTMatrix, bool Itemize=false);
+                   HMatrix *PFTMatrix, bool Itemize=false, 
+                   cdouble *PFTIBuffer=0);
 
 // PFT from multipole moments
 void GetMomentPFT(SWGGeometry *G, cdouble Omega, IncField *IF,

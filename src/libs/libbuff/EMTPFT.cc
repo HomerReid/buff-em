@@ -256,7 +256,7 @@ void ScatteredPFTIntegrand(double *xA, double *bA, double DivbA,
   cdouble Phi, Psi;
   if (SameObject)
    { double ImPhi, ImPsi;
-     if ( fabs(kr) < 1.0e-3 )
+     if ( fabs(kr) < 2.0e-2 )
       { double k3=k2*k;
         ImPhi  =  (1.0 - kr2/6.0)  * k/(4.0*M_PI);
         ImPsi  = -(1.0 - kr2/10.0) * k3/(12.0*M_PI);
@@ -323,7 +323,8 @@ void GetScatteredPFTIntegrals(SWGVolume *Oa, int nbfa,
 /***************************************************************/
 HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
                    HVector *JVector, HMatrix *DRMatrix,
-                   HMatrix *PFTMatrix, bool Itemize)
+                   HMatrix *PFTMatrix, bool Itemize,
+                   cdouble *PFTIBuffer)
 { 
   /***************************************************************/
   /***************************************************************/
@@ -383,49 +384,52 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
   /*- multithreaded loop over all basis functions in all volumes -*/
   /*--------------------------------------------------------------*/
   int TotalBFs = G->TotalBFs;
-  bool UseSymmetry=true;
-  char *s=getenv("BUFF_EMTPFT_SYMMETRY");
-  if (s && s[0]=='0')
-   { UseSymmetry=false;
-     Log("Not using symmetry in EMTPFT calculation.");
-   };
 #ifdef USE_OPENMP
   Log("EMT OpenMP multithreading (%i threads)",NT);
 #pragma omp parallel for schedule(dynamic,1),      	\
                          num_threads(NT)
 #endif
-  for(int nbfa=0; nbfa<TotalBFs; nbfa++)
-   for(int nbfb=(UseSymmetry ? nbfa : 0); nbfb<TotalBFs; nbfb++)
-    { 
-      if (LogLevel>=BUFF_VERBOSE_LOGGING)
-       if (nbfb==(UseSymmetry ? nbfa : 0)) 
-        LogPercent(nbfa, TotalBFs, 10);
+  for(int nbfPair=0; nbfPair<TotalBFs*TotalBFs; nbfPair++)
+   { 
+     int nbfa = nbfPair/TotalBFs, nbfb=nbfPair%TotalBFs;
+     if (nbfb<nbfa) continue;
 
-      int noa, nfa;
-      SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa);
+     if (LogLevel>=BUFF_VERBOSE_LOGGING && nbfb==nbfa)
+      LogPercent(nbfa, TotalBFs, 10);
 
-      int nob, nfb;
-      SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
+     int noa, nfa;
+     SWGVolume *OA = ResolveNBF(G, nbfa, &noa, &nfa);
 
-      cdouble Q[NUMPFTT+3];
+     int nob, nfb;
+     SWGVolume *OB = ResolveNBF(G, nbfb, &nob, &nfb);
+
+     cdouble Q[NUMPFTT+3];
+     if (PFTIBuffer)
+      { int Offset=nbfa*TotalBFs - nbfa*(nbfa+1)/2 + nbfb;
+        size_t PFTIBufLen=(NUMPFTT+3);
+        size_t PFTIBufSize=PFTIBufLen*sizeof(cdouble);
+        memcpy(Q, PFTIBuffer+Offset*PFTIBufLen, PFTIBufSize);
+      }
+     else
       GetScatteredPFTIntegrals(OA, nfa, OB, nfb, Omega, Q);
    
-      cdouble u0JJ = ZVAC*GetJJ(JVector, DRMatrix, nbfa, nbfb);
-      if (u0JJ==0.0) continue;
+     cdouble u0JJ = ZVAC*GetJJ(JVector, DRMatrix, nbfa, nbfb);
+     if (u0JJ==0.0) continue;
 
-      double dPFTT[NUMPFTT];
-      if (noa==nob)
+     double dPFTT[NUMPFTT];
+     dPFTT[PFT_PABS]=0.0;
+     if (noa==nob)
        { 
          dPFTT[PFT_PSCAT] = real(u0JJ)*imag(Q[PFT_PSCAT]);
-         for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
-          dPFTT[nq] = imag(u0JJ)*imag(Q[nq]);
+         if (nbfa!=nbfb)
+          for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
+           dPFTT[nq] = imag(u0JJ)*imag(Q[nq]);
        }
       else
        {
-         dPFTT[PFT_PSCAT] = -1.0*real(u0JJ * II*Q[PFT_PSCAT]);
-
+         dPFTT[PFT_PSCAT] = -0.5*real(u0JJ*II*Q[PFT_PSCAT]);
          for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
-          dPFTT[nq] = -1.0*imag(u0JJ * II * Q[nq]);
+          dPFTT[nq] = -0.5*imag(u0JJ*II*Q[nq]);
        };
 
       int nt=0;
@@ -433,44 +437,7 @@ HMatrix *GetEMTPFT(SWGGeometry *G, cdouble Omega, IncField *IF,
       nt=omp_get_thread_num();
 #endif
       int Offset = nt*NO2NQ + noa*NONQ + nob*NQ;
-      VecPlusEquals(DeltaPFTT + Offset, 0.5, dPFTT, NUMPFTT);
-
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
-if (UseSymmetry && nbfa!=nbfb)
-{
-  Q[PFT_XFORCE]*=-1.0;
-  Q[PFT_YFORCE]*=-1.0;
-  Q[PFT_ZFORCE]*=-1.0;
-  Q[PFT_XTORQUE1]*=-1.0;
-  Q[PFT_YTORQUE1]*=-1.0;
-  Q[PFT_ZTORQUE1]*=-1.0;
-  Q[PFT_XTORQUE2]=Q[PFT_XTORQUE2+3];
-  Q[PFT_YTORQUE2]=Q[PFT_YTORQUE2+3];
-  Q[PFT_ZTORQUE2]=Q[PFT_ZTORQUE2+3];
-
-      cdouble u0JJba = ZVAC*GetJJ(JVector, DRMatrix, nbfb, nbfa);
-      if (noa==nob)
-       { 
-         dPFTT[PFT_PSCAT] = real(u0JJba)*imag(Q[PFT_PSCAT]);
-         for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
-          dPFTT[nq] += imag(u0JJba)*imag(Q[nq]);
-       }
-      else
-       {
-         dPFTT[PFT_PSCAT] = -1.0*real(u0JJba * II*Q[PFT_PSCAT]);
-
-         for(int nq=PFT_XFORCE; nq<NUMPFTT; nq++)
-          dPFTT[nq] = -1.0*imag(u0JJba * II * Q[nq]);
-       };
-
-      Offset = nt*NO2NQ + nob*NONQ + noa*NQ;
-      VecPlusEquals(DeltaPFTT + Offset, 0.5, dPFTT, NUMPFTT);
-};
-/***************************************************************/
-/***************************************************************/
-/***************************************************************/
+      VecPlusEquals(DeltaPFTT + Offset, 1.0, dPFTT, NUMPFTT);
 
     }; // end of multithreaded loop
 
@@ -543,22 +510,29 @@ if (UseSymmetry && nbfa!=nbfb)
          { fprintf(f,"# EMTPFT contributions to object %s\n",G->Objects[noa]->Label);
            fprintf(f,"# columns: \n");
            fprintf(f,"# 1 frequency \n");
-           fprintf(f,"# 2 destination object label \n");
-           fprintf(f,"# 03-10 PAbs, PScat, Fxyz, Txyz (total)\n");
-           fprintf(f,"# 11-21 PAbs, PScat, Fxyz, T1xyz, T2xyz (extinction)\n");
-           int nc=22;
-           for(int nob=0; nob<NO; nob++, nc+=NUMPFTT)
-            fprintf(f,"# %i-%i PAbs, PScat, Fxyz, T1xyz T2xyz (object %s)\n",nc,nc+NUMPFTT-1,G->Objects[nob]->Label);
+           fprintf(f,"# 2 source (0=total, -1=extinction, +n=object #n scattered)\n");
+           fprintf(f,"# 3,4      PAbs, PScat\n");
+           fprintf(f,"# 5,6,7    Fx, Fy, Fz\n");
+           fprintf(f,"# 8,9,10   Tx, Ty, Tz (term 1)\n");
+           fprintf(f,"# 11,12,13 Tx, Ty, Tz (term 2)\n");
          };
-        fprintf(f,"%e %s ",real(Omega),G->Objects[noa]->Label);
+
+        fprintf(f,"%e 00 ",real(Omega));
         for(int nq=0; nq<NUMPFT; nq++)
-         fprintf(f,"%e ",PFTMatrix->GetEntryD(noa,nq));
-        for(int nq=0; nq<NUMPFTT; nq++)
-         fprintf(f,"%e ",ExtinctionPFTT->GetEntryD(noa,nq));
-        for(int nob=0; nob<NO; nob++)
-         for(int nq=0; nq<NUMPFTT; nq++)
-          fprintf(f,"%e ",ScatteredPFTT[nob]->GetEntryD(noa,nq));
+         fprintf(f,"%+e ",PFTMatrix->GetEntryD(noa,nq));
         fprintf(f,"\n");
+
+        fprintf(f,"%e -1 ",real(Omega));
+        for(int nq=0; nq<NUMPFTT; nq++)
+         fprintf(f,"%+e ",ExtinctionPFTT->GetEntryD(noa,nq));
+        fprintf(f,"\n");
+
+        for(int nob=0; nob<NO; nob++)
+         { fprintf(f,"%e %02i ",real(Omega),nob+1);
+            for(int nq=0; nq<NUMPFTT; nq++)
+             fprintf(f,"%+e ",ScatteredPFTT[nob]->GetEntryD(noa,nq));
+           fprintf(f,"\n");
+         };
         fclose(f);
       };
      WrotePreamble=true;

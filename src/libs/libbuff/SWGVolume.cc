@@ -100,7 +100,7 @@ SWGVolume::SWGVolume(char *pMeshFileName,
   /*- the MeshPath.                                             */
   /*------------------------------------------------------------*/
   MeshFileName=strdup(pMeshFileName);
-  char *WhichDir=".";
+  char *WhichDir=const_cast<char *>(".");
   FILE *MeshFile=fopenPath(getenv("BUFF_MESH_PATH"),MeshFileName,"r",
                            &WhichDir);
   if (!MeshFile)

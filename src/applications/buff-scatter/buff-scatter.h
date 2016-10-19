@@ -47,6 +47,7 @@ typedef struct BSData
    IncField *IF;
    char *TransformLabel;
    char *IFLabel;
+   char *FileBase;
  } BSData;
  
 

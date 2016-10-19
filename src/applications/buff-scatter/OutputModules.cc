@@ -70,6 +70,7 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
   IncField *IF    = BSD->IF;
   HVector  *J     = BSD->J; 
   cdouble  Omega  = BSD->Omega;
+  char *FileBase  = BSD->FileBase;
 
   /*--------------------------------------------------------------*/
   /*- try to read eval points from file --------------------------*/
@@ -100,7 +101,7 @@ void ProcessEPFile(BSData *BSD, char *EPFileName)
   const char *Ext[2]={"scattered","total"};
   for(int ST=0; ST<2; ST++)
    { char OutFileName[MAXSTR];
-     snprintf(OutFileName,MAXSTR,"%s.%s",GetFileBase(EPFileName),Ext[ST]);
+     snprintf(OutFileName,MAXSTR,"%s.%s.%s",FileBase,GetFileBase(EPFileName),Ext[ST]);
      FILE *f=fopen(OutFileName,"a");
      fprintf(f,"# buff-scatter run on %s (%s)\n",GetHostName(),GetTimeString());
      fprintf(f,"# columns: \n");

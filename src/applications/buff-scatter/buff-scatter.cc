@@ -76,8 +76,9 @@ int main(int argc, char *argv[])
   char *OmegaFile;                   int nOmegaFiles;
 //
   char *EPFiles[MAXEPF];             int nEPFiles;
+  char *FileBase=0;
 //
-  char *JPlotFile=0;
+  bool PlotCurrents=false;
 //
   char *PFTFile          = 0;
   char *OPFTFile         = 0;
@@ -114,6 +115,7 @@ int main(int argc, char *argv[])
      {"IFFile",         PA_STRING,  1, 1,       (void *)&IFFile,     0,             "list of incident fields"},
 /**/
      {"EPFile",         PA_STRING,  1, MAXEPF,  (void *)EPFiles,     &nEPFiles,    "list of evaluation points"},
+     {"FileBase",       PA_STRING,  1, 1,       (void *)&FileBase,   0,    "base file name for EPFile output"},
 /**/
      {"PFTFile",        PA_STRING,  1, 1,       (void *)&PFTFile,    0,            "name of PFT output file (computed by default EMTPFT method)"},
      {"EMTPFTFile",     PA_STRING,  1, 1,       (void *)&EMTPFTFile, 0,            "name of J \\dot E PFT output file"},
@@ -125,7 +127,7 @@ int main(int argc, char *argv[])
      {"DSIPoints",      PA_INT,     1, 1,       (void *)&DSIPoints,  0,            "number of quadrature points for surface-integral PFT (6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030, 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810)"},
      {"DSIPoints2",     PA_INT,     1, 1,       (void *)&DSIPoints2, 0,            "number of quadrature points for DSIPFT second opinion"},
 /**/
-     {"JPlotFile",      PA_STRING,  1, 1,       (void *)&JPlotFile,  0,            "name of J-plot file"},
+     {"PlotCurrents",   PA_BOOL,    0, 1,       (void *)&PlotCurrents, 0,          "plot induced current distribution and E-field visualization files"},
 /**/
      {"MomentFile",     PA_STRING,  1, 1,       (void *)&MomentFile, 0,            "name of induced-dipole-moment output file"},
 /**/
@@ -135,6 +137,8 @@ int main(int argc, char *argv[])
 
   if (GeoFile==0)
    OSUsage(argv[0], OSArray, "--geometry option is mandatory");
+  if (FileBase==0) 
+   FileBase=vstrdup(GetFileBase(GeoFile));
 
   /*******************************************************************/
   /* process frequency-related options to construct a list of        */
@@ -236,9 +240,7 @@ int main(int argc, char *argv[])
   BSD->IF             = 0;
   BSD->IFLabel        = 0;
   BSD->TransformLabel = 0;
-
-  char GeoFileBase[MAXSTR];
-  strncpy(GeoFileBase, GetFileBase(GeoFile), MAXSTR);
+  BSD->FileBase       = FileBase;
 
   /*******************************************************************/
   /* loop over frequencies *******************************************/
@@ -262,7 +264,7 @@ int main(int argc, char *argv[])
      /* export VIE matrix to a binary file if that was requested        */
      /*******************************************************************/
      if (ExportMatrix)
-      { void *pCC=HMatrix::OpenMATLABContext("%s_%s",GeoFileBase,OmegaStr);
+      { void *pCC=HMatrix::OpenMATLABContext("%s_%s",FileBase,OmegaStr);
         M->ExportToMATLAB(pCC,"M");
         HMatrix::CloseMATLABContext(pCC);
       };
@@ -299,10 +301,10 @@ int main(int argc, char *argv[])
         /***************************************************************/
         /* set up the incident field profile and assemble the RHS vector */
         /***************************************************************/
-        Log("  Assembling the RHS vector..."); 
+        Log("  Assembling the RHS vector...");
         G->AssembleRHSVector(Omega, IF, J);
-        if (JPlotFile)
-         G->PlotCurrentDistribution(JPlotFile, J, "RHS_%s%s",CD2S(Omega),IFStr);
+        if (PlotCurrents)
+         G->PlotCurrentDistribution(J, Omega, "%s.RHS", FileBase);
         BSD->RHS->Copy(J); // save a copy of the RHS vector for later
 
         /***************************************************************/
@@ -314,8 +316,8 @@ int main(int argc, char *argv[])
         /*--------------------------------------------------------------*/
         /*--------------------------------------------------------------*/
         /*--------------------------------------------------------------*/
-        if (JPlotFile)
-         G->PlotCurrentDistribution(JPlotFile, J, "J_%s",CD2S(Omega),IFStr);
+        if (PlotCurrents)
+         G->PlotCurrentDistribution(J, Omega, FileBase);
 
         /*--------------------------------------------------------------*/
         /*--------------------------------------------------------------*/

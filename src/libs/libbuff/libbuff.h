@@ -138,7 +138,7 @@ class SWGVolume
    void DrawBF(int nf, FILE *f);
    void DrawFace(int nf, FILE *f);
    void DrawTet(int nt, FILE *f);
-
+ 
    /*-------------------------------------------------------------------*/
    /*- apply geometrical transformations -------------------------------*/
    /*-------------------------------------------------------------------*/
@@ -219,8 +219,12 @@ class SWGGeometry
    void WritePPMesh(const char *FileName, const char *Tag);
    void PlotPermittivity(const char *FileName, const char *Tag);
    void PlotPermittivity(const char *FileName, const char *Tag, bool RealPart);
-   void PlotCurrentDistribution(const char *FileName, HVector *J,
-                                const char *Tag, ...);
+   void PlotCurrentDistribution(HVector *J, cdouble Omega,
+                                const char *format, ...);
+   HMatrix *GetXJEMatrix(HVector *J, cdouble Omega, HMatrix *XJEMatrix=0);
+   bool GetJE(double *X0, HVector *JVector, cdouble Omega, cdouble JE[6]);
+   bool GetJE(int no, int nt, double *X0,
+              HVector *JVector, cdouble Omega, cdouble JE[6]);
 
    // scattering API
    HMatrix *AllocateVIEMatrix(bool PureImagFreq=false);
