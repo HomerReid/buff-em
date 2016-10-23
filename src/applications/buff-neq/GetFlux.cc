@@ -178,12 +178,22 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
   // (d) M1    <- M3*M2 = V*SInverse*G
   // (e) M3    <- SInverse*M1 = SInverse*V*SInverse*G
   // (f) M3    += 1
+  //
+  // original
   // (g) M3    <- inv(M3) = W
   // (h) M1    <- Rytov
   // (i) M2    <- SInverse*M1 = SInverse*Rytov
   // (j) M1    <- M2*SInverse = SInverse*Rytov*SInverse
   // (k) M2    <- W*M1 = M3*M1
   // (l) M3    <- M2*W'
+  //
+  // modified 20161021:
+  // (h) M1    <- Rytov
+  // (i) M2    <- SInverse*M1 = SInverse*Rytov
+  // (j) M1    <- M2*SInverse = SInverse*Rytov*SInverse
+  // (k) M2    <- W \ adjoint( W \ SRS)
+  //
+  // modified 20161021:
 
   HMatrix *M1=WorkMatrix[0];
   HMatrix *M2=WorkMatrix[1];
@@ -225,8 +235,8 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
   // step (g) 
   if (Verbose) Log(" RTM g1");
   M3->LUFactorize();
-  if (Verbose) Log(" RTM g2");
-  M3->LUInvert();
+ // if (Verbose) Log(" RTM g2");
+ // M3->LUInvert();
 
   // step (h)
   if (Verbose) Log(" RTM h");
@@ -242,14 +252,21 @@ HMatrix *ComputeDressedRytovMatrix(BNEQData *BNEQD, int SourceObject)
   M2->Multiply(SInverse, M1);
 
   // step (k)
-  if (Verbose) Log(" RTM k");
-  M3->Multiply(M1, M2);
+ // if (Verbose) Log(" RTM k");
+ // M3->Multiply(M1, M2);
 
   // step (l)
-  if (Verbose) Log(" RTM l");
-  M2->Multiply(M3, M1, "--transB C");
+ // if (Verbose) Log(" RTM l");
+ // M2->Multiply(M3, M1, "--transB C");
 
-  if (Verbose) Log(" RTM done ");
+ // if (Verbose) Log(" RTM done ");
+
+  if (Verbose) Log(" RTM k");
+  M3->LUSolve(M2);
+  if (Verbose) Log(" RTM l");
+  M1->Adjoint();
+  if (Verbose) Log(" RTM m");
+  M3->LUSolve(M1);
   return M1;
 
 }
